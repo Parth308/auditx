@@ -25,9 +25,9 @@ npx auditx .
 ```
 🛡️  auditx — scanning /home/parth/codeoracle
   ✓  stack detected: Node.js · TypeScript · Docker
-  ✓  running 5 scanners in parallel...
+  ✓  running 10 scanners in parallel...
 
-  ████████████████████████████████ 100% (8.4s)
+  ████████████████████████████████ 100% (14.2s)
 
   ┌──────────────┬──────────┬────────┬────────┬──────┐
   │ Category     │ Critical │  High  │ Medium │  Low │
@@ -35,11 +35,16 @@ npx auditx .
   │ Secrets      │    1     │   0    │   0    │   0  │
   │ Dependencies │    0     │   3    │   5    │   2  │
   │ SAST         │    0     │   1    │   3    │   7  │
+  │ Duplication  │    0     │   1    │   4    │   0  │
+  │ Dep Health   │    0     │   0    │   2    │   3  │
+  │ Type Safety  │    0     │   1    │   6    │   0  │
+  │ Git Health   │    0     │   0    │   0    │   1  │
+  │ License      │    0     │   1    │   0    │   0  │
   │ Dead Code    │    —     │   —    │   0    │  12  │
   │ IaC          │    0     │   0    │   1    │   0  │
   └──────────────┴──────────┴────────┴────────┴──────┘
 
-  ⚠  1 critical · 4 high findings need immediate attention.
+  ⚠  1 critical · 7 high findings need immediate attention.
   ✓  Report written → audit-report.md
 ```
 
@@ -150,6 +155,11 @@ auditx --check-deps
 | `DEAD_CODE` | [Knip](https://github.com/webpro-nl/knip) | Unused exports, unused imports, unused dependencies |
 | `IaC` | [Trivy](https://github.com/aquasecurity/trivy) config | Dockerfile misconfig, k8s insecure defaults, Terraform issues |
 | `PATTERNS` | ESLint + security plugins | Prototype pollution, unsafe regex, insecure randomness (JS/TS only) |
+| `DUPLICATION` | [jscpd](https://github.com/kucherenko/jscpd) | Copy-pasted code blocks and exact clones across multiple files (polyglot) |
+| `DEP_HEALTH` | [depcheck](https://github.com/depcheck/depcheck) | Packages present in package.json but entirely unused in code |
+| `LICENSE` | [license-checker](https://github.com/davglass/license-checker) | Restrictive licenses (GPL/AGPL) that pose a legal risk |
+| `TYPE_SAFETY` | `tsc` | TypeScript compilation errors and missing types |
+| `GIT_HEALTH` | `git log` | Hotspot analysis — flags files modified 50+ times indicating architectural churn |
 
 ### Stack Auto-Detection
 
@@ -177,10 +187,10 @@ By default, `auditx` writes a structured Markdown report to `audit-report.md`.
 # 🛡️ auditx Security Report
 
 **Target**: `/home/parth/projects/codeoracle`
-**Scanned**: 2025-06-27 14:32:01 IST
-**Duration**: 8.4s
+**Scanned**: 2026-06-27 14:32:01 IST
+**Duration**: 14.2s
 **Stack detected**: Node.js · TypeScript · Docker
-**Scanners run**: semgrep · trivy · gitleaks · knip · npm-audit
+**Scanners run**: semgrep · trivy · gitleaks · knip · npm-audit · jscpd · depcheck · license-checker · typecheck · githealth
 
 ---
 
@@ -191,11 +201,16 @@ By default, `auditx` writes a structured Markdown report to `audit-report.md`.
 | Secrets      | 1 | 0 | 0 | 0 |
 | Dependencies | 0 | 3 | 5 | 2 |
 | SAST         | 0 | 1 | 3 | 7 |
+| Duplication  | 0 | 1 | 4 | 0 |
+| Dep Health   | 0 | 0 | 2 | 3 |
+| Type Safety  | 0 | 1 | 6 | 0 |
+| Git Health   | 0 | 0 | 0 | 1 |
+| License      | 0 | 1 | 0 | 0 |
 | Dead Code    | — | — | 0 | 12 |
 | IaC          | 0 | 0 | 1 | 0 |
-| **Total**    | **1** | **4** | **9** | **21** |
+| **Total**    | **1** | **7** | **21** | **25** |
 
-> ⚠️ 5 high/critical findings require immediate attention.
+> ⚠️ 8 high/critical findings require immediate attention.
 
 ---
 
@@ -217,11 +232,17 @@ By default, `auditx` writes a structured Markdown report to `audit-report.md`.
 - **Description**: Prototype pollution via crafted input
 - **Fix**: `npm install sanitize-html@2.13.0`
 
-### [SAST] SQL query built via string concatenation
-- **File**: `src/services/search.ts:87`
-- **Rule**: `semgrep/sql-injection`
-- **Code**: `` `SELECT * FROM users WHERE id = ${userId}` ``
-- **Fix**: Use parameterized queries — `db.query('SELECT * FROM users WHERE id = $1', [userId])`
+### [LICENSE] Restrictive License Detected: GPL-3.0
+- **Severity**: High
+- **Description**: The package 'ghost-script' uses a restrictive GPL-3.0 license.
+- **Fix**: Replace package or consult legal if distributed.
+
+### [DUPLICATION] Code duplication detected (42 lines)
+- **File**: `src/services/billing.ts:102`
+- **Rule**: `jscpd/duplication`
+- **Description**: This block of code is identical to code in `src/services/legacy-billing.ts:40`.
+- **Fix**: Extract logic into a shared utility function.
+
 
 ---
 

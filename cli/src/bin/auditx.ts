@@ -72,6 +72,12 @@ if (targetArg === 'install') {
     await getBinaryPath('gitleaks');
     await getBinaryPath('trivy');
     await getBinaryPath('semgrep');
+    
+    console.log(chalk.cyan('  Installing npm-based scanners globally...'));
+    import('child_process').then(({ execFileSync }) => {
+      execFileSync('npm', ['install', '-g', 'jscpd', 'depcheck', 'license-checker', 'typescript'], { stdio: 'ignore' });
+    });
+
     console.log(chalk.green('\n  ✅ All scanners installed successfully.\n'));
   } catch (err: any) {
     console.error(chalk.red(`\n  ❌ Installation failed: ${err.message}\n`));
