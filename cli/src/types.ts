@@ -5,6 +5,8 @@
 /** Severity levels — ordered from most to least severe. */
 export type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 
+export type AiProvider = 'claude' | 'openai' | 'gemini';
+
 /** Detection categories, matching plan.md spec. */
 export type Category =
   | 'SECRETS'
@@ -90,8 +92,10 @@ export interface Config {
   skip: Array<'secrets' | 'deps' | 'sast' | 'deadcode' | 'iac' | 'patterns'>;
   /** CI mode — exit 1 on any findings */
   ci: boolean;
-  /** Append Claude AI summary block to the report */
+  /** Append AI summary block to the report */
   ai: boolean;
+  aiProvider?: AiProvider;
+  aiModel?: string;
   /** Auto-apply fixable issues */
   fix: boolean;
   /** Re-run on file change */
