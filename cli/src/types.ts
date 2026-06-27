@@ -1,0 +1,129 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// auditx — Core type definitions
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Severity levels — ordered from most to least severe. */
+export type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+
+/** Detection categories, matching plan.md spec. */
+export type Category =
+  | 'SECRETS'
+  | 'DEPS'
+  | 'SAST'
+  | 'DEAD_CODE'
+  | 'IaC'
+  | 'PATTERNS';
+
+/** A single normalized security finding. */
+export interface Finding {
+  /** Unique finding ID, e.g. "auditx-001" */
+  id: string;
+  /** Detection category */
+  category: Category;
+  /** Severity level */
+  severity: Severity;
+  /** Short, human-readable title */
+  title: string;
+  /** Relative file path (if applicable) */
+  file?: string;
+  /** Line number (if applicable) */
+  line?: number;
+  /** Rule ID from the originating scanner */
+  rule?: string;
+  /** Name of the scanner that produced this finding */
+  scanner: string;
+  /** Human-readable description of the issue */
+  description?: string;
+  /** Actionable fix suggestion */
+  fix?: string;
+  /** CVE identifier (for DEPS findings) */
+  cve?: string;
+  /** CVSS score (for DEPS findings) */
+  cvss?: number;
+  /** Package name (for DEPS findings) */
+  packageName?: string;
+  /** Package version (for DEPS findings) */
+  packageVersion?: string;
+  /** Whether this secret exists in git history */
+  inGitHistory?: boolean;
+  /** The matched secret/code snippet (redacted safe preview) */
+  match?: string;
+}
+
+/** Result returned by each runner. */
+export interface ScanResult {
+  /** Runner name */
+  scanner: string;
+  /** Whether the scanner was available and ran successfully */
+  ok: boolean;
+  /** Findings from this scanner */
+  findings: Finding[];
+  /** Error message if the runner failed */
+  error?: string;
+  /** Duration in milliseconds */
+  durationMs: number;
+}
+
+/** Detected stack / tech context of the target directory. */
+export interface StackInfo {
+  hasNodeJs: boolean;
+  hasPython: boolean;
+  hasRust: boolean;
+  hasGo: boolean;
+  hasDocker: boolean;
+  hasGit: boolean;
+  hasGitHistory: boolean;
+  hasTerraform: boolean;
+}
+
+/** Resolved CLI configuration after arg parsing. */
+export interface Config {
+  /** Target directory to scan */
+  target: string;
+  /** Output mode */
+  output: 'markdown' | 'json' | 'terminal';
+  /** Output file path (for markdown mode) */
+  outputFile: string;
+  /** Minimum severity to include in results */
+  severity: Severity;
+  /** Scanners to skip */
+  skip: Array<'secrets' | 'deps' | 'sast' | 'deadcode' | 'iac' | 'patterns'>;
+  /** CI mode — exit 1 on any findings */
+  ci: boolean;
+  /** Append Claude AI summary block to the report */
+  ai: boolean;
+  /** Auto-apply fixable issues */
+  fix: boolean;
+  /** Re-run on file change */
+  watch: boolean;
+  /** Check that all required external tools are installed */
+  checkDeps: boolean;
+}
+
+/** The fully aggregated scan report. */
+export interface AuditReport {
+  meta: {
+    target: string;
+    scannedAt: string;
+    durationMs: number;
+    stack: string[];
+    scanners: string[];
+  };
+  summary: {
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+    info: number;
+  };
+  findings: Finding[];
+}
+
+/** Severity ordering for sorting (lower = more severe). */
+export const SEVERITY_ORDER: Record<Severity, number> = {
+  critical: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+  info: 4,
+};
