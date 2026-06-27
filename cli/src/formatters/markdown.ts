@@ -23,6 +23,13 @@ const CAT_LABEL: Record<Category, string> = {
   DEAD_CODE: 'Dead Code',
   IaC: 'IaC',
   PATTERNS: 'Patterns',
+  DUPLICATION: 'Duplication',
+  COMPLEXITY: 'Complexity',
+  DEP_HEALTH: 'Dep Health',
+  LICENSE: 'License',
+  AI_CODE: 'AI Code',
+  GIT_HEALTH: 'Git Health',
+  TYPE_SAFETY: 'Type Safety',
 };
 
 /**

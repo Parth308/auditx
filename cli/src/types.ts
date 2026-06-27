@@ -14,7 +14,14 @@ export type Category =
   | 'SAST'
   | 'DEAD_CODE'
   | 'IaC'
-  | 'PATTERNS';
+  | 'PATTERNS'
+  | 'DUPLICATION'
+  | 'COMPLEXITY'
+  | 'DEP_HEALTH'
+  | 'LICENSE'
+  | 'AI_CODE'
+  | 'GIT_HEALTH'
+  | 'TYPE_SAFETY';
 
 /** A single normalized security finding. */
 export interface Finding {
@@ -76,6 +83,7 @@ export interface StackInfo {
   hasGit: boolean;
   hasGitHistory: boolean;
   hasTerraform: boolean;
+  hasTypeScript: boolean;
 }
 
 /** Resolved CLI configuration after arg parsing. */
@@ -89,7 +97,21 @@ export interface Config {
   /** Minimum severity to include in results */
   severity: Severity;
   /** Scanners to skip */
-  skip: Array<'secrets' | 'deps' | 'sast' | 'deadcode' | 'iac' | 'patterns'>;
+  skip: Array<
+    | 'secrets'
+    | 'deps'
+    | 'sast'
+    | 'deadcode'
+    | 'iac'
+    | 'patterns'
+    | 'duplication'
+    | 'complexity'
+    | 'dephealth'
+    | 'license'
+    | 'aicode'
+    | 'githealth'
+    | 'typesafety'
+  >;
   /** CI mode — exit 1 on any findings */
   ci: boolean;
   /** Append AI summary block to the report */

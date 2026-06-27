@@ -5,8 +5,13 @@ import { runNpmAudit } from './npmaudit.js';
 import { runSemgrep } from './semgrep.js';
 import { runKnip } from './knip.js';
 import { runEslint } from './eslint.js';
+import { runJscpd } from './jscpd.js';
+import { runDepcheck } from './depcheck.js';
+import { runLicenseChecker } from './license.js';
+import { runTypecheck } from './typecheck.js';
+import { runGitHealth } from './githealth.js';
 
-export type RunnerName = 'secrets' | 'deps' | 'sast' | 'deadcode' | 'iac' | 'patterns';
+export type RunnerName = 'secrets' | 'deps' | 'sast' | 'deadcode' | 'iac' | 'patterns' | 'duplication' | 'complexity' | 'dephealth' | 'license' | 'aicode' | 'githealth' | 'typesafety';
 
 interface RunnerDef {
   name: RunnerName;
@@ -53,6 +58,36 @@ const RUNNERS: RunnerDef[] = [
     label: 'eslint (security patterns)',
     run: runEslint,
     isApplicable: (s) => s.hasNodeJs,
+  },
+  {
+    name: 'duplication',
+    label: 'jscpd (code duplication)',
+    run: runJscpd,
+    isApplicable: () => true, // jscpd is polyglot
+  },
+  {
+    name: 'dephealth',
+    label: 'depcheck (unused dependencies)',
+    run: runDepcheck,
+    isApplicable: (s) => s.hasNodeJs,
+  },
+  {
+    name: 'license',
+    label: 'license-checker (licenses)',
+    run: runLicenseChecker,
+    isApplicable: (s) => s.hasNodeJs,
+  },
+  {
+    name: 'typesafety',
+    label: 'tsc (typescript compiler)',
+    run: runTypecheck,
+    isApplicable: (s) => s.hasTypeScript,
+  },
+  {
+    name: 'githealth',
+    label: 'git log (hotspots)',
+    run: runGitHealth,
+    isApplicable: (s) => s.hasGit,
   },
 ];
 

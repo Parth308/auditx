@@ -14,6 +14,7 @@ import type { StackInfo } from './types.js';
  *   Dockerfile            → enable trivy config (IaC)
  *   .git present          → enable gitleaks (full history scan)
  *   go.mod                → enable trivy go module scan
+ *   tsconfig.json         → enable eslint/typescript checks
  */
 export function detectStack(targetDir: string): StackInfo {
   const has = (file: string) => existsSync(join(targetDir, file));
@@ -51,6 +52,8 @@ export function detectStack(targetDir: string): StackInfo {
       // Check a couple of common subdirectory patterns
       existsSync(join(targetDir, 'infra', 'main.tf')) ||
       existsSync(join(targetDir, 'terraform', 'main.tf')),
+
+    hasTypeScript: has('tsconfig.json'),
   };
 }
 
@@ -58,6 +61,7 @@ export function detectStack(targetDir: string): StackInfo {
 export function stackLabels(info: StackInfo): string[] {
   const labels: string[] = [];
   if (info.hasNodeJs) labels.push('Node.js');
+  if (info.hasTypeScript) labels.push('TypeScript');
   if (info.hasPython) labels.push('Python');
   if (info.hasRust) labels.push('Rust');
   if (info.hasGo) labels.push('Go');
