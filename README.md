@@ -1,37 +1,486 @@
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/parth/auditx/main/assets/logo.svg" alt="auditx" width="80" />
+
 # auditx
 
-> One command. Every vulnerability. AI-ready markdown report.
+**One command. Every vulnerability. AI-ready report.**
 
-`auditx` is a CLI security auditing tool that orchestrates Semgrep, Trivy, Gitleaks, and more — producing a single normalized Markdown report designed for both humans and AI agents.
+[![npm version](https://img.shields.io/npm/v/auditx?color=crimson&label=auditx)](https://www.npmjs.com/package/auditx)
+[![npm downloads](https://img.shields.io/npm/dm/auditx?color=crimson)](https://www.npmjs.com/package/auditx)
+[![License: MIT](https://img.shields.io/badge/license-MIT-crimson)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/parth/auditx/test.yml?label=CI&color=crimson)](https://github.com/parth/auditx/actions)
+[![TypeScript](https://img.shields.io/badge/built%20with-TypeScript-blue)](https://www.typescriptlang.org/)
+
+</div>
 
 ---
 
-## Repository Structure
-
-```
-auditx/
-├── cli/          # The CLI tool (npm package: auditx)
-└── marketing/    # Marketing website
-```
-
-## Quick Start
-
-```bash
-npm install -g auditx
-auditx .
-```
-
-Or zero-install:
+`auditx` is a **zero-config CLI security auditing tool** that orchestrates Semgrep, Trivy, Gitleaks, Knip, and more — running them in parallel, normalizing their output, and producing a single structured `.md` report designed for both human review and AI agent pipelines.
 
 ```bash
 npx auditx .
 ```
 
-## Links
+```
+🛡️  auditx — scanning /home/parth/codeoracle
+  ✓  stack detected: Node.js · TypeScript · Docker
+  ✓  running 5 scanners in parallel...
 
-- [CLI →](./cli/README.md)
-- [Marketing site →](./marketing/README.md)
+  ████████████████████████████████ 100% (8.4s)
+
+  ┌──────────────┬──────────┬────────┬────────┬──────┐
+  │ Category     │ Critical │  High  │ Medium │  Low │
+  ├──────────────┼──────────┼────────┼────────┼──────┤
+  │ Secrets      │    1     │   0    │   0    │   0  │
+  │ Dependencies │    0     │   3    │   5    │   2  │
+  │ SAST         │    0     │   1    │   3    │   7  │
+  │ Dead Code    │    —     │   —    │   0    │  12  │
+  │ IaC          │    0     │   0    │   1    │   0  │
+  └──────────────┴──────────┴────────┴────────┴──────┘
+
+  ⚠  1 critical · 4 high findings need immediate attention.
+  ✓  Report written → audit-report.md
+```
 
 ---
 
-*MIT License*
+## The Problem
+
+Running a comprehensive security audit today means:
+
+1. Learning **6 different CLIs** with 6 different flags
+2. Installing **6 different binaries** and keeping them updated
+3. Parsing **6 different JSON schemas** and normalizing severities
+4. Manually cross-referencing findings across tools
+5. Writing a report by hand
+
+`auditx` does all of this in one command.
+
+---
+
+## Why auditx
+
+| Feature | `auditx` | Snyk / Dependabot | SonarQube | GitHub Advanced Security |
+|---|---|---|---|---|
+| **Price** | Free & Open Source | Expensive SaaS | Enterprise pricing | Enterprise pricing |
+| **Setup** | `npx auditx .` — zero config | Cloud account required | Heavy Java server | Tied to GitHub |
+| **Data Privacy** | 100% local — nothing leaves your machine | Sends deps/code to cloud | Local or cloud | Cloud |
+| **Scope** | Secrets + Deps + SAST + IaC + Dead Code | Mostly Deps & SAST | SAST & Code Quality | Secrets + Deps + SAST |
+| **Underlying Engine** | Best-in-class OSS (Trivy, Semgrep, Gitleaks) | Proprietary | Proprietary | CodeQL (Proprietary) |
+| **AI Agent Ready** | Structured `.md` output, `--ci` flag | No | No | No |
+
+---
+
+## Installation
+
+```bash
+# Global install (recommended)
+npm install -g auditx
+
+# Or zero-install — no global needed
+npx auditx .
+```
+
+**External binaries** (Gitleaks, Trivy, Semgrep) are **auto-downloaded and cached** to `~/.auditx/bin/` on first run. No manual setup.
+
+To pre-fetch all dependencies:
+
+```bash
+auditx install
+```
+
+To verify everything is ready:
+
+```bash
+auditx --check-deps
+```
+
+---
+
+## Usage
+
+```bash
+# Scan current directory
+auditx .
+
+# Scan specific path
+auditx ./src
+```
+
+### Flags
+
+```bash
+# Output
+auditx . --output report.md        # write to file (default: audit-report.md)
+auditx . --output json             # machine-readable JSON
+auditx . --output terminal         # pretty print only, no file
+
+# Filtering
+auditx . --severity high           # only show: critical | high | medium | low
+auditx . --skip secrets            # skip Gitleaks
+auditx . --skip deps               # skip Trivy + npm audit
+auditx . --skip sast               # skip Semgrep
+auditx . --skip deadcode           # skip Knip
+
+# Actions
+auditx . --fix                     # auto-apply fixable issues (eslint --fix)
+auditx . --ci                      # exit code 1 if findings exist (CI mode)
+auditx . --watch                   # re-run on file changes
+
+# AI
+auditx . --ai                      # append Claude AI risk summary to report
+auditx . --ai-provider openai      # override AI provider: claude | openai | gemini
+auditx . --ai-model gpt-4o         # override model
+
+# Info
+auditx --version
+auditx --check-deps
+```
+
+---
+
+## What Gets Scanned
+
+| Category | Scanner | What It Finds |
+|---|---|---|
+| `SECRETS` | [Gitleaks](https://github.com/gitleaks/gitleaks) | Hardcoded API keys, tokens, passwords, connection strings — including git history |
+| `DEPS` | [Trivy](https://github.com/aquasecurity/trivy) + npm audit | CVEs in npm/pip/cargo packages with CVSS scores and fix versions |
+| `SAST` | [Semgrep](https://github.com/semgrep/semgrep) | SQL injection, eval usage, XSS, command injection, path traversal |
+| `DEAD_CODE` | [Knip](https://github.com/webpro-nl/knip) | Unused exports, unused imports, unused dependencies |
+| `IaC` | [Trivy](https://github.com/aquasecurity/trivy) config | Dockerfile misconfig, k8s insecure defaults, Terraform issues |
+| `PATTERNS` | ESLint + security plugins | Prototype pollution, unsafe regex, insecure randomness (JS/TS only) |
+
+### Stack Auto-Detection
+
+`auditx` inspects the target directory and only runs relevant scanners. No config needed.
+
+```
+package.json present       →  npm audit · eslint · knip
+requirements.txt present   →  pip-audit
+Cargo.toml present         →  cargo audit
+Dockerfile present         →  trivy config (IaC)
+.git present               →  gitleaks (full history scan)
+go.mod present             →  trivy go module scan
+```
+
+---
+
+## Report Format
+
+By default, `auditx` writes a structured Markdown report to `audit-report.md`.
+
+<details>
+<summary>📄 View sample report</summary>
+
+```markdown
+# 🛡️ auditx Security Report
+
+**Target**: `/home/parth/projects/codeoracle`
+**Scanned**: 2025-06-27 14:32:01 IST
+**Duration**: 8.4s
+**Stack detected**: Node.js · TypeScript · Docker
+**Scanners run**: semgrep · trivy · gitleaks · knip · npm-audit
+
+---
+
+## Summary
+
+| Category     | 🔴 Critical | 🟠 High | 🟡 Medium | 🔵 Low |
+|---|---|---|---|---|
+| Secrets      | 1 | 0 | 0 | 0 |
+| Dependencies | 0 | 3 | 5 | 2 |
+| SAST         | 0 | 1 | 3 | 7 |
+| Dead Code    | — | — | 0 | 12 |
+| IaC          | 0 | 0 | 1 | 0 |
+| **Total**    | **1** | **4** | **9** | **21** |
+
+> ⚠️ 5 high/critical findings require immediate attention.
+
+---
+
+## 🔴 Critical
+
+### [SECRETS] Hardcoded API key in source file
+- **File**: `src/config/db.ts:14`
+- **Rule**: `gitleaks/generic-api-key`
+- **Match**: `OPENAI_API_KEY = "sk-proj-..."`
+- **In git history**: Yes (commit `a3f91bc`)
+- **Fix**: Remove from code · Add to `.env` · Rotate the key · Add `.env` to `.gitignore`
+
+---
+
+## 🟠 High
+
+### [DEPS] CVE-2024-21501 — sanitize-html@2.11.0
+- **Severity**: High (CVSS 7.5)
+- **Description**: Prototype pollution via crafted input
+- **Fix**: `npm install sanitize-html@2.13.0`
+
+### [SAST] SQL query built via string concatenation
+- **File**: `src/services/search.ts:87`
+- **Rule**: `semgrep/sql-injection`
+- **Code**: `` `SELECT * FROM users WHERE id = ${userId}` ``
+- **Fix**: Use parameterized queries — `db.query('SELECT * FROM users WHERE id = $1', [userId])`
+
+---
+
+## 🤖 AI Analysis
+*(Generated via `--ai` flag)*
+
+**Top risks:**
+The most critical exposure is a hardcoded API key committed to git history.
+Rotating the key is mandatory — removal from code alone is insufficient.
+
+**Fix priority:**
+1. Rotate the exposed API key immediately
+2. Fix SQL injection in `search.ts:87` — directly exploitable
+3. Update `sanitize-html` — public PoC exploits exist
+```
+
+</details>
+
+---
+
+## AI Agent Integration
+
+`auditx` is built as a **tool node in AI agent pipelines**. The report structure is deterministic — tables, not prose — so agents can parse it without a secondary LLM call.
+
+```
+┌─────────────────────────────────────────────────────┐
+│                   AI Agent Loop                     │
+│                                                     │
+│  1. shell("auditx . --output report.md --ci")       │
+│         │                                           │
+│         ├─ exit 0 → ✅ codebase clean               │
+│         │                                           │
+│         └─ exit 1 → findings exist                  │
+│               │                                     │
+│               ├─ parse report.md tables             │
+│               ├─ CRITICAL → create GitHub issue     │
+│               ├─ DEPS high → run npm install <fix>  │
+│               ├─ SAST → send to LLM for patch       │
+│               └─ shell("auditx . --ci") ← verify   │
+└─────────────────────────────────────────────────────┘
+```
+
+```python
+# Example agent pseudocode
+result = shell("auditx . --output report.md --severity high --ci")
+
+if result.exit_code != 0:
+    report = read_file("report.md")
+    findings = parse_markdown_tables(report)
+
+    for f in findings["critical"]:
+        create_github_issue(title=f["title"], body=f["fix"])
+
+    for f in findings["high"]:
+        if f["category"] == "DEPS":
+            shell(f"npm install {f['fix']}")
+        elif f["category"] == "SAST":
+            apply_llm_patch(f["file"], f["line"])
+
+    shell("auditx . --ci")  # verify fixes
+```
+
+The `--ai` flag calls your configured LLM provider and appends a plain-English risk analysis block directly to the `.md` report.
+
+---
+
+## Architecture
+
+```
+auditx/
+├── src/
+│   ├── bin/auditx.ts          # CLI entry point (commander.js)
+│   ├── detect.ts              # Stack detection from target directory
+│   ├── runners/
+│   │   ├── index.ts           # Runner registry + parallel executor
+│   │   ├── semgrep.ts         # Semgrep JSON output parser
+│   │   ├── trivy.ts           # Trivy fs + config parser
+│   │   ├── gitleaks.ts        # Gitleaks JSON parser
+│   │   ├── knip.ts            # Knip programmatic runner
+│   │   ├── eslint.ts          # ESLint + security plugins
+│   │   └── npmaudit.ts        # npm audit --json parser
+│   ├── aggregate.ts           # Merge · dedupe · sort by severity
+│   ├── formatters/
+│   │   ├── markdown.ts        # .md report generator
+│   │   ├── json.ts            # JSON output
+│   │   └── terminal.ts        # Chalk-colored terminal output
+│   ├── ai.ts                  # --ai flag: LLM call + report append
+│   └── types.ts               # Finding · ScanResult · Config interfaces
+├── tests/
+│   ├── fixtures/              # Intentionally vulnerable test repos
+│   └── runners/               # Unit tests per scanner
+└── .github/
+    └── workflows/
+        └── test.yml           # CI: auditx scans itself on every push
+```
+
+**How it works:**
+
+```
+auditx . 
+  │
+  ├─ detect stack (package.json? Dockerfile? .git?)
+  │
+  ├─ spawn scanners in parallel (Promise.allSettled)
+  │   ├─ gitleaks --no-git --source . -f json
+  │   ├─ trivy fs . --format json
+  │   ├─ semgrep --config p/security-audit --json
+  │   ├─ knip --reporter json
+  │   └─ npm audit --json
+  │
+  ├─ normalize all outputs → Finding[]
+  ├─ deduplicate overlapping findings
+  ├─ sort by severity
+  │
+  └─ format → markdown | json | terminal
+```
+
+---
+
+## JSON Output Schema
+
+For programmatic use (`--output json`):
+
+```json
+{
+  "meta": {
+    "target": "/home/parth/codeoracle",
+    "scannedAt": "2026-06-27T14:32:01Z",
+    "durationMs": 8400,
+    "stack": ["nodejs", "typescript", "docker"],
+    "scanners": ["semgrep", "trivy", "gitleaks", "knip", "npm-audit"]
+  },
+  "summary": {
+    "critical": 1,
+    "high": 4,
+    "medium": 9,
+    "low": 21
+  },
+  "findings": [
+    {
+      "id": "auditx-001",
+      "category": "SECRETS",
+      "severity": "critical",
+      "title": "Hardcoded API key in source file",
+      "file": "src/config/db.ts",
+      "line": 14,
+      "rule": "gitleaks/generic-api-key",
+      "scanner": "gitleaks",
+      "fix": "Move to .env, rotate key",
+      "inGitHistory": true
+    }
+  ]
+}
+```
+
+---
+
+## CI Integration
+
+Use `--ci` to get exit code `1` if any findings exist. Combine with `--severity` to control the threshold:
+
+```yaml
+# .github/workflows/audit.yml
+name: Security Audit
+
+on: [push, pull_request]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run auditx
+        run: npx auditx . --severity high --ci --output audit-report.md
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-report
+          path: audit-report.md
+```
+
+---
+
+## Development
+
+```bash
+git clone https://github.com/parth/auditx
+cd auditx/cli
+
+npm install
+
+# Run in dev mode (no build needed)
+npm run dev -- .
+
+# Type check
+npm run typecheck
+
+# Build for production
+npm run build
+
+# Run tests
+npm test
+```
+
+---
+
+## Contributing
+
+Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+**Good first issues:**
+- Add a new scanner runner (`src/runners/`)
+- Add a new output formatter (`src/formatters/`)
+- Add support for a new language/package manager
+- Improve finding deduplication logic
+
+Each scanner runner follows a simple interface — adding a new one is straightforward.
+
+```typescript
+// src/runners/yourscanner.ts
+export async function run(targetPath: string): Promise<Finding[]> {
+  // 1. spawn the binary
+  // 2. parse its output
+  // 3. return normalized Finding[]
+}
+```
+
+---
+
+## Roadmap
+
+- [x] Core scanner orchestration (Trivy, Gitleaks, Semgrep, Knip)
+- [x] Markdown + JSON + terminal output
+- [x] Stack auto-detection
+- [x] `--ai` flag with multi-provider support
+- [x] `--ci` mode with exit codes
+- [x] Auto-download scanner binaries
+- [x] `--fix` auto-remediation
+- [x] `--watch` dev mode
+- [ ] VS Code extension
+- [ ] Web dashboard (self-hostable)
+- [ ] GitHub Action (official)
+
+---
+
+## License
+
+MIT © [Parth](https://github.com/parth)
+
+---
+
+<div align="center">
+
+Built with [Semgrep](https://semgrep.dev) · [Trivy](https://trivy.dev) · [Gitleaks](https://gitleaks.io) · [Knip](https://knip.dev)
+
+**If auditx found something in your codebase, it's working. ⭐ Star it.**
+
+</div>
