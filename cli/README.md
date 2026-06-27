@@ -18,13 +18,13 @@ npx auditx .
 
 ### Prerequisites
 
-These tools must be installed separately. `auditx --check-deps` will verify them:
+Good news: **`auditx` handles dependencies for you!** 
+When you run a scan, `auditx` will automatically download and cache the necessary binaries (`gitleaks`, `trivy`, `semgrep`) to `~/.auditx/bin/`. 
 
-| Tool | Purpose | Install |
-|---|---|---|
-| `gitleaks` | Secret scanning | [github.com/gitleaks/gitleaks](https://github.com/gitleaks/gitleaks#installing) |
-| `trivy` | CVE + IaC scanning | [trivy.dev](https://trivy.dev/docs/getting-started/installation/) |
-| `semgrep` | SAST analysis | [semgrep.dev](https://semgrep.dev/docs/getting-started/) |
+If you prefer to pre-fetch them, just run:
+```bash
+auditx install
+```
 
 ---
 
@@ -52,8 +52,12 @@ auditx . --skip deadcode           # skip knip
 # Actions
 auditx . --fix                     # auto-apply fixable issues (eslint --fix)
 auditx . --ci                      # exit 1 if any findings exist (CI pipelines)
-auditx . --ai                      # append Claude AI analysis block to report
 auditx . --watch                   # re-run on file changes (dev mode)
+
+# AI Integration
+auditx . --ai                      # analyze report using AI (interactive setup on first run)
+auditx . --ai-provider gemini      # override provider: gemini | openai | claude
+auditx . --ai-model gpt-4o         # override model
 
 # Info
 auditx --version
