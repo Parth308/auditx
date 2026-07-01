@@ -1,4 +1,5 @@
 import type { AuditReport, Category, Finding, Severity } from '../types.js';
+import { relative, isAbsolute } from 'path';
 
 const SEV_EMOJI: Record<Severity, string> = {
   critical: '🔴',
@@ -99,7 +100,7 @@ export function formatMarkdown(report: AuditReport, aiSummary?: string): string 
     }
 
     for (const finding of sevFindings) {
-      lines.push(renderFinding(finding));
+      lines.push(renderFinding(finding, report.meta.target));
     }
 
     if (collapse) {
@@ -152,14 +153,21 @@ export function formatMarkdown(report: AuditReport, aiSummary?: string): string 
   return lines.join('\n');
 }
 
-function renderFinding(f: Finding): string {
+function renderFinding(f: Finding, target: string): string {
   const lines: string[] = [];
 
   const anchor = f.id ? `<a id="${f.id}"></a>` : '';
   lines.push(`### ${anchor}[${f.category}] ${f.title}`);
 
   if (f.file) {
-    const location = f.line ? `${f.file}:${f.line}` : f.file;
+    let displayFile = f.file;
+    if (isAbsolute(f.file) && isAbsolute(target)) {
+      displayFile = relative(target, f.file);
+    }
+    // Normalize to forward slashes for cross-platform markdown readability
+    displayFile = displayFile.replace(/\\/g, '/');
+
+    const location = f.line ? `${displayFile}:${f.line}` : displayFile;
     lines.push(`- **File**: \`${location}\``);
   }
   if (f.cve) lines.push(`- **CVE**: \`${f.cve}\``);

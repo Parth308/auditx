@@ -7,7 +7,7 @@ rules:
     message: >
       Empty catch block swallows errors silently. Add logging or re-throw.
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     patterns:
       - pattern: |
           try { ... } catch ($E) { }
@@ -17,7 +17,7 @@ rules:
       Function does nothing but delegate to another function with same args.
       Delete wrapper, call inner directly.
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern-either:
       - pattern: |
           function $F($A) { return $G($A); }
@@ -30,7 +30,7 @@ rules:
     message: >
       .forEach + .push is imperative. Use .map() instead.
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern: |
       $ARR.forEach($ITEM => { ...; $OUT.push(...); })
 
@@ -38,7 +38,7 @@ rules:
     message: >
       Wrapping already-resolved value in new Promise/Promise.resolve is redundant.
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern-either:
       - pattern: return new Promise((resolve) => resolve($X))
       - pattern: return new Promise((resolve, reject) => resolve($X))
@@ -48,7 +48,7 @@ rules:
     message: >
       Comparing to true/false literally. Use value directly or negate with !.
     severity: INFO
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern-either:
       - pattern: if ($X === true) { ... }
       - pattern: if ($X == true) { ... }
@@ -59,12 +59,28 @@ rules:
     message: >
       `return await` inside async function is redundant outside try/catch.
     severity: INFO
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     patterns:
-      - pattern: |
-          async function $F(...) { ...; return await $P; }
+      - pattern: return await $P
+      - pattern-inside: async function $F(...) { ... }
       - pattern-not-inside: |
-          async function $F(...) { try { ... } catch (...) { ... } }
+          try {
+            ...
+          } catch ($E) {
+            ...
+          }
+      - pattern-not-inside: |
+          try {
+            ...
+          } catch {
+            ...
+          }
+      - pattern-not-inside: |
+          try {
+            ...
+          } finally {
+            ...
+          }
 
   # ─────────────────────────────────────────────
   # ERROR HANDLING
@@ -75,7 +91,7 @@ rules:
       Logging error and doing nothing is barely better than silencing it.
       Handle it, re-throw, or surface to caller.
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern-either:
       - pattern: |
           try { ... } catch ($E) { console.log($E); }
@@ -88,7 +104,7 @@ rules:
     message: >
       Catching error, assigning to var, never using it. Effectively silent catch.
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern: |
       try { ... } catch ($E) { $VAR = $E; }
 
@@ -96,7 +112,7 @@ rules:
     message: >
       Generic error message loses context. Include operation, inputs, cause.
     severity: INFO
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern-either:
       - pattern: throw new Error("Something went wrong")
       - pattern: throw new Error("An error occurred")
@@ -112,7 +128,7 @@ rules:
       Awaiting inside for/while loop runs sequentially. Use Promise.all()
       unless order matters.
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern-either:
       - pattern: |
           for ($I of $ARR) { ...; await $F(...); }
@@ -128,7 +144,7 @@ rules:
       Likely-async call not awaited and no .catch attached. Unhandled
       rejection risk.
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     patterns:
       - pattern-either:
           - pattern: $F(...)
@@ -149,7 +165,7 @@ rules:
       .forEach does not await async callbacks. Use for...of or
       Promise.all(arr.map(...)).
     severity: ERROR
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern: |
       $ARR.forEach(async ($ITEM) => { ... })
 
@@ -158,7 +174,7 @@ rules:
       Async function inside `new Promise` executor. Errors thrown inside
       are swallowed. Use async/await directly.
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern: |
       new Promise(async ($RESOLVE, $REJECT) => { ... })
 
@@ -166,7 +182,7 @@ rules:
     message: >
       Mixing .then()/.catch() with async/await in same function. Pick one style.
     severity: INFO
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern: |
       async function $F(...) { ...; $P.then(...); ... }
 
@@ -179,7 +195,7 @@ rules:
     message: >
       Variable assigned once, used once immediately after. Consider inlining.
     severity: INFO
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern-either:
       - pattern: |
           const $X = $EXPR;
@@ -192,7 +208,7 @@ rules:
     message: >
       `else` after `return` is unreachable-logic pattern. Remove else, dedent.
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern: |
       if (...) { ...; return ...; } else { ... }
 
@@ -200,7 +216,7 @@ rules:
     message: >
       `condition ? true : false` is identical to `condition` (or `!!condition`).
     severity: INFO
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     fix: "$X"
     pattern-either:
       - pattern: "$X ? true : false"
@@ -209,14 +225,14 @@ rules:
     message: >
       `!!value` to coerce boolean usually unnecessary. Use Boolean(value).
     severity: INFO
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     fix: "Boolean($X)"
     pattern: "!!$X"
 
   - id: ai-object-spread-self
     message: Spreading object into itself is redundant.
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     fix: "{ ...$O }"
     pattern: "{ ...$O, ...$O }"
 
@@ -224,7 +240,7 @@ rules:
     message: >
       Comparing typeof to a non-standard type string. Always returns false.
     severity: ERROR
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern-either:
       - pattern: typeof $X === "integer"
       - pattern: typeof $X === "float"
@@ -243,7 +259,7 @@ rules:
       console.log in production code. Use a proper logger (pino, winston)
       with log levels.
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern: console.log(...)
     paths:
       exclude:
@@ -257,7 +273,7 @@ rules:
   - id: ai-console-log-json-stringify
     message: console.log(JSON.stringify(...)) — AI debug pattern, remove before shipping.
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern: console.log(JSON.stringify(...))
     paths:
       exclude:
@@ -268,7 +284,7 @@ rules:
     message: >
       `debugger` left in code. Pauses execution in attached DevTools.
     severity: ERROR
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     fix: ""
     pattern: debugger;
 
@@ -323,7 +339,7 @@ rules:
     message: >
       `arr.length === 0` — consider `!arr.length` for idiomatic empty check.
     severity: INFO
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern-either:
       - pattern: if ($A.length == 0) { ... }
       - pattern: if ($A.length === 0) { ... }
@@ -333,7 +349,7 @@ rules:
     message: >
       JSON.parse without try/catch throws on malformed input.
     severity: ERROR
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     patterns:
       - pattern: JSON.parse($X)
       - pattern-not-inside: |
@@ -343,7 +359,7 @@ rules:
     message: >
       `Object.assign({}, obj)` is a shallow clone. Use spread `{ ...obj }`.
     severity: INFO
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     fix: "{ ...$OBJ }"
     pattern: Object.assign({}, $OBJ)
 
@@ -352,7 +368,7 @@ rules:
       setTimeout($F, 0) hides timing dependencies. Use queueMicrotask()
       or restructure async flow.
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern-either:
       - pattern: setTimeout($F, 0)
       - pattern: setTimeout(() => { ... }, 0)
@@ -362,7 +378,7 @@ rules:
       setInterval without stored reference can never be cleared.
       Assign to a variable.
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     patterns:
       - pattern: setInterval($F, $N)
       - pattern-not-inside: |
@@ -379,14 +395,14 @@ rules:
       Math.random() not cryptographically secure. Use crypto.randomUUID()
       or crypto.getRandomValues() for tokens/IDs.
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern: Math.random()
 
   - id: ai-hardcoded-localhost
     message: >
       Hardcoded localhost URL in non-test code. Use environment variables.
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern-either:
       - pattern: "\"http://localhost:$PORT\""
       - pattern: "'http://localhost:$PORT'"
@@ -399,7 +415,7 @@ rules:
   - id: ai-hardcoded-port
     message: "Hardcoded port. Use process.env.PORT or config."
     severity: INFO
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern-either:
       - pattern: app.listen(3000)
       - pattern: app.listen(8080)
@@ -409,7 +425,7 @@ rules:
   - id: ai-eval-usage
     message: "eval() executes arbitrary code. Never use — always has a safe alternative."
     severity: ERROR
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern: eval($X)
 
   - id: ai-innerHTML-assignment
@@ -417,7 +433,7 @@ rules:
       Assigning innerHTML with dynamic content is an XSS vector.
       Use textContent, or DOMPurify.sanitize() first.
     severity: ERROR
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern: $EL.innerHTML = $X
 
   # ─────────────────────────────────────────────
@@ -429,7 +445,7 @@ rules:
       useEffect with no dependency array runs after every render.
       Add a deps array.
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern: |
       useEffect(() => { ... })
 
@@ -438,7 +454,7 @@ rules:
       Array index as React key. Breaks reconciliation on reorder.
       Use stable unique ID.
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern-regex: \.map\([^,]+,\s*(?<idx>[a-zA-Z0-9_]+)\s*\)\s*=>\s*<[^>]+key=\{\k<idx>\}
 
   - id: ai-react-state-mutate-direct
@@ -446,10 +462,18 @@ rules:
       Directly mutating state object. React won't detect change —
       use setState with new reference.
     severity: ERROR
-    languages: [javascript, typescript]
-    pattern-either:
-      - pattern: $STATE.$PROP = $VAL
-      - pattern: $STATE.push($VAL)
+    languages: [javascript, typescript, jsx, tsx]
+    paths:
+      include:
+        - "*.jsx"
+        - "*.tsx"
+    patterns:
+      - pattern-inside: |
+          const [$STATE, $SET] = useState(...);
+          ...
+      - pattern-either:
+          - pattern: $STATE.$PROP = $VAL
+          - pattern: $STATE.push($VAL)
 
   # FIXED: constrained to setX-style setter names, was matching any capitalized call
   - id: ai-react-usestate-object-no-spread
@@ -457,7 +481,7 @@ rules:
       Replacing entire object state without spreading previous state loses
       other fields. Use `setState(prev => ({ ...prev, key: val }))`.
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     patterns:
       - pattern: "$SET({ $KEY: $VAL })"
       - metavariable-regex:
@@ -471,7 +495,7 @@ rules:
   - id: ai-magic-number
     message: "Magic number in logic. Extract to a named constant."
     severity: INFO
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern-either:
       - pattern: if ($X > 100) { ... }
       - pattern: if ($X > 1000) { ... }
@@ -483,19 +507,19 @@ rules:
     message: >
       TODO/FIXME left in code. Accumulates as permanent technical debt.
     severity: INFO
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern-regex: "// (TODO|FIXME|HACK|XXX): .*"
 
   - id: ai-string-concat-template
     message: "String built with + concatenation. Use template literals."
     severity: INFO
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern: $A + " " + $B
 
   - id: ai-callback-hell
     message: "Deeply nested callbacks. Convert to async/await."
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern: |
       $F($A, function($B) {
         $G($B, function($C) {
@@ -507,7 +531,7 @@ rules:
     message: >
       `var` declaration. Use const (default) or let (if reassigned).
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     fix: "let $X = $Y"
     pattern: var $X = $Y
 
@@ -516,7 +540,7 @@ rules:
       Loose equality triggers type coercion. Use === / !==
       (== null is fine for null+undefined check).
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     patterns:
       - pattern-either:
           - pattern: if ($X == $Y) { ... }
@@ -529,20 +553,20 @@ rules:
       `delete obj.key` mutates + de-optimizes V8 hidden class.
       Prefer destructuring rest: `const { key, ...rest } = obj`.
     severity: INFO
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern: delete $OBJ.$KEY
 
   - id: ai-arguments-object
     message: "`arguments` is legacy. Use rest parameters ...args."
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern: "arguments[$IDX]"
 
   - id: ai-prototype-extend-native
     message: >
       Extending native prototypes causes global pollution, breaks other libs.
     severity: ERROR
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern-either:
       - pattern: Array.prototype.$METHOD = $F
       - pattern: Object.prototype.$METHOD = $F
@@ -552,7 +576,7 @@ rules:
   - id: ai-class-no-constructor-body
     message: "Empty constructor. Remove — JS provides a default."
     severity: INFO
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern: |
       class $C {
         constructor() {}
@@ -563,6 +587,6 @@ rules:
     message: >
       switch without default. Unhandled values silently do nothing.
     severity: WARNING
-    languages: [javascript, typescript]
+    languages: [javascript, typescript, jsx, tsx]
     pattern: |
       switch ($X) { case ...: ...; }

@@ -31,32 +31,35 @@ export async function runDepcheck(targetPath: string): Promise<ScanResult> {
 
     if (report.dependencies && report.dependencies.length > 0) {
       for (const dep of report.dependencies) {
+        // depcheck occasionally returns objects instead of strings in monorepos or certain configs
+        const depName = typeof dep === 'string' ? dep : (dep.name || JSON.stringify(dep));
         findings.push({
           id: `depcheck-${randomUUID()}`,
           category: 'DEP_HEALTH',
           severity: 'low',
-          title: `Unused dependency: ${dep}`,
+          title: `Unused dependency: ${depName}`,
           file: 'package.json',
           rule: 'depcheck/unused-dependency',
           scanner: 'depcheck',
-          description: `The package '${dep}' is defined in package.json but never used in the codebase.`,
-          fix: `npm uninstall ${dep}`,
+          description: `The package '${depName}' is defined in package.json but never used in the codebase.`,
+          fix: `npm uninstall ${depName}`,
         });
       }
     }
 
     if (report.devDependencies && report.devDependencies.length > 0) {
       for (const dep of report.devDependencies) {
+        const depName = typeof dep === 'string' ? dep : (dep.name || JSON.stringify(dep));
         findings.push({
           id: `depcheck-${randomUUID()}`,
           category: 'DEP_HEALTH',
-          severity: 'info',
-          title: `Unused devDependency: ${dep}`,
+          severity: 'low',
+          title: `Unused devDependency: ${depName}`,
           file: 'package.json',
           rule: 'depcheck/unused-dev-dependency',
           scanner: 'depcheck',
-          description: `The dev package '${dep}' is defined but never used.`,
-          fix: `npm uninstall ${dep}`,
+          description: `The package '${depName}' is defined in package.json but never used in the codebase.`,
+          fix: `npm uninstall ${depName}`,
         });
       }
     }
