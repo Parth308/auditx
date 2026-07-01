@@ -72,12 +72,27 @@ export async function runEslint(targetDir: string, stagedFiles?: string[]): Prom
       args.push('.');
     }
 
+    const npxBin = process.platform === 'win32' ? 'npx.cmd' : 'npx';
     const result = await execFileAsync(
-      'npx',
-      args,
-      { cwd: targetDir, maxBuffer: 20 * 1024 * 1024 },
+      npxBin,
+      ['--yes', ...args],
+      { cwd: targetDir, maxBuffer: 20 * 1024 * 1024, shell: process.platform === 'win32' },
     ).catch((err) => {
       if (err.stdout) return { stdout: err.stdout as string };
+      // Handle ESLint 9 flat config deprecations gracefully
+      if (err.message && err.message.includes('eslint.config.js')) {
+        return {
+          stdout: JSON.stringify([{
+            messages: [{
+              ruleId: 'auditx/eslint-flat-config',
+              severity: 1,
+              message: 'ESLint 9 Flat Config detected. auditx security plugin injection is currently unsupported for this repo.',
+              line: 1
+            }],
+            filePath: 'eslint.config.js'
+          }])
+        };
+      }
       throw err;
     });
 

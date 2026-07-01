@@ -1,5 +1,9 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
+import { randomUUID } from 'crypto';
+import { tmpdir } from 'os';
+import { join } from 'path';
+import { readFileSync, unlinkSync } from 'fs';
 import type { Finding, ScanResult } from '../../types.js';
 import { getBinaryPath } from '../../installer.js';
 
@@ -33,23 +37,32 @@ interface GitleaksFinding {
 export async function runGitleaks(targetDir: string): Promise<ScanResult> {
   const start = Date.now();
   const scanner = 'gitleaks';
+  const tmpFile = join(tmpdir(), `gitleaks-${randomUUID()}.json`);
 
   try {
     const bin = await getBinaryPath('gitleaks');
-    const { stdout } = await execFileAsync(
+    await execFileAsync(
       bin,
       [
         'detect',
         '--source', targetDir,
         '--report-format', 'json',
-        '--report-path', '/dev/stdout',
+        '--report-path', tmpFile,
         '--no-banner',
         '--exit-code', '0', // Don't exit 1 on findings — we handle that ourselves
       ],
       { maxBuffer: 50 * 1024 * 1024 }, // 50 MB
     );
 
-    const raw: GitleaksFinding[] = JSON.parse(stdout || '[]');
+    let rawOutput = '[]';
+    try {
+      rawOutput = readFileSync(tmpFile, 'utf8');
+      unlinkSync(tmpFile);
+    } catch {
+      // Ignored
+    }
+
+    const raw: GitleaksFinding[] = JSON.parse(rawOutput || '[]');
 
     const findings: Finding[] = raw.map((item) => ({
       id: '',
@@ -68,10 +81,18 @@ export async function runGitleaks(targetDir: string): Promise<ScanResult> {
 
     return { scanner, ok: true, findings, durationMs: Date.now() - start };
   } catch (err: any) {
-    // gitleaks exits 1 when it finds secrets. Capture that output.
-    if (err.stdout) {
+    // gitleaks might exit non-zero. Check tmp file.
+    let rawOutput = '[]';
+    try {
+      rawOutput = readFileSync(tmpFile, 'utf8');
+      unlinkSync(tmpFile);
+    } catch {
+      // Ignored
+    }
+
+    if (rawOutput !== '[]') {
       try {
-        const raw: GitleaksFinding[] = JSON.parse(err.stdout || '[]');
+        const raw: GitleaksFinding[] = JSON.parse(rawOutput);
         const findings: Finding[] = raw.map((item) => ({
           id: '',
           category: 'SECRETS',

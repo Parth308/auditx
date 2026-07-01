@@ -66,10 +66,11 @@ export async function runNpmAudit(targetDir: string): Promise<ScanResult> {
 
   try {
     // npm audit exits with non-zero if vulnerabilities are found — capture stdout anyway
+    const npmBin = process.platform === 'win32' ? 'npm.cmd' : 'npm';
     const result = await execFileAsync(
-      'npm',
+      npmBin,
       ['audit', '--json'],
-      { cwd: targetDir, maxBuffer: 20 * 1024 * 1024 },
+      { cwd: targetDir, maxBuffer: 20 * 1024 * 1024, shell: process.platform === 'win32' },
     ).catch((err) => {
       // npm audit exits 1 on findings, but stdout still has the JSON
       if (err.stdout) return { stdout: err.stdout as string };

@@ -459,7 +459,7 @@ rules:
     severity: WARNING
     languages: [javascript, typescript]
     patterns:
-      - pattern: $SET({ $KEY: $VAL })
+      - pattern: "$SET({ $KEY: $VAL })"
       - metavariable-regex:
           metavariable: $SET
           regex: ^set[A-Z]\w*$

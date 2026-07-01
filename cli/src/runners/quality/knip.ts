@@ -36,10 +36,11 @@ export async function runKnip(targetDir: string): Promise<ScanResult> {
   const scanner = 'knip';
 
   try {
+    const npxBin = process.platform === 'win32' ? 'npx.cmd' : 'npx';
     const result = await execFileAsync(
-      'npx',
-      ['knip', '--reporter', 'json'],
-      { cwd: targetDir, maxBuffer: 20 * 1024 * 1024 },
+      npxBin,
+      ['--yes', 'knip', '--reporter', 'json'],
+      { cwd: targetDir, maxBuffer: 20 * 1024 * 1024, shell: process.platform === 'win32' },
     ).catch((err) => {
       if (err.stdout) return { stdout: err.stdout as string };
       throw err;
