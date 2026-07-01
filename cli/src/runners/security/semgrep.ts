@@ -73,7 +73,7 @@ export async function runSemgrep(targetDir: string, stagedFiles?: string[]): Pro
     const { stdout } = await execFileAsync(
       bin,
       args,
-      { maxBuffer: 50 * 1024 * 1024, env: getSemgrepEnv() },
+      { maxBuffer: 50 * 1024 * 1024, env: getSemgrepEnv(), timeout: 120_000 },
     ).catch((err) => {
       // semgrep exits 1 when findings exist
       if (err.stdout) return { stdout: err.stdout as string };

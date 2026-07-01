@@ -59,28 +59,30 @@ async function getBinaryPathInternal(tool: ToolName): Promise<string> {
     return expectedBin;
   }
 
+  if (tool === 'semgrep' && platform() === 'win32') {
+    try {
+      execFileSync('semgrep', ['--version'], { stdio: 'ignore' });
+      return 'semgrep';
+    } catch {
+      // Continue to pip installation below
+    }
+  }
+
   // Not found, install it
   console.log(chalk.cyan(`\n[auditx] First run setup: Installing ${tool} locally...`));
   const spinner = ora(`Downloading ${tool}...`).start();
 
   try {
     if (tool === 'semgrep' && platform() === 'win32') {
-      // Check if semgrep is already in PATH
-      try {
-        execFileSync('semgrep', ['--version'], { stdio: 'ignore' });
-        spinner.stop();
-        return 'semgrep';
-      } catch {
-        // Semgrep doesn't have a standalone Windows binary. Install via pip.
-        spinner.text = 'Installing semgrep via pip...';
-        execFileSync('pip', ['install', 'semgrep'], { stdio: 'pipe' });
-        spinner.succeed(`semgrep installed via pip`);
+      // Semgrep doesn't have a standalone Windows binary. Install via pip.
+      spinner.text = 'Installing semgrep via pip...';
+      execFileSync('pip', ['install', 'semgrep'], { stdio: 'pipe' });
+      spinner.succeed(`semgrep installed via pip`);
 
-        // Pre-warm settings file in isolated location to avoid first-run permission crash
-        getSemgrepEnv();
+      // Pre-warm settings file in isolated location to avoid first-run permission crash
+      getSemgrepEnv();
 
-        return 'semgrep'; // Relies on system PATH
-      }
+      return 'semgrep'; // Relies on system PATH
     }
 
     const { url, isZip } = getDownloadUrl(tool);

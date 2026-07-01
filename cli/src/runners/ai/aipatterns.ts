@@ -7,7 +7,7 @@ import type { Finding, ScanResult, Severity } from '../../types.js';
 import { getBinaryPath, getSemgrepEnv } from '../../installer.js';
 
 const execFileAsync = promisify(execFile);
-const TIMEOUT_MS = 60_000;
+const TIMEOUT_MS = 120_000;
 const MAX_BUFFER = 50 * 1024 * 1024;
 
 function mapSeverity(sev: string): Severity {
