@@ -1,6 +1,6 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import type { Finding, ScanResult, Severity } from '../types.js';
+import type { Finding, ScanResult, Severity } from '../../types.js';
 
 const execFileAsync = promisify(execFile);
 

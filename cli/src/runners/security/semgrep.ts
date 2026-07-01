@@ -1,7 +1,7 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import type { Finding, ScanResult, Severity } from '../types.js';
-import { getBinaryPath } from '../installer.js';
+import type { Finding, ScanResult, Severity } from '../../types.js';
+import { getBinaryPath } from '../../installer.js';
 
 const execFileAsync = promisify(execFile);
 

@@ -4,7 +4,7 @@ import { join } from 'path';
 import { readFileSync, rmSync, existsSync, mkdirSync } from 'fs';
 import { tmpdir } from 'os';
 import { randomUUID } from 'crypto';
-import type { Finding, ScanResult } from '../types.js';
+import type { Finding, ScanResult } from '../../types.js';
 
 const execAsync = promisify(exec);
 

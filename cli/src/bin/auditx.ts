@@ -76,6 +76,12 @@ if (targetArg === 'install') {
     console.log(chalk.cyan('  Installing npm-based scanners globally...'));
     import('child_process').then(({ execFileSync }) => {
       execFileSync('npm', ['install', '-g', 'jscpd', 'depcheck', 'license-checker', 'typescript'], { stdio: 'ignore' });
+      try {
+        console.log(chalk.cyan('  Installing Python-based scanners globally...'));
+        execFileSync('pip', ['install', 'lizard'], { stdio: 'ignore' });
+      } catch (e) {
+        console.log(chalk.yellow('  ⚠️  pip not found, skipping Python scanners (lizard).'));
+      }
     });
 
     console.log(chalk.green('\n  ✅ All scanners installed successfully.\n'));

@@ -1,15 +1,17 @@
 import type { Config, ScanResult, StackInfo } from '../types.js';
-import { runGitleaks } from './gitleaks.js';
-import { runTrivy } from './trivy.js';
-import { runNpmAudit } from './npmaudit.js';
-import { runSemgrep } from './semgrep.js';
-import { runKnip } from './knip.js';
-import { runEslint } from './eslint.js';
-import { runJscpd } from './jscpd.js';
-import { runDepcheck } from './depcheck.js';
-import { runLicenseChecker } from './license.js';
-import { runTypecheck } from './typecheck.js';
-import { runGitHealth } from './githealth.js';
+import { runSemgrep } from './security/semgrep.js';
+import { runTrivy } from './security/trivy.js';
+import { runNpmAudit } from './security/npmaudit.js';
+import { runGitleaks } from './security/gitleaks.js';
+import { runKnip } from './quality/knip.js';
+import { runEslint } from './quality/eslint.js';
+import { runJscpd } from './quality/jscpd.js';
+import { runDepcheck } from './health/depcheck.js';
+import { runLicenseChecker } from './health/license.js';
+import { runTypecheck } from './quality/typecheck.js';
+import { runGitHealth } from './health/githealth.js';
+import { runLizard } from './quality/lizard.js';
+import { runAiPatterns } from './ai/aipatterns.js';
 
 export type RunnerName = 'secrets' | 'deps' | 'sast' | 'deadcode' | 'iac' | 'patterns' | 'duplication' | 'complexity' | 'dephealth' | 'license' | 'aicode' | 'githealth' | 'typesafety';
 
@@ -88,6 +90,18 @@ const RUNNERS: RunnerDef[] = [
     label: 'git log (hotspots)',
     run: runGitHealth,
     isApplicable: (s) => s.hasGit,
+  },
+  {
+    name: 'aicode',
+    label: 'semgrep (ai patterns)',
+    run: runAiPatterns,
+    isApplicable: (s) => s.hasNodeJs || s.hasTypeScript,
+  },
+  {
+    name: 'complexity',
+    label: 'lizard (complexity)',
+    run: runLizard,
+    isApplicable: () => true,
   },
 ];
 
