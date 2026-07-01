@@ -504,7 +504,7 @@ export async function run(targetPath: string): Promise<Finding[]> {
 
 ## License
 
-MIT © [Parth](https://github.com/parth)
+MIT © [Parth](https://github.com/parth308)
 
 ---
 
