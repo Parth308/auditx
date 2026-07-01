@@ -68,6 +68,7 @@ async function getBinaryPathInternal(tool: ToolName): Promise<string> {
       // Check if semgrep is already in PATH
       try {
         execFileSync('semgrep', ['--version'], { stdio: 'ignore' });
+        spinner.stop();
         return 'semgrep';
       } catch {
         // Semgrep doesn't have a standalone Windows binary. Install via pip.
