@@ -119,6 +119,7 @@ auditx ./src
 # Output
 auditx . --output report.md        # write to file (default: audit-report.md)
 auditx . --output json             # machine-readable JSON
+auditx . --output agent            # minimal single-line JSON for AI agents
 auditx . --output terminal         # pretty print only, no file
 
 # Filtering
@@ -132,6 +133,8 @@ auditx . --skip deadcode           # skip Knip
 auditx . --fix                     # auto-apply fixable issues (eslint --fix)
 auditx . --ci                      # exit code 1 if findings exist (CI mode)
 auditx . --watch                   # re-run on file changes
+auditx hook install                # install git hooks (pre-commit, pre-push, etc.)
+auditx . --staged-list <file>      # only scan specific files (used by git hooks)
 
 # AI
 auditx . --ai                      # append Claude AI risk summary to report
@@ -265,47 +268,47 @@ Rotating the key is mandatory — removal from code alone is insufficient.
 
 ## AI Agent Integration
 
-`auditx` is built as a **tool node in AI agent pipelines**. The report structure is deterministic — tables, not prose — so agents can parse it without a secondary LLM call.
+`auditx` is built as a **tool node in AI agent pipelines**. Use the `--output agent` flag to get a deterministic, token-cheap, single-line JSON string optimized specifically for LLMs. This suppresses all interactive CLI output.
 
 ```
 ┌─────────────────────────────────────────────────────┐
 │                   AI Agent Loop                     │
 │                                                     │
-│  1. shell("auditx . --output report.md --ci")       │
+│  1. shell("auditx . --output agent")                │
 │         │                                           │
-│         ├─ exit 0 → ✅ codebase clean               │
+│         ├─ exitCode: 0 → ✅ codebase clean          │
 │         │                                           │
-│         └─ exit 1 → findings exist                  │
+│         └─ exitCode: 1 → findings exist             │
 │               │                                     │
-│               ├─ parse report.md tables             │
-│               ├─ CRITICAL → create GitHub issue     │
-│               ├─ DEPS high → run npm install <fix>  │
-│               ├─ SAST → send to LLM for patch       │
-│               └─ shell("auditx . --ci") ← verify   │
+│               ├─ parse JSON object                  │
+│               ├─ loop findingsByFile keys           │
+│               ├─ send file + findings to LLM        │
+│               ├─ apply fixes to file                │
+│               └─ shell("auditx . --output agent")   │
+│                  (verify fixes)                     │
 └─────────────────────────────────────────────────────┘
 ```
 
 ```python
 # Example agent pseudocode
-result = shell("auditx . --output report.md --severity high --ci")
+result = shell("auditx . --output agent")
+report = json.loads(result.stdout)
 
-if result.exit_code != 0:
-    report = read_file("report.md")
-    findings = parse_markdown_tables(report)
-
-    for f in findings["critical"]:
-        create_github_issue(title=f["title"], body=f["fix"])
-
-    for f in findings["high"]:
-        if f["category"] == "DEPS":
-            shell(f"npm install {f['fix']}")
-        elif f["category"] == "SAST":
-            apply_llm_patch(f["file"], f["line"])
-
-    shell("auditx . --ci")  # verify fixes
+if report["exitCode"] != 0:
+    for file, finding_ids in report["findingsByFile"].items():
+        file_findings = [f for f in report["findings"] if f["id"] in finding_ids]
+        
+        for f in file_findings:
+            if f["fixable"]:
+                shell(f"npm install {f['fix']}") # Example dependency fix
+            else:
+                apply_llm_patch(file, f["msg"]) # Auto-fix pattern/sast
+                
+    # Verify fixes
+    shell("auditx . --output agent")
 ```
 
-The `--ai` flag calls your configured LLM provider and appends a plain-English risk analysis block directly to the `.md` report.
+The `--ai` flag calls your configured LLM provider and appends a plain-English risk analysis block directly to the `.md` report (for human consumption).
 
 ---
 
@@ -486,6 +489,8 @@ export async function run(targetPath: string): Promise<Finding[]> {
 - [x] Auto-download scanner binaries
 - [x] `--fix` auto-remediation
 - [x] `--watch` dev mode
+- [x] AI agent output mode (`--output agent`)
+- [x] Git Hook integration (`--staged-list`, `auditx hook install`)
 - [ ] VS Code extension
 - [ ] Web dashboard (self-hostable)
 - [ ] GitHub Action (official)
