@@ -1,7 +1,7 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import type { Finding, ScanResult, Severity } from '../../types.js';
-import { getBinaryPath } from '../../installer.js';
+import { getBinaryPath, getSemgrepEnv } from '../../installer.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -73,7 +73,7 @@ export async function runSemgrep(targetDir: string, stagedFiles?: string[]): Pro
     const { stdout } = await execFileAsync(
       bin,
       args,
-      { maxBuffer: 50 * 1024 * 1024 },
+      { maxBuffer: 50 * 1024 * 1024, env: getSemgrepEnv() },
     ).catch((err) => {
       // semgrep exits 1 when findings exist
       if (err.stdout) return { stdout: err.stdout as string };

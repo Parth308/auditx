@@ -17,6 +17,23 @@ const SEMGREP_VERSION = '1.100.0';
 const installPromises = new Map<string, Promise<string>>();
 
 /**
+ * Returns a robust environment object for Semgrep to prevent PermissionDenied errors on Windows
+ * and skip telemetry.
+ */
+export function getSemgrepEnv(): NodeJS.ProcessEnv {
+  const semgrepHome = join(homedir(), '.auditx', 'semgrep-home');
+  if (!existsSync(semgrepHome)) {
+    mkdirSync(semgrepHome, { recursive: true });
+  }
+
+  return {
+    ...process.env,
+    SEMGREP_SETTINGS_FILE: join(semgrepHome, 'settings.yml'),
+    SEMGREP_SEND_METRICS: 'off',
+  };
+}
+
+/**
  * Returns the path to the executable for a given tool.
  * If it's not installed in ~/.auditx/bin, it will download it.
  */
@@ -57,6 +74,10 @@ async function getBinaryPathInternal(tool: ToolName): Promise<string> {
         spinner.text = 'Installing semgrep via pip...';
         execFileSync('pip', ['install', 'semgrep'], { stdio: 'pipe' });
         spinner.succeed(`semgrep installed via pip`);
+
+        // Pre-warm settings file in isolated location to avoid first-run permission crash
+        getSemgrepEnv();
+
         return 'semgrep'; // Relies on system PATH
       }
     }

@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto';
 import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import type { Finding, ScanResult, Severity } from '../../types.js';
-import { getBinaryPath } from '../../installer.js';
+import { getBinaryPath, getSemgrepEnv } from '../../installer.js';
 
 const execFileAsync = promisify(execFile);
 const TIMEOUT_MS = 60_000;
@@ -41,6 +41,7 @@ export async function runAiPatterns(targetPath: string, stagedFiles?: string[]):
       const result = await execFileAsync(semgrepBin, args, {
         maxBuffer: MAX_BUFFER,
         timeout: TIMEOUT_MS,
+        env: getSemgrepEnv(),
       });
       stdout = result.stdout;
     } catch (e: any) {
