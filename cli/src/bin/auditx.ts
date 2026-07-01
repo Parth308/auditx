@@ -126,7 +126,18 @@ async function runDefaultScan() {
   if (opts['stagedList']) {
     try {
       const content = readFileSync(opts['stagedList'], 'utf8').replace(/\0/g, '');
-      stagedFiles = content.split('\n').map(s => s.trim()).filter(Boolean);
+      const files = content.split('\n').map((s) => s.trim()).filter(Boolean);
+      
+      // Smart Fallback: if core configuration changes, do a full scan to prevent blindspots
+      const globalConfigs = ['package.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'tsconfig.json', '.eslintrc', 'go.mod', 'requirements.txt', 'schema.prisma'];
+      const touchedGlobal = files.some(f => globalConfigs.some(g => f.endsWith(g)) || f.endsWith('.yml') || f.endsWith('.yaml'));
+      
+      if (touchedGlobal) {
+        console.log(chalk.yellow('\n  ⚠️  Global configuration files modified. Ignoring --staged-list and performing a full scan.'));
+        stagedFiles = undefined;
+      } else {
+        stagedFiles = files;
+      }
     } catch (err: any) {
       console.error(chalk.red(`\n  ❌ Failed to read staged-list file: ${err.message}\n`));
       process.exit(1);

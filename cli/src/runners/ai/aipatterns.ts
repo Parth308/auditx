@@ -66,6 +66,7 @@ export async function runAiPatterns(targetPath: string, stagedFiles: string[] | 
       ...configArgs,
       '--json',
       '--timeout', '30',
+      '--cache',
       '--exclude', 'node_modules',
       '--exclude', '.next',
       '--exclude', 'dist',

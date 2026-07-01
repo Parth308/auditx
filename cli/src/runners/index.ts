@@ -13,12 +13,14 @@ import { runGitHealth } from './health/githealth.js';
 import { runLizard } from './quality/lizard.js';
 import { runAiPatterns } from './ai/aipatterns.js';
 import { runIaC } from './security/iac.js';
+import { Orchestrator, type TaskCost } from './orchestrator.js';
 
 export type RunnerName = 'secrets' | 'deps' | 'sast' | 'deadcode' | 'iac' | 'patterns' | 'duplication' | 'complexity' | 'dephealth' | 'license' | 'aicode' | 'githealth' | 'typesafety';
 
 interface RunnerDef {
   name: RunnerName;
   label: string;
+  cost: TaskCost;
   run: (targetDir: string, stagedFiles: string[] | undefined, stack: StackInfo) => Promise<ScanResult>;
   /** Returns true if this runner is applicable for the detected stack */
   isApplicable: (stack: StackInfo) => boolean;
@@ -29,84 +31,98 @@ const RUNNERS: RunnerDef[] = [
   {
     name: 'secrets',
     label: 'gitleaks (secrets)',
+    cost: 1,
     run: runGitleaks,
     isApplicable: (s) => s.hasGit,
   },
   {
     name: 'deps',
     label: 'trivy (deps/CVEs)',
+    cost: 3,
     run: runTrivy,
     isApplicable: () => true, // trivy handles all ecosystems
   },
   {
     name: 'iac',
     label: 'trivy (IaC)',
+    cost: 2,
     run: runIaC,
-    isApplicable: (s) => s.hasTerraform || s.hasDocker || s.hasGit, // Trivy config scans kubernetes manifests, terraform, dockerfiles
+    isApplicable: (s) => s.hasTerraform || s.hasDocker || s.hasGit,
   },
   {
     name: 'deps',
     label: 'npm-audit (deps)',
+    cost: 1,
     run: runNpmAudit,
     isApplicable: (s) => s.hasNodeJs,
   },
   {
     name: 'sast',
     label: 'semgrep (SAST)',
+    cost: 3,
     run: runSemgrep,
     isApplicable: () => true,
   },
   {
     name: 'deadcode',
     label: 'knip (dead code)',
+    cost: 2,
     run: runKnip,
     isApplicable: (s) => s.hasNodeJs,
   },
   {
     name: 'patterns',
     label: 'eslint (security patterns)',
+    cost: 2,
     run: runEslint,
     isApplicable: (s) => s.hasNodeJs,
   },
   {
     name: 'duplication',
     label: 'jscpd (code duplication)',
+    cost: 1,
     run: runJscpd,
     isApplicable: () => true, // jscpd is polyglot
   },
   {
     name: 'dephealth',
     label: 'depcheck (unused dependencies)',
+    cost: 1,
     run: runDepcheck,
     isApplicable: (s) => s.hasNodeJs,
   },
   {
     name: 'license',
     label: 'license-checker (licenses)',
+    cost: 1,
     run: runLicenseChecker,
     isApplicable: (s) => s.hasNodeJs,
   },
   {
     name: 'typesafety',
     label: 'tsc (typescript compiler)',
+    cost: 2,
     run: runTypecheck,
     isApplicable: (s) => s.hasTypeScript,
   },
   {
     name: 'githealth',
     label: 'git log (hotspots)',
+    cost: 1,
     run: runGitHealth,
     isApplicable: (s) => s.hasGit,
   },
   {
     name: 'aicode',
     label: 'semgrep (ai patterns)',
+    cost: 3,
     run: runAiPatterns,
-    isApplicable: (s) => s.hasNodeJs || s.hasTypeScript,
+    isApplicable: (s) => s.hasNodeJs || s.hasTypeScript || s.hasPython || s.hasGo || s.hasSql || s.hasReact || s.hasNextJs || s.hasDjango || s.hasExpress || s.hasNestJs,
   },
   {
     name: 'complexity',
     label: 'lizard (complexity)',
+    cost: 2,
     run: runLizard,
     isApplicable: () => true,
   },
@@ -120,9 +136,7 @@ export interface RunnerProgress {
 }
 
 /**
- * Runs all applicable runners in parallel using Promise.allSettled.
- * Runners that aren't applicable to the stack or are explicitly skipped
- * are omitted. Individual runner failures never crash the whole scan.
+ * Runs all applicable runners using the Orchestrator for concurrency control.
  *
  * @param onProgress - called whenever a runner finishes, for live terminal updates
  */
@@ -141,13 +155,9 @@ export async function runAll(
     return true;
   });
 
-  const semgrepNames = new Set(['sast', 'aicode']);
-  const otherRunners = selected.filter((r) => !semgrepNames.has(r.name));
-  const semgrepRunners = selected.filter((r) => semgrepNames.has(r.name));
+  const orchestrator = new Orchestrator<ScanResult>();
 
-  const results: ScanResult[] = [];
-
-  const runAndReport = async (runner: (typeof RUNNERS)[0]) => {
+  const runAndReport = async (runner: RunnerDef): Promise<ScanResult> => {
     try {
       const result = await runner.run(targetDir, config.stagedFiles, stack);
       onProgress?.({
@@ -175,25 +185,15 @@ export async function runAll(
     }
   };
 
-  // Run all other scanners in parallel
-  const otherPromises = otherRunners.map(runAndReport);
-  
-  // Wait for other runners to finish? No, start them parallel
-  
-  // Run semgrep scanners sequentially to avoid CPU fight
-  const semgrepPromises = (async () => {
-    const res: ScanResult[] = [];
-    for (const runner of semgrepRunners) {
-      res.push(await runAndReport(runner));
-    }
-    return res;
-  })();
+  const tasks = selected.map((runner) => {
+    return orchestrator.enqueue({
+      id: runner.name,
+      cost: runner.cost,
+      execute: () => runAndReport(runner),
+    });
+  });
 
-  const otherResults = await Promise.all(otherPromises);
-  const semgrepResults = await semgrepPromises;
-
-  results.push(...otherResults, ...semgrepResults);
-  return results;
+  return await Promise.all(tasks);
 }
 
 /** Returns a list of all runner labels applicable to the given stack. */
