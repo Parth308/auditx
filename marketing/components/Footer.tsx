@@ -39,8 +39,8 @@ export default function Footer() {
             padding: '10px 16px', borderRadius: 4,
             backgroundColor: '#f1eeee', border: HR,
           }}>
-            <code style={{ fontFamily: FONT, fontSize: 14, color: '#201d1d' }}>npx auditx .</code>
-            <CopyButton code="npx auditx ." />
+            <code style={{ fontFamily: FONT, fontSize: 14, color: '#201d1d' }}>npx auditx@latest .</code>
+            <CopyButton code="npx auditx@latest ." />
           </div>
         </div>
       </div>

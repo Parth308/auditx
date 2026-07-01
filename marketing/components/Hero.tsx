@@ -108,8 +108,8 @@ export default function Hero() {
 
       <div style={s.installRow}>
         <div style={s.installPill}>
-          <code style={s.installCode}>npx auditx .</code>
-          <CopyButton code="npx auditx ." />
+          <code style={s.installCode}>npx auditx@latest .</code>
+          <CopyButton code="npx auditx@latest ." />
         </div>
         <a href="https://github.com/parth308/auditx" style={s.ghLink}>
           [→] GitHub

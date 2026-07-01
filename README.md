@@ -21,7 +21,7 @@
 `auditx` is a **zero-config CLI security auditing tool** that orchestrates Semgrep, Trivy, Gitleaks, Knip, and more — running them in parallel, normalizing their output, and producing a single structured `.md` report designed for both human review and AI agent pipelines.
 
 ```bash
-npx auditx .
+npx auditx@latest .
 ```
 
 ```
@@ -72,7 +72,7 @@ Running a comprehensive security audit today means:
 | Feature | `auditx` | Snyk / Dependabot | SonarQube | GitHub Advanced Security |
 |---|---|---|---|---|
 | **Price** | Free & Open Source | Expensive SaaS | Enterprise pricing | Enterprise pricing |
-| **Setup** | `npx auditx .` — zero config | Cloud account required | Heavy Java server | Tied to GitHub |
+| **Setup** | `npx auditx@latest .` — zero config | Cloud account required | Heavy Java server | Tied to GitHub |
 | **Data Privacy** | 100% local — nothing leaves your machine | Sends deps/code to cloud | Local or cloud | Cloud |
 | **Scope** | Secrets + Deps + SAST + IaC + Dead Code | Mostly Deps & SAST | SAST & Code Quality | Secrets + Deps + SAST |
 | **Underlying Engine** | Best-in-class OSS (Trivy, Semgrep, Gitleaks) | Proprietary | Proprietary | CodeQL (Proprietary) |
@@ -87,7 +87,7 @@ Running a comprehensive security audit today means:
 npm install -g auditx
 
 # Or zero-install — no global needed
-npx auditx .
+npx auditx@latest .
 ```
 
 **External binaries** (Gitleaks, Trivy, Semgrep) are **auto-downloaded and cached** to `~/.auditx/bin/` on first run. No manual setup.
@@ -425,7 +425,7 @@ jobs:
         with:
           node-version: '20'
       - name: Run auditx
-        run: npx auditx . --severity high --ci --output audit-report.md
+        run: npx auditx@latest . --severity high --ci --output audit-report.md
       - name: Upload report
         if: always()
         uses: actions/upload-artifact@v4

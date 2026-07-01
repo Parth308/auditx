@@ -4,7 +4,7 @@ const HR = '1px solid rgba(15,0,0,0.12)';
 const FONT = 'inherit';
 
 const ROWS = [
-  { feature: 'Setup time',            manual: 'Hours — 5+ tools, configs, docs',   auditx: '0 minutes — npx auditx .' },
+  { feature: 'Setup time',            manual: 'Hours — 5+ tools, configs, docs',   auditx: '0 minutes — npx auditx@latest .' },
   { feature: 'Secrets scanning',      manual: 'Gitleaks alone, separate step',      auditx: '[+] Integrated, runs in parallel' },
   { feature: 'Dep vulnerability',     manual: 'Trivy or Snyk, separate output',     auditx: '[+] Trivy + npm audit, one schema' },
   { feature: 'AI code anti-patterns', manual: '[-] Nobody does this',               auditx: '[+] 44 custom rules — only auditx' },

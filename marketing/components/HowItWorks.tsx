@@ -9,7 +9,7 @@ const STEPS = [
     num: '01',
     label: 'Install',
     detail: 'Zero config. No account. No cloud. External scanners auto-downloaded to ~/.auditx/bin on first run.',
-    code: 'npm install -g auditx\n# or run directly:\nnpx auditx .',
+    code: 'npm install -g auditx\n# or run directly:\nnpx auditx@latest .',
   },
   {
     num: '02',

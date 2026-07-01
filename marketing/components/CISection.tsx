@@ -17,7 +17,7 @@ jobs:
         with:
           node-version: '20'
       - name: Run auditx
-        run: npx auditx . --severity high --ci
+        run: npx auditx@latest . --severity high --ci
       - name: Upload report
         if: always()
         uses: actions/upload-artifact@v4

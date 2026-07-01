@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 
 // severity color map mirrors actual CLI output
 const LINES = [
-  { text: '$ npx auditx .', color: '#fdfcfc', delay: 0 },
+  { text: '$ npx auditx@latest .', color: '#fdfcfc', delay: 0 },
   { text: '', color: '', delay: 500 },
   { text: '  🛡️  auditx v0.1.0', color: '#fdfcfc', delay: 600 },
   { text: '  Scanning: /projects/my-app', color: '#9a9898', delay: 800 },
