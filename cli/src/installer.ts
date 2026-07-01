@@ -14,11 +14,22 @@ const GITLEAKS_VERSION = '8.30.1';
 const TRIVY_VERSION = '0.71.2';
 const SEMGREP_VERSION = '1.100.0';
 
+const installPromises = new Map<string, Promise<string>>();
+
 /**
  * Returns the path to the executable for a given tool.
  * If it's not installed in ~/.auditx/bin, it will download it.
  */
-export async function getBinaryPath(tool: ToolName): Promise<string> {
+export function getBinaryPath(tool: ToolName): Promise<string> {
+  if (installPromises.has(tool)) {
+    return installPromises.get(tool)!;
+  }
+  const promise = getBinaryPathInternal(tool);
+  installPromises.set(tool, promise);
+  return promise;
+}
+
+async function getBinaryPathInternal(tool: ToolName): Promise<string> {
   const binDir = join(homedir(), '.auditx', 'bin');
   if (!existsSync(binDir)) {
     mkdirSync(binDir, { recursive: true });
@@ -53,7 +64,9 @@ export async function getBinaryPath(tool: ToolName): Promise<string> {
     const { url, isZip } = getDownloadUrl(tool);
     const archivePath = join(binDir, `${tool}-archive${isZip ? '.zip' : '.tar.gz'}`);
 
-    await downloadFile(url, archivePath);
+    await downloadFile(url, archivePath, (percent) => {
+      spinner.text = `Downloading ${tool}... ${percent}%`;
+    });
     spinner.text = `Extracting ${tool}...`;
 
     if (isZip) {
@@ -126,7 +139,7 @@ function getDownloadUrl(tool: ToolName): { url: string; isZip: boolean } {
   throw new Error(`Unknown tool: ${tool}`);
 }
 
-function downloadFile(url: string, dest: string): Promise<void> {
+function downloadFile(url: string, dest: string, onProgress?: (percent: number) => void): Promise<void> {
   return new Promise((resolve, reject) => {
     const file = createWriteStream(dest);
 
@@ -141,6 +154,19 @@ function downloadFile(url: string, dest: string): Promise<void> {
         if (response.statusCode !== 200) {
           reject(new Error(`Failed to download ${urlToFetch}: ${response.statusCode}`));
           return;
+        }
+
+        const totalBytes = parseInt(response.headers['content-length'] || '0', 10);
+        let downloadedBytes = 0;
+
+        if (onProgress) {
+          response.on('data', (chunk) => {
+            downloadedBytes += chunk.length;
+            if (totalBytes > 0) {
+              const percent = Math.round((downloadedBytes / totalBytes) * 100);
+              onProgress(percent);
+            }
+          });
         }
 
         response.pipe(file);

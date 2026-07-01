@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+
+// Silence Node.js deprecation warnings (e.g. DEP0190 for shell:true with array args)
+process.noDeprecation = true;
+
 import { program } from 'commander';
 import ora from 'ora';
 import chalk from 'chalk';
