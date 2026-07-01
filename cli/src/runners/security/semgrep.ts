@@ -1,6 +1,6 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import type { Finding, ScanResult, Severity } from '../../types.js';
+import type { Finding, ScanResult, Severity, StackInfo } from '../../types.js';
 import { getBinaryPath, getSemgrepEnv } from '../../installer.js';
 
 const execFileAsync = promisify(execFile);
@@ -52,15 +52,27 @@ function mapSemgrepSeverity(match: SemgrepMatch): Severity {
  * Runs `semgrep` with the `p/security-audit` ruleset against the target
  * directory and returns normalized SAST findings.
  */
-export async function runSemgrep(targetDir: string, stagedFiles?: string[]): Promise<ScanResult> {
+export async function runSemgrep(targetDir: string, stagedFiles: string[] | undefined, stack: StackInfo): Promise<ScanResult> {
   const start = Date.now();
   const scanner = 'semgrep';
 
   try {
     const bin = await getBinaryPath('semgrep');
+    
+    const configArgs = ['--config', 'p/security-audit'];
+    if (stack.hasReact) configArgs.push('--config', 'p/react');
+    if (stack.hasNextJs) configArgs.push('--config', 'p/nextjs');
+    if (stack.hasNestJs) configArgs.push('--config', 'p/nestjs');
+    if (stack.hasExpress) configArgs.push('--config', 'p/expressjs');
+    if (stack.hasTypeScript) configArgs.push('--config', 'p/typescript');
+    if (stack.hasPython) configArgs.push('--config', 'p/python');
+    if (stack.hasDjango) configArgs.push('--config', 'p/django');
+    if (stack.hasGo) configArgs.push('--config', 'p/golang');
+    if (stack.hasSql) configArgs.push('--config', 'p/sql');
+
     const args = [
       'scan',
-      '--config', 'p/security-audit',
+      ...configArgs,
       '--json',
       '--quiet',
       '--timeout', '30',

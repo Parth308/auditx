@@ -89,6 +89,7 @@ export interface StackInfo {
   hasNextJs: boolean;
   hasNestJs: boolean;
   hasExpress: boolean;
+  hasSql: boolean;
 }
 
 /** Resolved CLI configuration after arg parsing. */

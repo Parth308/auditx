@@ -104,6 +104,8 @@ export function detectStack(targetDir: string): StackInfo {
         return false;
       }
     })(),
+
+    hasSql: has('schema.sql') || has('schema.prisma') || has('drizzle.config.ts') || has('prisma') || has('migrations') || has('db'),
   };
 }
 
@@ -120,6 +122,7 @@ export function stackLabels(info: StackInfo): string[] {
   if (info.hasDjango) labels.push('Django');
   if (info.hasRust) labels.push('Rust');
   if (info.hasGo) labels.push('Go');
+  if (info.hasSql) labels.push('SQL');
   if (info.hasDocker) labels.push('Docker');
   if (info.hasTerraform) labels.push('Terraform');
   return labels;

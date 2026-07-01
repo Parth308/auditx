@@ -1,0 +1,32 @@
+rules:
+  - id: ai-sql-select-star
+    message: >
+      `SELECT *` fetches all columns, which can cause performance issues and break when schema changes. Explicitly list required columns.
+    severity: WARNING
+    languages: [sql]
+    pattern: SELECT * FROM ...
+
+  - id: ai-sql-delete-no-where
+    message: >
+      `DELETE` statement without a `WHERE` clause will delete all records in the table!
+    severity: ERROR
+    languages: [sql]
+    pattern: DELETE FROM $TABLE
+    pattern-not-inside: |
+      DELETE FROM $TABLE WHERE ...
+
+  - id: ai-sql-update-no-where
+    message: >
+      `UPDATE` statement without a `WHERE` clause will update all records in the table!
+    severity: ERROR
+    languages: [sql]
+    pattern: UPDATE $TABLE SET ...
+    pattern-not-inside: |
+      UPDATE $TABLE SET ... WHERE ...
+
+  - id: ai-sql-insert-no-columns
+    message: >
+      `INSERT INTO` without explicitly specifying columns is brittle and will break if a column is added to the table.
+    severity: WARNING
+    languages: [sql]
+    pattern: INSERT INTO $TABLE VALUES (...)
