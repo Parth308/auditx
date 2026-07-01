@@ -439,7 +439,7 @@ jobs:
 ## Development
 
 ```bash
-git clone https://github.com/parth/auditx
+git clone https://github.com/parth308/auditx
 cd auditx/cli
 
 npm install
@@ -502,7 +502,7 @@ export async function run(targetPath: string): Promise<Finding[]> {
 
 ## License
 
-MIT © [Parth](https://github.com/parth)
+MIT © [Parth Mongia](https://github.com/parth308)
 
 ---
 
