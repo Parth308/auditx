@@ -89,14 +89,18 @@ export async function runAiPatterns(targetPath: string, stagedFiles?: string[]):
     }
 
     for (const res of report.results || []) {
+      const cleanCheckId = res.check_id.includes('.') 
+        ? res.check_id.split('.').pop() || res.check_id
+        : res.check_id;
+        
       findings.push({
         id: `aipatterns-${randomUUID()}`,
         category: 'AI_CODE',
         severity: mapSeverity(res.extra.severity),
-        title: `AI Code Pattern: ${res.check_id.replace('ai-', '')}`,
+        title: `AI Code Pattern: ${cleanCheckId.replace('ai-', '')}`,
         file: res.path,
         line: res.start?.line,
-        rule: res.check_id,
+        rule: cleanCheckId,
         scanner: 'aipatterns',
         description: res.extra.message,
       });
