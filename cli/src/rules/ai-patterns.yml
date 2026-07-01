@@ -530,7 +530,7 @@ rules:
   - id: ai-var-usage
     message: >
       `var` declaration. Use const (default) or let (if reassigned).
-    severity: WARNING
+    severity: INFO
     languages: [javascript, typescript, jsx, tsx]
     fix: "let $X = $Y"
     pattern: var $X = $Y
