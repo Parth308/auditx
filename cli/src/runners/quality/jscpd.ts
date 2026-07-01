@@ -8,7 +8,7 @@ import type { Finding, ScanResult } from '../../types.js';
 
 const execAsync = promisify(exec);
 
-export async function runJscpd(targetPath: string): Promise<ScanResult> {
+export async function runJscpd(targetPath: string, stagedFiles?: string[]): Promise<ScanResult> {
   const start = Date.now();
   const tmpDir = join(tmpdir(), `auditx-jscpd-${randomUUID()}`);
 
@@ -18,7 +18,8 @@ export async function runJscpd(targetPath: string): Promise<ScanResult> {
     // jscpd exits with code 1 if it finds duplicates above threshold.
     // We ignore the exit code because we just want the JSON report.
     try {
-      await execAsync(`npx --yes jscpd "${targetPath}" --reporters json --output "${tmpDir}" --silent`, { maxBuffer: 10 * 1024 * 1024 });
+      const targets = stagedFiles && stagedFiles.length > 0 ? stagedFiles.map(f => `"${f}"`).join(' ') : `"${targetPath}"`;
+      await execAsync(`npx --yes jscpd ${targets} --reporters json --output "${tmpDir}" --silent`, { maxBuffer: 10 * 1024 * 1024 });
     } catch (e) {
       // Ignore exit code 1
     }

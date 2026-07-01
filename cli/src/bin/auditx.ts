@@ -2,7 +2,7 @@
 import { program } from 'commander';
 import ora from 'ora';
 import chalk from 'chalk';
-import { writeFileSync, existsSync } from 'fs';
+import { writeFileSync, existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 import { execSync } from 'child_process';
 
@@ -12,6 +12,7 @@ import { runAll, getApplicableRunnerLabels } from '../runners/index.js';
 import { aggregate, filterBySeverity, buildSummary } from '../aggregate.js';
 import { formatMarkdown } from '../formatters/markdown.js';
 import { formatJson } from '../formatters/json.js';
+import { formatAgent } from '../formatters/agent.js';
 import { printTerminalReport, printCiSummary, printScannerResult } from '../formatters/terminal.js';
 import { generateAiSummary } from '../ai.js';
 import { getBinaryPath, type ToolName } from '../installer.js';
@@ -32,7 +33,7 @@ program
   .argument('[target]', 'Directory to scan', '.')
   .option(
     '-o, --output <mode>',
-    'Output mode: markdown (default), json, terminal',
+    'Output mode: markdown (default), json, terminal, agent',
     'markdown',
   )
   .option(
@@ -54,6 +55,7 @@ program
   .option('--ai', 'Append AI analysis block to the report')
   .option('--ai-provider <provider>', 'AI provider: gemini | openai | claude')
   .option('--ai-model <model>', 'Specific model override (optional)')
+  .option('--staged-list <file>', 'Path to a file containing a list of files to scan (used by git hooks)')
   .option('--fix', 'Auto-apply fixable issues (eslint --fix, knip --fix)')
   .option('--watch', 'Re-run on file changes (dev mode)')
   .option('--check-deps', 'Verify all required external scanner tools are installed');
@@ -92,7 +94,42 @@ if (targetArg === 'install') {
   process.exit(0);
 }
 
-const config: Config = {
+// Special "hook" command
+if (targetArg === 'hook') {
+  import('../hook.js').then(({ installHook, uninstallHook, installAll }) => {
+    const action = program.args[1];
+    const hookType = (opts['type'] || 'pre-commit') as any;
+    
+    if (action === 'install') {
+      installHook(hookType);
+    } else if (action === 'install-all') {
+      installAll();
+    } else if (action === 'uninstall') {
+      uninstallHook(hookType);
+    } else {
+      console.error(chalk.red(`\n  ❌ Unknown hook action: ${action}. Use 'install', 'install-all', or 'uninstall'.\n`));
+      process.exit(1);
+    }
+    process.exit(0);
+  });
+  // We need to return here or wait to prevent the rest of the script from executing synchronously
+} else {
+  runDefaultScan();
+}
+
+async function runDefaultScan() {
+  let stagedFiles: string[] | undefined = undefined;
+  if (opts['stagedList']) {
+    try {
+      const content = readFileSync(opts['stagedList'], 'utf8').replace(/\0/g, '');
+      stagedFiles = content.split('\n').map(s => s.trim()).filter(Boolean);
+    } catch (err: any) {
+      console.error(chalk.red(`\n  ❌ Failed to read staged-list file: ${err.message}\n`));
+      process.exit(1);
+    }
+  }
+
+  const config: Config = {
   target: resolve(targetArg),
   output: (opts['output'] as Config['output']) ?? 'markdown',
   outputFile: opts['outputFile'] ?? 'audit-report.md',
@@ -100,6 +137,7 @@ const config: Config = {
   skip: opts['skip']
     ? (opts['skip'] as string).split(',').map((s: string) => s.trim()).filter(Boolean) as Config['skip']
     : [],
+  stagedFiles,
   ci: Boolean(opts['ci']),
   ai: Boolean(opts['ai']),
   aiProvider: opts['aiProvider'] as AiProvider,
@@ -141,15 +179,19 @@ if (config.watch) {
 async function runScan(): Promise<void> {
   const scanStart = Date.now();
 
-  console.log('');
-  console.log(chalk.bold.cyan('  🛡️  auditx') + chalk.dim(` v${VERSION}`));
-  console.log(chalk.dim(`  Scanning: ${config.target}`));
-  console.log('');
+  const isInteractive = config.output !== 'json' && config.output !== 'agent';
+
+  if (isInteractive) {
+    console.log('');
+    console.log(chalk.bold.cyan('  🛡️  auditx') + chalk.dim(` v${VERSION}`));
+    console.log(chalk.dim(`  Scanning: ${config.target}`));
+    console.log('');
+  }
 
   if (config.ai && !config.aiProvider) {
     const globalConfig = readGlobalConfig();
     if (!globalConfig.aiProvider) {
-      console.log(chalk.cyan('  🤖 First time using --ai. Let\'s set up your provider!'));
+      if (isInteractive) console.log(chalk.cyan('  🤖 First time using --ai. Let\'s set up your provider!'));
       await promptForAiConfig();
       const updatedConfig = readGlobalConfig();
       config.aiProvider = updatedConfig.aiProvider;
@@ -164,32 +206,40 @@ async function runScan(): Promise<void> {
   const stack = detectStack(config.target);
   const labels = stackLabels(stack);
 
-  if (labels.length === 0) {
-    console.log(chalk.yellow('  ⚠️  No recognized stack detected. Running generic scanners only.'));
-  } else {
-    console.log(chalk.dim(`  Stack detected: ${chalk.cyan(labels.join(' · '))}`));
+  if (isInteractive) {
+    if (labels.length === 0) {
+      console.log(chalk.yellow('  ⚠️  No recognized stack detected. Running generic scanners only.'));
+    } else {
+      console.log(chalk.dim(`  Stack detected: ${chalk.cyan(labels.join(' · '))}`));
+    }
   }
 
   const applicableRunners = getApplicableRunnerLabels(stack, config);
-  console.log(chalk.dim(`  Running ${applicableRunners.length} scanners in parallel…`));
-  console.log('');
+  if (isInteractive) {
+    console.log(chalk.dim(`  Running ${applicableRunners.length} scanners in parallel…`));
+    console.log('');
+  }
 
   // 2. Run all scanners in parallel with live progress
-  const spinner = ora({ text: 'Scanning…', color: 'cyan' }).start();
+  const spinner = isInteractive ? ora({ text: 'Scanning…', color: 'cyan' }).start() : undefined;
 
   const results = await runAll(config.target, stack, config, (progress) => {
-    spinner.stop();
-    printScannerResult({
-      scanner: progress.label,
-      ok: progress.status === 'done',
-      findings: [],
-      error: progress.error,
-      durationMs: progress.durationMs ?? 0,
-    });
-    spinner.start();
+    if (isInteractive) {
+      spinner?.stop();
+      printScannerResult({
+        scanner: progress.label,
+        ok: progress.status === 'done',
+        findings: [],
+        error: progress.error,
+        durationMs: progress.durationMs ?? 0,
+      });
+      spinner?.start();
+    }
   });
 
-  spinner.stop();
+  if (isInteractive) {
+    spinner?.stop();
+  }
 
   const totalDuration = Date.now() - scanStart;
 
@@ -246,6 +296,12 @@ async function runScan(): Promise<void> {
       printTerminalReport(report);
       break;
     }
+
+    case 'agent': {
+      const agentJson = formatAgent(report);
+      console.log(agentJson);
+      break;
+    }
   }
 
   // 8. --fix
@@ -259,14 +315,16 @@ async function runScan(): Promise<void> {
   );
 
   if (config.ci && urgentFindings.length > 0) {
-    console.log(
-      chalk.red(`\n  ❌ CI mode: ${urgentFindings.length} critical/high finding(s). Exiting with code 1.`),
-    );
+    if (isInteractive) {
+      console.log(
+        chalk.red(`\n  ❌ CI mode: ${urgentFindings.length} critical/high finding(s). Exiting with code 1.`),
+      );
+    }
     process.exit(1);
   } else if (config.ci) {
-    console.log(chalk.green('\n  ✅ CI mode: No critical/high findings. Clean!'));
+    if (isInteractive) console.log(chalk.green('\n  ✅ CI mode: No critical/high findings. Clean!'));
   }
-}
+} // End of runDefaultScan
 
 // ─── --check-deps ─────────────────────────────────────────────────────────────
 
@@ -313,4 +371,5 @@ function applyFixes(targetDir: string): void {
   } catch {
     console.log(chalk.yellow('  ⚠ eslint --fix had issues (see above)'));
   }
+}
 }

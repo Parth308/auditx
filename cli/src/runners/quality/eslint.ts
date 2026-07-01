@@ -53,22 +53,28 @@ const SECURITY_RULES = new Set([
  * Runs `eslint` with `eslint-plugin-security` against the target directory.
  * Only surfaces security-related rule violations as PATTERNS findings.
  */
-export async function runEslint(targetDir: string): Promise<ScanResult> {
+export async function runEslint(targetDir: string, stagedFiles?: string[]): Promise<ScanResult> {
   const start = Date.now();
   const scanner = 'eslint';
 
   try {
+    const args = [
+      'eslint',
+      '--format', 'json',
+      '--no-eslintrc',
+      '--plugin', 'security',
+      '--rule', JSON.stringify(buildSecurityRules()),
+      '--ext', '.js,.ts,.jsx,.tsx,.mjs,.cjs',
+    ];
+    if (stagedFiles && stagedFiles.length > 0) {
+      args.push(...stagedFiles);
+    } else {
+      args.push('.');
+    }
+
     const result = await execFileAsync(
       'npx',
-      [
-        'eslint',
-        '--format', 'json',
-        '--no-eslintrc',
-        '--plugin', 'security',
-        '--rule', JSON.stringify(buildSecurityRules()),
-        '--ext', '.js,.ts,.jsx,.tsx,.mjs,.cjs',
-        '.',
-      ],
+      args,
       { cwd: targetDir, maxBuffer: 20 * 1024 * 1024 },
     ).catch((err) => {
       if (err.stdout) return { stdout: err.stdout as string };

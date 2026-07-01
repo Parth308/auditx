@@ -32,14 +32,10 @@ const CAT_LABEL: Record<Category, string> = {
   TYPE_SAFETY: 'Type Safety',
 };
 
-/**
- * Renders the full auditx report as a Markdown string.
- * Format matches the spec in plan.md exactly.
- */
 export function formatMarkdown(report: AuditReport, aiSummary?: string): string {
   const lines: string[] = [];
 
-  // ─── Header ────────────────────────────────────────────────────────────────
+  // ─── Header ──────────────────────────────────────────────────────────────
   lines.push(`# 🛡️ auditx Security Report`);
   lines.push('');
   lines.push(`**Target**: \`${report.meta.target}\``);
@@ -51,62 +47,71 @@ export function formatMarkdown(report: AuditReport, aiSummary?: string): string 
   lines.push('---');
   lines.push('');
 
-  // ─── Summary table ─────────────────────────────────────────────────────────
+  // ─── Summary table — FIXED: iterate every category, not hardcoded subset ──
   lines.push('## Summary');
   lines.push('');
-  lines.push(
-    '| Category | 🔴 Critical | 🟠 High | 🟡 Medium | 🔵 Low |',
-  );
-  lines.push('|---|---|---|---|---|');
+  lines.push('| Category | 🔴 Critical | 🟠 High | 🟡 Medium | 🔵 Low | ⚪ Info |');
+  lines.push('|---|---|---|---|---|---|');
 
-  const categories: Category[] = ['SECRETS', 'DEPS', 'SAST', 'DEAD_CODE', 'IaC', 'PATTERNS'];
-
-  for (const cat of categories) {
+  const allCategories = Object.keys(CAT_LABEL) as Category[];
+  for (const cat of allCategories) {
     const catFindings = report.findings.filter((f) => f.category === cat);
     if (catFindings.length === 0) continue;
     const counts = countBySeverity(catFindings);
     lines.push(
-      `| ${CAT_LABEL[cat]} | ${counts.critical || '—'} | ${counts.high || '—'} | ${counts.medium || '—'} | ${counts.low || '—'} |`,
+      `| ${CAT_LABEL[cat]} | ${counts.critical || '—'} | ${counts.high || '—'} | ${counts.medium || '—'} | ${counts.low || '—'} | ${counts.info || '—'} |`,
     );
   }
 
   const total = report.summary;
+  const totalInfo = report.findings.filter((f) => f.severity === 'info').length;
   lines.push(
-    `| **Total** | **${total.critical}** | **${total.high}** | **${total.medium}** | **${total.low}** |`,
+    `| **Total** | **${total.critical}** | **${total.high}** | **${total.medium}** | **${total.low}** | **${totalInfo}** |`,
   );
   lines.push('');
 
   const urgentCount = total.critical + total.high;
   if (urgentCount > 0) {
     lines.push(`> ⚠️ ${urgentCount} high/critical finding${urgentCount > 1 ? 's' : ''} require immediate attention.`);
-    lines.push('');
   } else {
     lines.push('> ✅ No critical or high severity findings.');
-    lines.push('');
   }
-
+  lines.push('');
   lines.push('---');
   lines.push('');
 
-  // ─── Findings sections by severity ─────────────────────────────────────────
+  // ─── Findings by severity ──────────────────────────────────────────────
   const severityGroups: Severity[] = ['critical', 'high', 'medium', 'low', 'info'];
 
   for (const sev of severityGroups) {
     const sevFindings = report.findings.filter((f) => f.severity === sev);
     if (sevFindings.length === 0) continue;
 
-    lines.push(`## ${SEV_EMOJI[sev]} ${SEV_LABEL[sev]}`);
+    lines.push(`## ${SEV_EMOJI[sev]} ${SEV_LABEL[sev]} (${sevFindings.length})`);
     lines.push('');
+
+    // low/info collapsed by default — keeps report scannable at scale, still fully present for agents
+    const collapse = (sev === 'low' || sev === 'info') && sevFindings.length > 5;
+    if (collapse) {
+      lines.push('<details>');
+      lines.push(`<summary>Show ${sevFindings.length} ${SEV_LABEL[sev].toLowerCase()} findings</summary>`);
+      lines.push('');
+    }
 
     for (const finding of sevFindings) {
       lines.push(renderFinding(finding));
+    }
+
+    if (collapse) {
+      lines.push('</details>');
+      lines.push('');
     }
 
     lines.push('---');
     lines.push('');
   }
 
-  // ─── AI Analysis block ─────────────────────────────────────────────────────
+  // ─── AI Analysis (LLM-generated summary, if --ai used) ─────────────────
   if (aiSummary) {
     lines.push('## 🤖 AI Analysis');
     lines.push('');
@@ -116,7 +121,32 @@ export function formatMarkdown(report: AuditReport, aiSummary?: string): string 
     lines.push('');
   }
 
-  // ─── Footer ────────────────────────────────────────────────────────────────
+  // ─── Machine-readable block for agent loops ─────────────────────────────
+  // Agents scraping the .md file (not the --output json mode) get a parseable
+  // anchor instead of having to regex the prose above.
+  lines.push('## Machine-Readable Summary');
+  lines.push('');
+  lines.push('```json');
+  lines.push(
+    JSON.stringify(
+      {
+        exitCode: urgentCount > 0 ? 1 : 0,
+        urgentCount,
+        totalFindings: report.findings.length,
+        fixableCount: report.findings.filter((f) => Boolean(f.fix)).length,
+        filesAffected: new Set(report.findings.map((f) => f.file).filter(Boolean)).size,
+        topFiles: topOffendingFiles(report.findings, 5),
+      },
+      null,
+      2,
+    ),
+  );
+  lines.push('```');
+  lines.push('');
+  lines.push('---');
+  lines.push('');
+
+  // ─── Footer ──────────────────────────────────────────────────────────────
   lines.push(`*Generated by [auditx](https://github.com/parth308/auditx) · MIT License*`);
 
   return lines.join('\n');
@@ -125,7 +155,8 @@ export function formatMarkdown(report: AuditReport, aiSummary?: string): string 
 function renderFinding(f: Finding): string {
   const lines: string[] = [];
 
-  lines.push(`### [${f.category}] ${f.title}`);
+  const anchor = f.id ? `<a id="${f.id}"></a>` : '';
+  lines.push(`### ${anchor}[${f.category}] ${f.title}`);
 
   if (f.file) {
     const location = f.line ? `${f.file}:${f.line}` : f.file;
@@ -156,4 +187,16 @@ function countBySeverity(findings: Finding[]) {
     low: findings.filter((f) => f.severity === 'low').length,
     info: findings.filter((f) => f.severity === 'info').length,
   };
+}
+
+function topOffendingFiles(findings: Finding[], n: number): { file: string; count: number }[] {
+  const counts = new Map<string, number>();
+  for (const f of findings) {
+    if (!f.file) continue;
+    counts.set(f.file, (counts.get(f.file) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, n)
+    .map(([file, count]) => ({ file, count }));
 }

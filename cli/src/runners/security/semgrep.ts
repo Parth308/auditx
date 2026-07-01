@@ -52,21 +52,27 @@ function mapSemgrepSeverity(match: SemgrepMatch): Severity {
  * Runs `semgrep` with the `p/security-audit` ruleset against the target
  * directory and returns normalized SAST findings.
  */
-export async function runSemgrep(targetDir: string): Promise<ScanResult> {
+export async function runSemgrep(targetDir: string, stagedFiles?: string[]): Promise<ScanResult> {
   const start = Date.now();
   const scanner = 'semgrep';
 
   try {
     const bin = await getBinaryPath('semgrep');
+    const args = [
+      '--config', 'p/security-audit',
+      '--json',
+      '--quiet',
+      '--no-rewrite-rule-ids',
+    ];
+    if (stagedFiles && stagedFiles.length > 0) {
+      args.push(...stagedFiles);
+    } else {
+      args.push(targetDir);
+    }
+
     const { stdout } = await execFileAsync(
       bin,
-      [
-        '--config', 'p/security-audit',
-        '--json',
-        '--quiet',
-        '--no-rewrite-rule-ids',
-        targetDir,
-      ],
+      args,
       { maxBuffer: 50 * 1024 * 1024 },
     ).catch((err) => {
       // semgrep exits 1 when findings exist

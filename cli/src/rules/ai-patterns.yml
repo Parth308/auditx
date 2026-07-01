@@ -1,12 +1,11 @@
 rules:
   # ─────────────────────────────────────────────
-  # ORIGINAL 6 (kept, lightly cleaned)
+  # ORIGINAL 6
   # ─────────────────────────────────────────────
 
   - id: ai-silent-catch
     message: >
-      Empty catch block swallows errors silently. Classic AI anti-pattern —
-      makes debugging impossible. Add logging or re-throw.
+      Empty catch block swallows errors silently. Add logging or re-throw.
     severity: WARNING
     languages: [javascript, typescript]
     patterns:
@@ -16,7 +15,7 @@ rules:
   - id: ai-meaningless-wrapper
     message: >
       Function does nothing but delegate to another function with same args.
-      Delete the wrapper and call the inner function directly.
+      Delete wrapper, call inner directly.
     severity: WARNING
     languages: [javascript, typescript]
     pattern-either:
@@ -29,7 +28,7 @@ rules:
 
   - id: ai-foreach-push
     message: >
-      .forEach + .push is imperative. Use .map() — cleaner, returns array directly.
+      .forEach + .push is imperative. Use .map() instead.
     severity: WARNING
     languages: [javascript, typescript]
     pattern: |
@@ -37,8 +36,7 @@ rules:
 
   - id: ai-redundant-promise
     message: >
-      Wrapping already-resolved value in new Promise or Promise.resolve is redundant.
-      Just return the value.
+      Wrapping already-resolved value in new Promise/Promise.resolve is redundant.
     severity: WARNING
     languages: [javascript, typescript]
     pattern-either:
@@ -48,7 +46,7 @@ rules:
 
   - id: ai-redundant-boolean-compare
     message: >
-      Comparing to true/false literally. Use the value directly or negate with !.
+      Comparing to true/false literally. Use value directly or negate with !.
     severity: INFO
     languages: [javascript, typescript]
     pattern-either:
@@ -59,21 +57,23 @@ rules:
 
   - id: ai-redundant-return-await
     message: >
-      `return await` inside async function is redundant. The promise auto-unwraps.
-      Exception: inside try/catch where you need the error in scope.
+      `return await` inside async function is redundant outside try/catch.
     severity: INFO
     languages: [javascript, typescript]
-    pattern: |
-      async function $F(...) { ...; return await $P; }
+    patterns:
+      - pattern: |
+          async function $F(...) { ...; return await $P; }
+      - pattern-not-inside: |
+          async function $F(...) { try { ... } catch (...) { ... } }
 
   # ─────────────────────────────────────────────
-  # ERROR HANDLING ANTI-PATTERNS
+  # ERROR HANDLING
   # ─────────────────────────────────────────────
 
   - id: ai-console-log-catch
     message: >
       Logging error and doing nothing is barely better than silencing it.
-      Either handle the error, re-throw, or surface it to the caller.
+      Handle it, re-throw, or surface to caller.
     severity: WARNING
     languages: [javascript, typescript]
     pattern-either:
@@ -86,7 +86,7 @@ rules:
 
   - id: ai-catch-reassign-ignore
     message: >
-      Catching error, assigning to variable, then never using it. Effectively silent catch.
+      Catching error, assigning to var, never using it. Effectively silent catch.
     severity: WARNING
     languages: [javascript, typescript]
     pattern: |
@@ -94,8 +94,7 @@ rules:
 
   - id: ai-generic-error-message
     message: >
-      Throwing Error with generic message loses context. Include the operation,
-      inputs, and underlying cause.
+      Generic error message loses context. Include operation, inputs, cause.
     severity: INFO
     languages: [javascript, typescript]
     pattern-either:
@@ -105,13 +104,13 @@ rules:
       - pattern: throw new Error("Failed")
 
   # ─────────────────────────────────────────────
-  # ASYNC / PROMISE ANTI-PATTERNS
+  # ASYNC / PROMISE
   # ─────────────────────────────────────────────
 
   - id: ai-promise-in-loop
     message: >
-      Awaiting inside a for/while loop runs promises sequentially.
-      Use Promise.all() for parallel execution unless order matters.
+      Awaiting inside for/while loop runs sequentially. Use Promise.all()
+      unless order matters.
     severity: WARNING
     languages: [javascript, typescript]
     pattern-either:
@@ -122,20 +121,33 @@ rules:
       - pattern: |
           while (...) { ...; await $F(...); }
 
+  # FIXED: was matching every function call in codebase. Narrowed to
+  # known async-ish call names + no await/catch/return guard.
   - id: ai-floating-promise
     message: >
-      Promise not awaited and not caught. Unhandled rejections crash Node.js silently.
-      Either await it or attach .catch().
+      Likely-async call not awaited and no .catch attached. Unhandled
+      rejection risk.
     severity: WARNING
     languages: [javascript, typescript]
-    pattern-either:
-      - pattern: $F();
-      - pattern: $OBJ.$METHOD();
-    # narrow via metavariable-type if semgrep supports it in your ruleset
+    patterns:
+      - pattern-either:
+          - pattern: $F(...)
+          - pattern: $OBJ.$METHOD(...)
+      - pattern-not: await $F(...)
+      - pattern-not: await $OBJ.$METHOD(...)
+      - pattern-not: return $F(...)
+      - pattern-not: return $OBJ.$METHOD(...)
+      - pattern-not: $F(...).catch(...)
+      - pattern-not: $OBJ.$METHOD(...).catch(...)
+      - pattern-not: void $F(...)
+      - metavariable-regex:
+          metavariable: $F
+          regex: ^(fetch|axios|save|create|update|delete|remove|send|write|sync|fs)\w*$
 
   - id: ai-async-foreach
     message: >
-      .forEach does not await async callbacks. Use `for...of` or `Promise.all(arr.map(...))`.
+      .forEach does not await async callbacks. Use for...of or
+      Promise.all(arr.map(...)).
     severity: ERROR
     languages: [javascript, typescript]
     pattern: |
@@ -143,8 +155,8 @@ rules:
 
   - id: ai-new-promise-executor-async
     message: >
-      Async function inside `new Promise` executor is an anti-pattern.
-      Errors thrown inside async executor are swallowed. Use async/await directly.
+      Async function inside `new Promise` executor. Errors thrown inside
+      are swallowed. Use async/await directly.
     severity: WARNING
     languages: [javascript, typescript]
     pattern: |
@@ -152,21 +164,20 @@ rules:
 
   - id: ai-then-catch-mixed-with-await
     message: >
-      Mixing .then()/.catch() chains with async/await in same function.
-      Pick one style — inconsistency makes control flow hard to trace.
+      Mixing .then()/.catch() with async/await in same function. Pick one style.
     severity: INFO
     languages: [javascript, typescript]
     pattern: |
       async function $F(...) { ...; $P.then(...); ... }
 
   # ─────────────────────────────────────────────
-  # UNNECESSARY ABSTRACTION / OVER-ENGINEERING
+  # OVER-ENGINEERING
   # ─────────────────────────────────────────────
 
+  # DOWNGRADED: legit pattern (debug naming, stack clarity). Was top noise source.
   - id: ai-single-use-variable
     message: >
-      Variable assigned once and used once immediately after. Inline it — the
-      extra name adds no clarity and AI over-generates these.
+      Variable assigned once, used once immediately after. Consider inlining.
     severity: INFO
     languages: [javascript, typescript]
     pattern-either:
@@ -179,8 +190,7 @@ rules:
 
   - id: ai-useless-else-after-return
     message: >
-      `else` block after `return` is unreachable logic. Remove the else —
-      code inside executes only when condition is false anyway.
+      `else` after `return` is unreachable-logic pattern. Remove else, dedent.
     severity: WARNING
     languages: [javascript, typescript]
     pattern: |
@@ -188,34 +198,31 @@ rules:
 
   - id: ai-ternary-to-boolean
     message: >
-      `condition ? true : false` is identical to just `condition` (or `!!condition`).
-      AI generates these constantly.
+      `condition ? true : false` is identical to `condition` (or `!!condition`).
     severity: INFO
     languages: [javascript, typescript]
+    fix: "$X"
     pattern-either:
       - pattern: "$X ? true : false"
-      - pattern: "$X ? false : true"
 
   - id: ai-double-negation
     message: >
-      `!!value` to coerce boolean is usually unnecessary. Just use the value
-      in a boolean context, or Boolean(value) for explicitness.
+      `!!value` to coerce boolean usually unnecessary. Use Boolean(value).
     severity: INFO
     languages: [javascript, typescript]
+    fix: "Boolean($X)"
     pattern: "!!$X"
 
   - id: ai-object-spread-self
-    message: >
-      Spreading object into itself `{ ...$OBJ, ...$OBJ }` is redundant.
+    message: Spreading object into itself is redundant.
     severity: WARNING
     languages: [javascript, typescript]
+    fix: "{ ...$O }"
     pattern: "{ ...$O, ...$O }"
 
   - id: ai-typeof-equals-string-redundant
     message: >
-      Comparing typeof to a non-standard type string. Valid typeof values are:
-      "undefined" "boolean" "number" "bigint" "string" "symbol" "function" "object".
-      Any other string always returns false.
+      Comparing typeof to a non-standard type string. Always returns false.
     severity: ERROR
     languages: [javascript, typescript]
     pattern-either:
@@ -226,70 +233,80 @@ rules:
       - pattern: typeof $X === "class"
 
   # ─────────────────────────────────────────────
-  # CONSOLE / LOGGING LEAKAGE
+  # CONSOLE / LOGGING
   # ─────────────────────────────────────────────
 
+  # FIXED: excludes tool's own cli/bin/scripts + tests from false-positiving on
+  # legitimate CLI stdout usage (auditx itself uses console.log everywhere).
   - id: ai-console-log-leak
     message: >
-      console.log in production code. AI leaves debug logging everywhere.
-      Use a proper logger (pino, winston) with log levels.
+      console.log in production code. Use a proper logger (pino, winston)
+      with log levels.
     severity: WARNING
     languages: [javascript, typescript]
     pattern: console.log(...)
+    paths:
+      exclude:
+        - "*.test.*"
+        - "*.spec.*"
+        - "**/__tests__/**"
+        - "**/cli/**"
+        - "**/bin/**"
+        - "**/scripts/**"
 
   - id: ai-console-log-json-stringify
-    message: >
-      console.log(JSON.stringify(...)) — AI debug pattern. Remove before shipping.
+    message: console.log(JSON.stringify(...)) — AI debug pattern, remove before shipping.
     severity: WARNING
     languages: [javascript, typescript]
     pattern: console.log(JSON.stringify(...))
+    paths:
+      exclude:
+        - "*.test.*"
+        - "*.spec.*"
 
   - id: ai-debugger-statement
     message: >
-      `debugger` statement left in code. Will pause execution in any attached DevTools.
+      `debugger` left in code. Pauses execution in attached DevTools.
     severity: ERROR
     languages: [javascript, typescript]
+    fix: ""
     pattern: debugger;
 
   # ─────────────────────────────────────────────
-  # TYPE SAFETY ESCAPES (TypeScript)
+  # TYPE SAFETY (TS)
   # ─────────────────────────────────────────────
 
   - id: ai-ts-any-cast
     message: >
-      `as any` cast defeats TypeScript entirely. AI uses this to silence type errors
-      instead of fixing them. Type the value properly.
+      `as any` defeats TypeScript. Type the value properly.
     severity: WARNING
     languages: [typescript]
     pattern: $X as any
 
   - id: ai-ts-ignore-comment
     message: >
-      @ts-ignore suppresses TypeScript errors without fixing them.
-      Use @ts-expect-error with a comment explaining why, or fix the type.
+      @ts-ignore suppresses errors without fixing. Use @ts-expect-error with
+      explanation, or fix the type.
     severity: WARNING
     languages: [typescript]
     pattern-regex: "// @ts-ignore"
 
   - id: ai-ts-nocheck
-    message: >
-      @ts-nocheck disables type checking for the entire file. Never acceptable in prod.
+    message: "@ts-nocheck disables type checking for whole file. Never acceptable in prod."
     severity: ERROR
     languages: [typescript]
     pattern-regex: "// @ts-nocheck"
 
   - id: ai-ts-nonNull-assertion-chain
     message: >
-      Chaining non-null assertions `a!.b!.c!` means you've given up on type safety.
-      Add proper null checks or optional chaining with a fallback.
+      Chaining non-null assertions `a!.b!` gives up on type safety.
+      Add null checks or optional chaining with fallback.
     severity: WARNING
     languages: [typescript]
     pattern: $A!.$B!
 
   - id: ai-any-function-param
-    message: >
-      Function parameter typed as `any`. Defeats purpose of TypeScript.
-      Type the parameter explicitly.
+    message: "Function parameter typed as `any`. Type it explicitly."
     severity: WARNING
     languages: [typescript]
     pattern-either:
@@ -298,39 +315,42 @@ rules:
       - pattern: "const $F = ($P: any) => $EXPR"
 
   # ─────────────────────────────────────────────
-  # OBJECT / ARRAY ANTI-PATTERNS
+  # OBJECT / ARRAY
   # ─────────────────────────────────────────────
 
+  # FIXED message to match actual pattern (was describing >0 case it doesn't check)
   - id: ai-array-length-check-wrong
     message: >
-      Using `arr.length > 0` is fine but `arr.length === 0` should be `!arr.length`
-      or better yet check for existence before length.
+      `arr.length === 0` — consider `!arr.length` for idiomatic empty check.
     severity: INFO
     languages: [javascript, typescript]
     pattern-either:
       - pattern: if ($A.length == 0) { ... }
       - pattern: if ($A.length === 0) { ... }
 
+  # FIXED: now excludes already-wrapped calls (was firing regardless of try/catch)
   - id: ai-json-parse-no-try
     message: >
-      JSON.parse without try/catch throws on malformed input. Always wrap in try/catch.
+      JSON.parse without try/catch throws on malformed input.
     severity: ERROR
     languages: [javascript, typescript]
-    pattern: JSON.parse($X)
-    # exclude patterns where it's already inside try block via path filter
+    patterns:
+      - pattern: JSON.parse($X)
+      - pattern-not-inside: |
+          try { ... } catch (...) { ... }
 
   - id: ai-object-assign-to-empty
     message: >
-      `Object.assign({}, obj)` is a shallow clone. Use spread `{ ...obj }` instead —
-      cleaner, more idiomatic, and less AI-boilerplate.
+      `Object.assign({}, obj)` is a shallow clone. Use spread `{ ...obj }`.
     severity: INFO
     languages: [javascript, typescript]
+    fix: "{ ...$OBJ }"
     pattern: Object.assign({}, $OBJ)
 
   - id: ai-settimeout-zero
     message: >
-      setTimeout($F, 0) used to defer execution. This is a code smell — it hides
-      timing dependencies. Use queueMicrotask() or restructure the async flow.
+      setTimeout($F, 0) hides timing dependencies. Use queueMicrotask()
+      or restructure async flow.
     severity: WARNING
     languages: [javascript, typescript]
     pattern-either:
@@ -339,37 +359,45 @@ rules:
 
   - id: ai-setinterval-no-clear
     message: >
-      setInterval without a stored reference means you can never clear it.
-      Always assign to a variable: `const id = setInterval(...)`.
+      setInterval without stored reference can never be cleared.
+      Assign to a variable.
     severity: WARNING
     languages: [javascript, typescript]
-    pattern: "setInterval($F, $N)"
+    patterns:
+      - pattern: setInterval($F, $N)
+      - pattern-not-inside: |
+          const $ID = setInterval($F, $N)
+      - pattern-not-inside: |
+          let $ID = setInterval($F, $N)
 
   # ─────────────────────────────────────────────
-  # SECURITY PATTERNS (AI-specific additions)
+  # SECURITY
   # ─────────────────────────────────────────────
 
   - id: ai-math-random-crypto
     message: >
-      Math.random() is not cryptographically secure. For tokens, IDs, or anything
-      security-sensitive use `crypto.randomUUID()` or `crypto.getRandomValues()`.
+      Math.random() not cryptographically secure. Use crypto.randomUUID()
+      or crypto.getRandomValues() for tokens/IDs.
     severity: WARNING
     languages: [javascript, typescript]
     pattern: Math.random()
 
   - id: ai-hardcoded-localhost
     message: >
-      Hardcoded localhost URL in non-test code. Use environment variables for service URLs.
+      Hardcoded localhost URL in non-test code. Use environment variables.
     severity: WARNING
     languages: [javascript, typescript]
     pattern-either:
       - pattern: "\"http://localhost:$PORT\""
       - pattern: "'http://localhost:$PORT'"
       - pattern: "`http://localhost:$PORT`"
+    paths:
+      exclude:
+        - "*.test.*"
+        - "*.spec.*"
 
   - id: ai-hardcoded-port
-    message: >
-      Hardcoded port number. Should come from `process.env.PORT` or config.
+    message: "Hardcoded port. Use process.env.PORT or config."
     severity: INFO
     languages: [javascript, typescript]
     pattern-either:
@@ -379,29 +407,27 @@ rules:
       - pattern: server.listen(3000)
 
   - id: ai-eval-usage
-    message: >
-      eval() executes arbitrary code. Never use. AI sometimes generates this for
-      dynamic logic — always has a safe alternative.
+    message: "eval() executes arbitrary code. Never use — always has a safe alternative."
     severity: ERROR
     languages: [javascript, typescript]
     pattern: eval($X)
 
   - id: ai-innerHTML-assignment
     message: >
-      Assigning to innerHTML with dynamic content is an XSS vector.
-      Use textContent for text, or DOMPurify.sanitize() before innerHTML.
+      Assigning innerHTML with dynamic content is an XSS vector.
+      Use textContent, or DOMPurify.sanitize() first.
     severity: ERROR
     languages: [javascript, typescript]
     pattern: $EL.innerHTML = $X
 
   # ─────────────────────────────────────────────
-  # REACT-SPECIFIC AI ANTI-PATTERNS
+  # REACT
   # ─────────────────────────────────────────────
 
   - id: ai-react-useeffect-no-deps
     message: >
       useEffect with no dependency array runs after every render.
-      This is almost never intentional — add a deps array [].
+      Add a deps array.
     severity: WARNING
     languages: [javascript, typescript]
     pattern: |
@@ -409,39 +435,41 @@ rules:
 
   - id: ai-react-key-index
     message: >
-      Using array index as React key. Causes incorrect reconciliation when list order
-      changes. Use a stable unique ID from the data.
+      Array index as React key. Breaks reconciliation on reorder.
+      Use stable unique ID.
     severity: WARNING
     languages: [javascript, typescript]
     pattern-regex: \.map\([^,]+,\s*(?<idx>[a-zA-Z0-9_]+)\s*\)\s*=>\s*<[^>]+key=\{\k<idx>\}
 
   - id: ai-react-state-mutate-direct
     message: >
-      Directly mutating state object. React won't detect the change — use setState
-      with a new object reference.
+      Directly mutating state object. React won't detect change —
+      use setState with new reference.
     severity: ERROR
     languages: [javascript, typescript]
     pattern-either:
       - pattern: $STATE.$PROP = $VAL
       - pattern: $STATE.push($VAL)
 
+  # FIXED: constrained to setX-style setter names, was matching any capitalized call
   - id: ai-react-usestate-object-no-spread
     message: >
-      Replacing entire object state without spreading previous state loses other fields.
-      Use `setState(prev => ({ ...prev, $KEY: $VAL }))`.
+      Replacing entire object state without spreading previous state loses
+      other fields. Use `setState(prev => ({ ...prev, key: val }))`.
     severity: WARNING
     languages: [javascript, typescript]
-    pattern: |
-      $SET({ $KEY: $VAL })
+    patterns:
+      - pattern: $SET({ $KEY: $VAL })
+      - metavariable-regex:
+          metavariable: $SET
+          regex: ^set[A-Z]\w*$
 
   # ─────────────────────────────────────────────
   # CODE SMELL / MAINTAINABILITY
   # ─────────────────────────────────────────────
 
   - id: ai-magic-number
-    message: >
-      Magic number in logic. Extract to a named constant for readability.
-      (Excludes 0, 1, -1 which are idiomatic.)
+    message: "Magic number in logic. Extract to a named constant."
     severity: INFO
     languages: [javascript, typescript]
     pattern-either:
@@ -453,23 +481,19 @@ rules:
 
   - id: ai-todo-fixme-left
     message: >
-      TODO/FIXME comment left in code. AI generates these as placeholders and
-      they accumulate as permanent technical debt.
+      TODO/FIXME left in code. Accumulates as permanent technical debt.
     severity: INFO
     languages: [javascript, typescript]
     pattern-regex: "// (TODO|FIXME|HACK|XXX): .*"
 
   - id: ai-string-concat-template
-    message: >
-      String built with + concatenation. Use template literals for readability.
-      AI mixes both styles constantly.
+    message: "String built with + concatenation. Use template literals."
     severity: INFO
     languages: [javascript, typescript]
     pattern: $A + " " + $B
 
   - id: ai-callback-hell
-    message: >
-      Deeply nested callbacks. Convert to async/await or Promise chains.
+    message: "Deeply nested callbacks. Convert to async/await."
     severity: WARNING
     languages: [javascript, typescript]
     pattern: |
@@ -481,41 +505,42 @@ rules:
 
   - id: ai-var-usage
     message: >
-      `var` declaration. Use `const` (default) or `let` (if reassigned).
-      `var` has function scope and hoisting — source of subtle bugs.
+      `var` declaration. Use const (default) or let (if reassigned).
     severity: WARNING
     languages: [javascript, typescript]
+    fix: "let $X = $Y"
     pattern: var $X = $Y
 
   - id: ai-loose-equality
     message: >
-      Loose equality `==` / `!=` triggers type coercion. Use `===` / `!==`.
-      AI sometimes generates this when comparing to null (use `== null` only for null+undefined check).
+      Loose equality triggers type coercion. Use === / !==
+      (== null is fine for null+undefined check).
     severity: WARNING
     languages: [javascript, typescript]
-    pattern-either:
-      - pattern: if ($X == $Y) { ... }
-      - pattern: if ($X != $Y) { ... }
+    patterns:
+      - pattern-either:
+          - pattern: if ($X == $Y) { ... }
+          - pattern: if ($X != $Y) { ... }
+      - pattern-not: if ($X == null) { ... }
+      - pattern-not: if ($X != null) { ... }
 
   - id: ai-delete-object-key
     message: >
-      `delete obj.key` mutates the object and is slow (de-optimizes V8 hidden class).
-      Prefer object destructuring rest: `const { key, ...rest } = obj`.
+      `delete obj.key` mutates + de-optimizes V8 hidden class.
+      Prefer destructuring rest: `const { key, ...rest } = obj`.
     severity: INFO
     languages: [javascript, typescript]
     pattern: delete $OBJ.$KEY
 
   - id: ai-arguments-object
-    message: >
-      `arguments` object is legacy. Use rest parameters `...args` instead.
+    message: "`arguments` is legacy. Use rest parameters ...args."
     severity: WARNING
     languages: [javascript, typescript]
     pattern: "arguments[$IDX]"
 
   - id: ai-prototype-extend-native
     message: >
-      Extending native prototypes (Array, Object, String) causes global pollution
-      and breaks other libraries. Never do this.
+      Extending native prototypes causes global pollution, breaks other libs.
     severity: ERROR
     languages: [javascript, typescript]
     pattern-either:
@@ -525,8 +550,7 @@ rules:
       - pattern: Number.prototype.$METHOD = $F
 
   - id: ai-class-no-constructor-body
-    message: >
-      Class with empty constructor. Remove it — JavaScript provides a default.
+    message: "Empty constructor. Remove — JS provides a default."
     severity: INFO
     languages: [javascript, typescript]
     pattern: |
@@ -537,8 +561,7 @@ rules:
 
   - id: ai-switch-no-default
     message: >
-      switch statement without default case. Unhandled values silently do nothing.
-      Add a default that throws or logs.
+      switch without default. Unhandled values silently do nothing.
     severity: WARNING
     languages: [javascript, typescript]
     pattern: |

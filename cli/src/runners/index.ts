@@ -18,7 +18,7 @@ export type RunnerName = 'secrets' | 'deps' | 'sast' | 'deadcode' | 'iac' | 'pat
 interface RunnerDef {
   name: RunnerName;
   label: string;
-  run: (targetDir: string) => Promise<ScanResult>;
+  run: (targetDir: string, stagedFiles?: string[]) => Promise<ScanResult>;
   /** Returns true if this runner is applicable for the detected stack */
   isApplicable: (stack: StackInfo) => boolean;
 }
@@ -137,7 +137,7 @@ export async function runAll(
   // Run all in parallel
   const settled = await Promise.allSettled(
     selected.map(async (runner) => {
-      const result = await runner.run(targetDir);
+      const result = await runner.run(targetDir, config.stagedFiles);
       onProgress?.({
         label: runner.label,
         status: result.ok ? 'done' : 'failed',

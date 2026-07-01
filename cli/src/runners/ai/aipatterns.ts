@@ -1,42 +1,54 @@
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { join } from 'path';
 import { randomUUID } from 'crypto';
-import type { Finding, ScanResult } from '../../types.js';
-import { getBinaryPath } from '../../installer.js';
 import { existsSync } from 'fs';
+import { fileURLToPath } from 'url';
+import type { Finding, ScanResult, Severity } from '../../types.js';
+import { getBinaryPath } from '../../installer.js';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
+const TIMEOUT_MS = 60_000;
+const MAX_BUFFER = 50 * 1024 * 1024;
 
-export async function runAiPatterns(targetPath: string): Promise<ScanResult> {
+function mapSeverity(sev: string): Severity {
+  switch (sev) {
+    case 'ERROR': return 'high';
+    case 'WARNING': return 'medium';
+    default: return 'low';
+  }
+}
+
+export async function runAiPatterns(targetPath: string, stagedFiles?: string[]): Promise<ScanResult> {
   const start = Date.now();
   const findings: Finding[] = [];
 
   try {
     const semgrepBin = await getBinaryPath('semgrep');
-    // We assume the rules are placed next to the built binary, or we can use __dirname to locate it.
-    // In dev, it's cli/src/rules/ai-patterns.yml. In dist, it might need to be copied.
-    // A robust way for a CLI is to package the rule inside the npm package and resolve it:
-    const rulesPath = new URL('../src/rules/ai-patterns.yml', import.meta.url).pathname;
-    const devRulesPath = new URL('../rules/ai-patterns.yml', import.meta.url).pathname;
-    
-    // Windows URL pathnames start with /C:/... we need to trim the leading slash
-    let cleanRulesPath = process.platform === 'win32' && rulesPath.startsWith('/') ? rulesPath.slice(1) : rulesPath;
-    const cleanDevRulesPath = process.platform === 'win32' && devRulesPath.startsWith('/') ? devRulesPath.slice(1) : devRulesPath;
 
-    if (!existsSync(cleanRulesPath) && existsSync(cleanDevRulesPath)) {
-      cleanRulesPath = cleanDevRulesPath;
+    const prodRules = fileURLToPath(new URL('../src/rules/ai-patterns.yml', import.meta.url));
+    const devRules = fileURLToPath(new URL('../rules/ai-patterns.yml', import.meta.url));
+    const rulesPath = existsSync(prodRules) ? prodRules : devRules;
+
+    if (!existsSync(rulesPath)) {
+      return { scanner: 'aipatterns', ok: false, findings: [], error: 'ruleset file not found', durationMs: Date.now() - start };
     }
+
+    const targets = stagedFiles && stagedFiles.length > 0 ? stagedFiles : [targetPath];
+    const args = ['scan', '--config', rulesPath, '--json', '--timeout', '30', ...targets];
 
     let stdout = '';
     try {
-      const cmd = `"${semgrepBin}" scan --config "${cleanRulesPath}" --json "${targetPath}"`;
-      console.log('RUNNING:', cmd);
-      const result = await execAsync(cmd, { maxBuffer: 10 * 1024 * 1024 });
+      const result = await execFileAsync(semgrepBin, args, {
+        maxBuffer: MAX_BUFFER,
+        timeout: TIMEOUT_MS,
+      });
       stdout = result.stdout;
     } catch (e: any) {
+      if (e.killed) {
+        return { scanner: 'aipatterns', ok: false, findings: [], error: 'semgrep timed out after 60s', durationMs: Date.now() - start };
+      }
       if (e.stdout) {
-        stdout = e.stdout;
+        stdout = e.stdout; // semgrep exits nonzero when findings exist — expected
       } else {
         throw e;
       }
@@ -48,11 +60,27 @@ export async function runAiPatterns(targetPath: string): Promise<ScanResult> {
 
     const report = JSON.parse(stdout);
 
+    if (report.errors?.length > 0) {
+      // rule-level errors (bad yaml, parse failures on a file) shouldn't silently pass as clean
+      for (const err of report.errors) {
+        findings.push({
+          id: `aipatterns-err-${randomUUID()}`,
+          category: 'AI_CODE',
+          severity: 'info',
+          title: 'Semgrep scan error',
+          file: err.path ?? 'unknown',
+          rule: 'aipatterns-internal',
+          scanner: 'aipatterns',
+          description: err.message ?? JSON.stringify(err),
+        });
+      }
+    }
+
     for (const res of report.results || []) {
       findings.push({
         id: `aipatterns-${randomUUID()}`,
         category: 'AI_CODE',
-        severity: res.extra.severity === 'WARNING' || res.extra.severity === 'ERROR' ? 'medium' : 'info',
+        severity: mapSeverity(res.extra.severity),
         title: `AI Code Pattern: ${res.check_id.replace('ai-', '')}`,
         file: res.path,
         line: res.start?.line,
@@ -62,19 +90,8 @@ export async function runAiPatterns(targetPath: string): Promise<ScanResult> {
       });
     }
 
-    return {
-      scanner: 'aipatterns',
-      ok: true,
-      findings,
-      durationMs: Date.now() - start,
-    };
+    return { scanner: 'aipatterns', ok: true, findings, durationMs: Date.now() - start };
   } catch (error: any) {
-    return {
-      scanner: 'aipatterns',
-      ok: false,
-      findings: [],
-      error: error.message,
-      durationMs: Date.now() - start,
-    };
+    return { scanner: 'aipatterns', ok: false, findings: [], error: error.message, durationMs: Date.now() - start };
   }
 }

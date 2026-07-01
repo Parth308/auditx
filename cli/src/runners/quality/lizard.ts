@@ -5,7 +5,7 @@ import type { Finding, ScanResult } from '../../types.js';
 
 const execAsync = promisify(exec);
 
-export async function runLizard(targetPath: string): Promise<ScanResult> {
+export async function runLizard(targetPath: string, stagedFiles?: string[]): Promise<ScanResult> {
   const start = Date.now();
   const findings: Finding[] = [];
 
@@ -13,7 +13,8 @@ export async function runLizard(targetPath: string): Promise<ScanResult> {
     let stdout = '';
     try {
       // Run lizard cyclomatic complexity check, threshold 15, warnings only
-      const result = await execAsync(`lizard "${targetPath}" -C 15 -w`, { maxBuffer: 10 * 1024 * 1024 });
+      const targets = stagedFiles && stagedFiles.length > 0 ? stagedFiles.map(f => `"${f}"`).join(' ') : `"${targetPath}"`;
+      const result = await execAsync(`lizard ${targets} -C 15 -w`, { maxBuffer: 10 * 1024 * 1024 });
       stdout = result.stdout;
     } catch (e: any) {
       // lizard exits with 1 if it finds complexity warnings

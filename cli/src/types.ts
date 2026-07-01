@@ -91,7 +91,7 @@ export interface Config {
   /** Target directory to scan */
   target: string;
   /** Output mode */
-  output: 'markdown' | 'json' | 'terminal';
+  output: 'markdown' | 'json' | 'terminal' | 'agent';
   /** Output file path (for markdown mode) */
   outputFile: string;
   /** Minimum severity to include in results */
@@ -112,6 +112,8 @@ export interface Config {
     | 'githealth'
     | 'typesafety'
   >;
+  /** Optional array of staged files to scan (used by git hook) */
+  stagedFiles?: string[];
   /** CI mode — exit 1 on any findings */
   ci: boolean;
   /** Append AI summary block to the report */

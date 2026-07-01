@@ -1,27 +1,25 @@
 import chalk, { type ChalkInstance } from 'chalk';
 import type { AuditReport, Finding, Severity, ScanResult } from '../types.js';
 
-// ─── Color scheme ─────────────────────────────────────────────────────────────
-
 const SEV_COLOR: Record<Severity, ChalkInstance> = {
   critical: chalk.bgRed.white.bold,
   high: chalk.red.bold,
   medium: chalk.yellow.bold,
   low: chalk.blue,
-  info: chalk.gray,
+  info: chalk.dim,
 };
 
+// FIXED: chalk.bgGray doesn't exist in all chalk versions/terminals — use bgBlackBright
 const SEV_BADGE: Record<Severity, string> = {
   critical: chalk.bgRed.white(' CRITICAL '),
-  high:     chalk.bgYellow.black(' HIGH     '),
-  medium:   chalk.bgYellow.black(' MEDIUM   '),
-  low:      chalk.bgBlue.white('  LOW      '),
-  info:     chalk.bgGray.white('  INFO     '),
+  high: chalk.bgYellow.black(' HIGH     '),
+  medium: chalk.bgYellow.black(' MEDIUM   '),
+  low: chalk.bgBlue.white('  LOW      '),
+  info: chalk.bgBlackBright.white('  INFO     '),
 };
 
-// ─── Scanner status display ───────────────────────────────────────────────────
+const MAX_FINDINGS_PER_SEVERITY = 15; // avoid flooding terminal on huge repos; full list still in --output json/markdown
 
-/** Print a live scanner result line. Called by runner onProgress. */
 export function printScannerResult(result: ScanResult): void {
   const icon = result.ok ? chalk.green('✓') : chalk.red('✗');
   const name = chalk.cyan(result.scanner.padEnd(18));
@@ -35,12 +33,6 @@ export function printScannerResult(result: ScanResult): void {
   console.log(`  ${icon} ${name} ${count}  ${dur}`);
 }
 
-// ─── Full report display ──────────────────────────────────────────────────────
-
-/**
- * Prints the full auditx scan report to the terminal with colors.
- * Used for `--output terminal`.
- */
 export function printTerminalReport(report: AuditReport): void {
   console.log('');
   console.log(chalk.bold.cyan('━'.repeat(60)));
@@ -54,7 +46,6 @@ export function printTerminalReport(report: AuditReport): void {
   console.log(`  ${chalk.dim('Scanners:')} ${report.meta.scanners.join(', ')}`);
   console.log('');
 
-  // Summary box
   const s = report.summary;
   console.log(chalk.bold('  Summary'));
   console.log(chalk.dim('  ' + '─'.repeat(40)));
@@ -72,7 +63,24 @@ export function printTerminalReport(report: AuditReport): void {
     return;
   }
 
-  // Findings grouped by severity
+  // Top offending files — fast triage view before wall of findings
+  const fileCounts = new Map<string, number>();
+  for (const f of report.findings) {
+    if (!f.file) continue;
+    fileCounts.set(f.file, (fileCounts.get(f.file) ?? 0) + 1);
+  }
+  if (fileCounts.size > 0) {
+    console.log(chalk.bold('  Top affected files'));
+    console.log(chalk.dim('  ' + '─'.repeat(40)));
+    [...fileCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .forEach(([file, count]) => {
+        console.log(`  ${chalk.white(file)} ${chalk.dim(`(${count})`)}`);
+      });
+    console.log('');
+  }
+
   const severities: Severity[] = ['critical', 'high', 'medium', 'low', 'info'];
 
   for (const sev of severities) {
@@ -82,8 +90,15 @@ export function printTerminalReport(report: AuditReport): void {
     console.log(SEV_COLOR[sev](`  ${sev.toUpperCase()} (${sevFindings.length})`));
     console.log('');
 
-    for (const f of sevFindings) {
+    const shown = sevFindings.slice(0, MAX_FINDINGS_PER_SEVERITY);
+    for (const f of shown) {
       printFinding(f);
+    }
+
+    const hidden = sevFindings.length - shown.length;
+    if (hidden > 0) {
+      console.log(chalk.dim(`  … and ${hidden} more ${sev} finding${hidden > 1 ? 's' : ''}. Run with --output markdown or --output json for full list.`));
+      console.log('');
     }
   }
 }
@@ -103,8 +118,6 @@ function printFinding(f: Finding): void {
   console.log('');
 }
 
-// ─── Summary line (for CI output) ────────────────────────────────────────────
-
 export function printCiSummary(report: AuditReport): void {
   const s = report.summary;
   const total = s.critical + s.high + s.medium + s.low + s.info;
@@ -114,9 +127,7 @@ export function printCiSummary(report: AuditReport): void {
   } else {
     console.log(
       chalk.red(`auditx: ❌ ${total} findings`) +
-        chalk.dim(
-          ` — critical: ${s.critical}, high: ${s.high}, medium: ${s.medium}, low: ${s.low}`,
-        ),
+      chalk.dim(` — critical: ${s.critical}, high: ${s.high}, medium: ${s.medium}, low: ${s.low}`),
     );
   }
 }
