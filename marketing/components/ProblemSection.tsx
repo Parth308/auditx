@@ -44,23 +44,25 @@ export default function ProblemSection() {
 
       {/* Anti-pattern code callout */}
       <ScrollReveal delay={320}>
-        <div style={{ marginTop: 32, backgroundColor: '#201d1d', padding: '24px 28px', borderRadius: 0 }}>
+        <div className="scroll-x" style={{ marginTop: 32, backgroundColor: '#201d1d', padding: '24px 28px', borderRadius: 0, overflowX: 'auto' }}>
           <div style={{ fontFamily: FONT, fontSize: 12, color: MUTE, marginBottom: 16 }}>
             // real AI-generated anti-patterns auditx catches
           </div>
-          {[
-            { sev: 'WARN',  sevColor: '#ff9f0a', name: 'ai-silent-catch       ', code: "try { ... } catch (e) { }" },
-            { sev: 'WARN',  sevColor: '#ff9f0a', name: 'ai-floating-promise   ', code: "fetch(url)  // no await, no .catch" },
-            { sev: 'WARN',  sevColor: '#ff9f0a', name: 'ai-ts-any-cast        ', code: "const val = data as any" },
-            { sev: 'ERROR', sevColor: '#ff3b30', name: 'ai-react-state-mutate ', code: "state.items.push(newItem)" },
-            { sev: 'WARN',  sevColor: '#ff9f0a', name: 'ai-promise-in-loop    ', code: "for (const x of items) { await save(x) }" },
-          ].map((line) => (
-            <div key={line.name} style={{ fontFamily: FONT, fontSize: 12, lineHeight: 2, display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
-              <span style={{ color: line.sevColor, minWidth: 36 }}>{line.sev}</span>
-              <span style={{ color: '#9a9898', minWidth: 190 }}>{line.name}</span>
-              <span style={{ color: '#fdfcfc' }}>{line.code}</span>
-            </div>
-          ))}
+          <div style={{ minWidth: 'max-content' }}>
+            {[
+              { sev: 'WARN',  sevColor: '#ff9f0a', name: 'ai-silent-catch       ', code: "try { ... } catch (e) { }" },
+              { sev: 'WARN',  sevColor: '#ff9f0a', name: 'ai-floating-promise   ', code: "fetch(url)  // no await, no .catch" },
+              { sev: 'WARN',  sevColor: '#ff9f0a', name: 'ai-ts-any-cast        ', code: "const val = data as any" },
+              { sev: 'ERROR', sevColor: '#ff3b30', name: 'ai-react-state-mutate ', code: "state.items.push(newItem)" },
+              { sev: 'WARN',  sevColor: '#ff9f0a', name: 'ai-promise-in-loop    ', code: "for (const x of items) { await save(x) }" },
+            ].map((line) => (
+              <div key={line.name} style={{ fontFamily: FONT, fontSize: 12, lineHeight: 2, display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
+                <span style={{ color: line.sevColor, minWidth: 36 }}>{line.sev}</span>
+                <span style={{ color: '#9a9898', minWidth: 190 }}>{line.name}</span>
+                <span style={{ color: '#fdfcfc' }}>{line.code}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </ScrollReveal>
     </section>

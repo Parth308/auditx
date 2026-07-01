@@ -18,11 +18,11 @@ export default function Footer() {
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 24px' }}>
         <div style={{
           display: 'flex',
-          flexWrap: 'wrap' as const,
+          flexWrap: 'wrap',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: 24,
-          padding: '40px 0',
+          gap: 20,
+          padding: '36px 0',
           borderTop: HR,
           borderBottom: HR,
         }}>
@@ -37,7 +37,7 @@ export default function Footer() {
           <div style={{
             display: 'flex', alignItems: 'center', gap: 12,
             padding: '10px 16px', borderRadius: 4,
-            backgroundColor: '#f1eeee', border: '1px solid rgba(15,0,0,0.12)',
+            backgroundColor: '#f1eeee', border: HR,
           }}>
             <code style={{ fontFamily: FONT, fontSize: 14, color: '#201d1d' }}>npx auditx .</code>
             <CopyButton code="npx auditx ." />
@@ -45,24 +45,15 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Link grid */}
+      {/* Link grid — footer-links CSS class handles responsive collapse */}
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 24px' }}>
-        <div style={{ display: 'flex', borderBottom: HR }}>
-          {LINKS.map((link, i) => (
+        <div className="footer-links">
+          {LINKS.map((link) => (
             <a
               key={link.label}
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
-              style={{
-                flex: 1,
-                textAlign: 'center',
-                fontFamily: FONT,
-                fontSize: 13,
-                padding: '16px 8px',
-                color: '#646262',
-                borderRight: i < LINKS.length - 1 ? HR : 'none',
-              }}
             >
               {link.label}
             </a>
@@ -71,8 +62,8 @@ export default function Footer() {
       </div>
 
       {/* Copyright */}
-      <div style={{ maxWidth: 960, margin: '0 auto', padding: '16px 24px 40px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' as const, gap: 8 }}>
+      <div style={{ maxWidth: 960, margin: '0 auto', padding: '14px 24px 40px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
           <span style={{ fontFamily: FONT, fontSize: 13, color: '#9a9898' }}>
             © 2026 auditx — MIT License
           </span>

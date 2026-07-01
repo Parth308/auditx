@@ -57,8 +57,8 @@ export default function TerminalDemo() {
       </div>
 
       {/* Body */}
-      <div style={{ padding: '20px 24px', minHeight: 360 }}>
-        <div style={{ fontSize: 13, lineHeight: 1.8, fontFamily: 'inherit' }}>
+      <div className="scroll-x" style={{ padding: '20px 24px', minHeight: 360, overflowX: 'auto' }}>
+        <div style={{ fontSize: 13, lineHeight: 1.8, fontFamily: 'inherit', minWidth: 'max-content' }}>
           {LINES.slice(0, visible).map((line, i) => (
             <div
               key={i}
@@ -78,14 +78,16 @@ export default function TerminalDemo() {
       </div>
 
       {/* Hint row */}
-      <div style={{
+      <div className="scroll-x" style={{
         display: 'flex',
         gap: 24,
-        padding: '8px 24px',
+        padding: '12px 24px',
         fontSize: 11,
         color: '#9a9898',
         borderTop: '1px solid rgba(255,255,255,0.05)',
         fontFamily: 'inherit',
+        overflowX: 'auto',
+        whiteSpace: 'nowrap',
       }}>
         <span>tab switch panel</span>
         <span>ctrl-c exit</span>

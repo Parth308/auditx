@@ -33,7 +33,7 @@ const STEPS = [
 
 export default function HowItWorks() {
   return (
-    <section id="how-it-works" style={{ maxWidth: 960, margin: '0 auto', padding: '96px 24px 0' }}>
+    <section id="how-it-works" className="page-section">
       <ScrollReveal>
         <div style={{ borderBottom: HR, paddingBottom: 12, marginBottom: 0 }}>
           <span style={{ fontFamily: 'inherit', fontSize: 16, fontWeight: 700, color: C }}>
@@ -42,15 +42,12 @@ export default function HowItWorks() {
         </div>
       </ScrollReveal>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
+      {/* CSS class handles 2-col → 1-col collapse */}
+      <div className="grid-2col">
         {STEPS.map((step, i) => (
           <ScrollReveal key={step.num} delay={i * 80}>
-            <div style={{
-              padding: '28px 24px',
-              borderBottom: HR,
-              borderRight: i % 2 === 0 ? HR : 'none',
-            }}>
-              <div style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: 32, color: 'rgba(32,29,29,0.12)', marginBottom: 12 }}>
+            <div style={{ padding: '28px 20px', height: '100%' }}>
+              <div style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: 30, color: 'rgba(32,29,29,0.12)', marginBottom: 12 }}>
                 {step.num}
               </div>
               <div style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: 16, color: C, marginBottom: 8 }}>
@@ -59,17 +56,14 @@ export default function HowItWorks() {
               <p style={{ fontFamily: 'inherit', fontSize: 14, lineHeight: 1.65, color: BODY, marginBottom: 16 }}>
                 {step.detail}
               </p>
-              <pre style={{
-                fontFamily: 'inherit',
-                fontSize: 12,
-                padding: '12px 14px',
-                borderRadius: 4,
-                backgroundColor: '#f1eeee',
-                color: '#201d1d',
-                border: '1px solid rgba(15,0,0,0.08)',
-                overflowX: 'auto',
-                lineHeight: 1.8,
-              }}>
+              <pre
+                className="scroll-x"
+                style={{
+                  fontFamily: 'inherit', fontSize: 12, padding: '12px 14px',
+                  borderRadius: 4, backgroundColor: '#f1eeee', color: '#201d1d',
+                  border: '1px solid rgba(15,0,0,0.08)', lineHeight: 1.8,
+                }}
+              >
                 {step.code}
               </pre>
             </div>

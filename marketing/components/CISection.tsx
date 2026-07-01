@@ -45,7 +45,7 @@ const HOOK_FEATURES = [
 
 export default function CISection() {
   return (
-    <section id="ci" style={{ maxWidth: 960, margin: '0 auto', padding: '96px 24px 0' }}>
+    <section id="ci" className="page-section">
       <ScrollReveal>
         <div style={{ borderBottom: HR, paddingBottom: 12, marginBottom: 0 }}>
           <div style={{ fontFamily: FONT, fontSize: 16, fontWeight: 700, color: '#201d1d' }}>
@@ -57,10 +57,11 @@ export default function CISection() {
         </div>
       </ScrollReveal>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', border: HR, borderTop: 'none' }}>
+      {/* ci-grid: 2col → 1col on tablet */}
+      <div className="ci-grid">
         {/* GHA block */}
         <ScrollReveal>
-          <div style={{ borderRight: HR, position: 'relative' }}>
+          <div>
             <div style={{
               fontFamily: FONT, fontSize: 12, padding: '8px 16px',
               color: '#646262', borderBottom: HR, backgroundColor: '#f8f7f7',
@@ -69,10 +70,13 @@ export default function CISection() {
               <span>GitHub Actions</span>
               <CopyButton code={GHA} />
             </div>
-            <pre style={{
-              fontFamily: FONT, fontSize: 12, padding: '16px', lineHeight: 1.75,
-              color: '#201d1d', backgroundColor: '#fdfcfc', overflowX: 'auto', margin: 0,
-            }}>
+            <pre
+              className="scroll-x"
+              style={{
+                fontFamily: FONT, fontSize: 12, padding: '16px', lineHeight: 1.75,
+                color: '#201d1d', backgroundColor: '#fdfcfc', margin: 0,
+              }}
+            >
               {GHA}
             </pre>
           </div>
@@ -89,11 +93,13 @@ export default function CISection() {
               <span>Git hooks</span>
               <CopyButton code={HOOK} />
             </div>
-            <pre style={{
-              fontFamily: FONT, fontSize: 12, padding: '16px', lineHeight: 1.75,
-              color: '#201d1d', backgroundColor: '#fdfcfc', overflowX: 'auto', margin: 0,
-              borderBottom: HR,
-            }}>
+            <pre
+              className="scroll-x"
+              style={{
+                fontFamily: FONT, fontSize: 12, padding: '16px', lineHeight: 1.75,
+                color: '#201d1d', backgroundColor: '#fdfcfc', margin: 0, borderBottom: HR,
+              }}
+            >
               {HOOK}
             </pre>
             <div style={{ padding: '16px' }}>

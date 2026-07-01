@@ -29,9 +29,9 @@ const SCANNERS = [
 
 export default function ScannerGrid() {
   return (
-    <section id="scanners" style={{ maxWidth: 960, margin: '0 auto', padding: '96px 24px 0' }}>
+    <section id="scanners" className="page-section">
       <ScrollReveal>
-        <div style={{ borderBottom: HR, paddingBottom: 12, marginBottom: 0 }}>
+        <div style={{ borderBottom: HR, paddingBottom: 12 }}>
           <div style={{ fontFamily: FONT, fontSize: 16, fontWeight: 700, color: '#201d1d' }}>
             [+] 13 scanner categories
           </div>
@@ -41,18 +41,12 @@ export default function ScannerGrid() {
         </div>
       </ScrollReveal>
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-        border: HR,
-        borderTop: 'none',
-      }}>
+      {/* scanner-grid CSS class: 3 col → 2 col → 1 col via media queries */}
+      <div className="scanner-grid">
         {SCANNERS.map((s, i) => (
           <ScrollReveal key={s.id} delay={i * 40}>
             <div style={{
               padding: '16px',
-              borderBottom: HR,
-              borderRight: HR,
               backgroundColor: s.unique ? '#f8f7f7' : 'transparent',
               height: '100%',
             }}>
@@ -63,7 +57,7 @@ export default function ScannerGrid() {
                 {s.unique && (
                   <span style={{
                     fontFamily: FONT, fontSize: 10, padding: '2px 6px', borderRadius: 4,
-                    backgroundColor: '#201d1d', color: '#fdfcfc',
+                    backgroundColor: '#201d1d', color: '#fdfcfc', whiteSpace: 'nowrap',
                   }}>
                     [unique]
                   </span>
