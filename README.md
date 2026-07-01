@@ -9,8 +9,10 @@
 [![npm version](https://img.shields.io/npm/v/auditx?color=crimson&label=auditx)](https://www.npmjs.com/package/auditx)
 [![npm downloads](https://img.shields.io/npm/dm/auditx?color=crimson)](https://www.npmjs.com/package/auditx)
 [![License: MIT](https://img.shields.io/badge/license-MIT-crimson)](LICENSE)
-[![CI](https://img.shields.io/github/actions/workflow/status/parth/auditx/test.yml?label=CI&color=crimson)](https://github.com/parth/auditx/actions)
+[![CI](https://img.shields.io/github/actions/workflow/status/parth308/auditx/test.yml?label=CI&color=crimson)](https://github.com/parth308/auditx/actions)
 [![TypeScript](https://img.shields.io/badge/built%20with-TypeScript-blue)](https://www.typescriptlang.org/)
+
+**[🌐 Visit Website](https://auditx-cli.vercel.app/)**
 
 </div>
 
@@ -25,9 +27,9 @@ npx auditx .
 ```
 🛡️  auditx — scanning /home/parth/codeoracle
   ✓  stack detected: Node.js · TypeScript · Docker
-  ✓  running 10 scanners in parallel...
+  ✓  running 13 scanners in parallel...
 
-  ████████████████████████████████ 100% (14.2s)
+  ████████████████████████████████ 100% (9.4s)
 
   ┌──────────────┬──────────┬────────┬────────┬──────┐
   │ Category     │ Critical │  High  │ Medium │  Low │
@@ -35,6 +37,7 @@ npx auditx .
   │ Secrets      │    1     │   0    │   0    │   0  │
   │ Dependencies │    0     │   3    │   5    │   2  │
   │ SAST         │    0     │   1    │   3    │   7  │
+  │ AI_CODE      │    0     │   0    │   3    │   4  │
   │ Duplication  │    0     │   1    │   4    │   0  │
   │ Dep Health   │    0     │   0    │   2    │   3  │
   │ Type Safety  │    0     │   1    │   6    │   0  │
