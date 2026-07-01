@@ -1,0 +1,38 @@
+rules:
+  - id: ai-django-debug-true
+    message: >
+      `DEBUG = True` should never be deployed to production. Ensure this is driven by an environment variable.
+    severity: ERROR
+    languages: [python]
+    pattern: DEBUG = True
+
+  - id: ai-django-csrf-exempt
+    message: >
+      Using `@csrf_exempt` disables cross-site request forgery protection. Ensure this endpoint is properly authenticated by other means (e.g., stateless API token).
+    severity: WARNING
+    languages: [python]
+    pattern: |
+      @csrf_exempt
+      def $F(...):
+        ...
+
+  - id: ai-django-raw-sql
+    message: >
+      Using `RawSQL` or `objects.raw()` can lead to SQL injection if string formatting is used instead of query parameters.
+    severity: WARNING
+    languages: [python]
+    pattern-either:
+      - pattern: $MODEL.objects.raw(f"...")
+      - pattern: $MODEL.objects.raw("..." % ...)
+      - pattern: $MODEL.objects.raw("...".format(...))
+
+  - id: ai-django-mass-assignment
+    message: >
+      Using `__all__` in a ModelForm's `fields` allows mass assignment attacks if new fields are added to the model later. Explicitly list allowed fields.
+    severity: WARNING
+    languages: [python]
+    pattern: |
+      class $META:
+        ...
+        fields = '__all__'
+        ...

@@ -1,0 +1,48 @@
+rules:
+  - id: ai-golang-unhandled-error
+    message: >
+      Error returned by function is completely ignored. Handle it properly.
+    severity: WARNING
+    languages: [go]
+    pattern: _, _ = $F(...)
+
+  - id: ai-golang-goroutine-loop-variable
+    message: >
+      Using a loop variable inside a goroutine without passing it as an argument or re-assigning it. It will capture the last value of the loop.
+    severity: ERROR
+    languages: [go]
+    pattern: |
+      for $K, $V := range $MAP {
+        go func() {
+          ... $K ... $V ...
+        }()
+      }
+
+  - id: ai-golang-defer-in-loop
+    message: >
+      `defer` inside a loop will only execute when the surrounding function returns, not at the end of each iteration. This can exhaust resources like file descriptors.
+    severity: WARNING
+    languages: [go]
+    pattern: |
+      for ... {
+        ...
+        defer $F(...)
+        ...
+      }
+
+  - id: ai-golang-fmt-print
+    message: >
+      `fmt.Print*` used instead of a proper structured logger (e.g., `slog`, `zap`, `logrus`).
+    severity: INFO
+    languages: [go]
+    pattern-either:
+      - pattern: fmt.Println(...)
+      - pattern: fmt.Printf(...)
+      - pattern: fmt.Print(...)
+
+  - id: ai-golang-crypto-md5
+    message: >
+      Use of MD5 is cryptographically broken and considered insecure for passwords or security hashes.
+    severity: ERROR
+    languages: [go]
+    pattern: md5.New()

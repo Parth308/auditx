@@ -1,0 +1,48 @@
+rules:
+  - id: ai-python-print-leftover
+    message: >
+      `print()` statement left in code. Use the `logging` module for production applications.
+    severity: WARNING
+    languages: [python]
+    pattern: print(...)
+
+  - id: ai-python-bare-except
+    message: >
+      Bare `except:` catches SystemExit and KeyboardInterrupt. Use `except Exception:` instead.
+    severity: WARNING
+    languages: [python]
+    pattern: |
+      try:
+        ...
+      except:
+        ...
+
+  - id: ai-python-mutable-default-arg
+    message: >
+      Mutable default arguments (list, dict) are shared across all calls. Use `None` instead.
+    severity: ERROR
+    languages: [python]
+    pattern-either:
+      - pattern: "def $F(..., $ARG=[], ...): ..."
+      - pattern: "def $F(..., $ARG={}, ...): ..."
+
+  - id: ai-python-assert-used
+    message: >
+      `assert` statements are removed when running Python with `-O`. Do not use for data validation or control flow.
+    severity: WARNING
+    languages: [python]
+    pattern: assert ...
+
+  - id: ai-python-exec-used
+    message: >
+      Use of `exec()` is highly dangerous and allows arbitrary code execution.
+    severity: ERROR
+    languages: [python]
+    pattern: exec(...)
+
+  - id: ai-python-flask-debug-true
+    message: >
+      Flask app run with `debug=True`. This enables the interactive debugger and allows arbitrary code execution.
+    severity: ERROR
+    languages: [python]
+    pattern: $APP.run(..., debug=True, ...)

@@ -288,47 +288,6 @@ rules:
     fix: ""
     pattern: debugger;
 
-  # ─────────────────────────────────────────────
-  # TYPE SAFETY (TS)
-  # ─────────────────────────────────────────────
-
-  - id: ai-ts-any-cast
-    message: >
-      `as any` defeats TypeScript. Type the value properly.
-    severity: WARNING
-    languages: [typescript]
-    pattern: $X as any
-
-  - id: ai-ts-ignore-comment
-    message: >
-      @ts-ignore suppresses errors without fixing. Use @ts-expect-error with
-      explanation, or fix the type.
-    severity: WARNING
-    languages: [typescript]
-    pattern-regex: "// @ts-ignore"
-
-  - id: ai-ts-nocheck
-    message: "@ts-nocheck disables type checking for whole file. Never acceptable in prod."
-    severity: ERROR
-    languages: [typescript]
-    pattern-regex: "// @ts-nocheck"
-
-  - id: ai-ts-nonNull-assertion-chain
-    message: >
-      Chaining non-null assertions `a!.b!` gives up on type safety.
-      Add null checks or optional chaining with fallback.
-    severity: WARNING
-    languages: [typescript]
-    pattern: $A!.$B!
-
-  - id: ai-any-function-param
-    message: "Function parameter typed as `any`. Type it explicitly."
-    severity: WARNING
-    languages: [typescript]
-    pattern-either:
-      - pattern: "function $F($P: any) { ... }"
-      - pattern: "const $F = ($P: any) => { ... }"
-      - pattern: "const $F = ($P: any) => $EXPR"
 
   # ─────────────────────────────────────────────
   # OBJECT / ARRAY
@@ -435,58 +394,6 @@ rules:
     severity: ERROR
     languages: [javascript, typescript, jsx, tsx]
     pattern: $EL.innerHTML = $X
-
-  # ─────────────────────────────────────────────
-  # REACT
-  # ─────────────────────────────────────────────
-
-  - id: ai-react-useeffect-no-deps
-    message: >
-      useEffect with no dependency array runs after every render.
-      Add a deps array.
-    severity: WARNING
-    languages: [javascript, typescript, jsx, tsx]
-    pattern: |
-      useEffect(() => { ... })
-
-  - id: ai-react-key-index
-    message: >
-      Array index as React key. Breaks reconciliation on reorder.
-      Use stable unique ID.
-    severity: WARNING
-    languages: [javascript, typescript, jsx, tsx]
-    pattern-regex: \.map\([^,]+,\s*(?<idx>[a-zA-Z0-9_]+)\s*\)\s*=>\s*<[^>]+key=\{\k<idx>\}
-
-  - id: ai-react-state-mutate-direct
-    message: >
-      Directly mutating state object. React won't detect change —
-      use setState with new reference.
-    severity: ERROR
-    languages: [javascript, typescript, jsx, tsx]
-    paths:
-      include:
-        - "*.jsx"
-        - "*.tsx"
-    patterns:
-      - pattern-inside: |
-          const [$STATE, $SET] = useState(...);
-          ...
-      - pattern-either:
-          - pattern: $STATE.$PROP = $VAL
-          - pattern: $STATE.push($VAL)
-
-  # FIXED: constrained to setX-style setter names, was matching any capitalized call
-  - id: ai-react-usestate-object-no-spread
-    message: >
-      Replacing entire object state without spreading previous state loses
-      other fields. Use `setState(prev => ({ ...prev, key: val }))`.
-    severity: WARNING
-    languages: [javascript, typescript, jsx, tsx]
-    patterns:
-      - pattern: "$SET({ $KEY: $VAL })"
-      - metavariable-regex:
-          metavariable: $SET
-          regex: ^set[A-Z]\w*$
 
   # ─────────────────────────────────────────────
   # CODE SMELL / MAINTAINABILITY

@@ -1,9 +1,10 @@
 import { execFile } from 'child_process';
+import { join } from 'path';
 import { promisify } from 'util';
 import { randomUUID } from 'crypto';
 import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
-import type { Finding, ScanResult, Severity } from '../../types.js';
+import type { Finding, ScanResult, Severity, StackInfo } from '../../types.js';
 import { getBinaryPath, getSemgrepEnv } from '../../installer.js';
 
 const execFileAsync = promisify(execFile);
@@ -18,25 +19,51 @@ function mapSeverity(sev: string): Severity {
   }
 }
 
-export async function runAiPatterns(targetPath: string, stagedFiles?: string[]): Promise<ScanResult> {
+export async function runAiPatterns(targetPath: string, stagedFiles: string[] | undefined, stack: StackInfo): Promise<ScanResult> {
   const start = Date.now();
   const findings: Finding[] = [];
 
   try {
     const semgrepBin = await getBinaryPath('semgrep');
 
-    const prodRules = fileURLToPath(new URL('../src/rules/ai-patterns.yml', import.meta.url));
-    const devRules = fileURLToPath(new URL('../rules/ai-patterns.yml', import.meta.url));
-    const rulesPath = existsSync(prodRules) ? prodRules : devRules;
+    const rulesRoot = fileURLToPath(new URL('../src/rules', import.meta.url));
+    const rulesDevRoot = fileURLToPath(new URL('../rules', import.meta.url));
+    const baseRulesDir = existsSync(rulesRoot) ? rulesRoot : rulesDevRoot;
 
-    if (!existsSync(rulesPath)) {
-      return { scanner: 'aipatterns', ok: false, findings: [], error: 'ruleset file not found', durationMs: Date.now() - start };
+    if (!existsSync(baseRulesDir)) {
+      return { scanner: 'aipatterns', ok: false, findings: [], error: 'ruleset directory not found', durationMs: Date.now() - start };
+    }
+
+    const configArgs = ['--config', join(baseRulesDir, 'core')];
+    if (stack.hasTypeScript) {
+      configArgs.push('--config', join(baseRulesDir, 'languages', 'typescript.yml'));
+    }
+    if (stack.hasReact) {
+      configArgs.push('--config', join(baseRulesDir, 'frameworks', 'react.yml'));
+    }
+    if (stack.hasNextJs) {
+      configArgs.push('--config', join(baseRulesDir, 'frameworks', 'nextjs.yml'));
+    }
+    if (stack.hasNestJs) {
+      configArgs.push('--config', join(baseRulesDir, 'frameworks', 'nestjs.yml'));
+    }
+    if (stack.hasExpress) {
+      configArgs.push('--config', join(baseRulesDir, 'frameworks', 'express.yml'));
+    }
+    if (stack.hasPython) {
+      configArgs.push('--config', join(baseRulesDir, 'languages', 'python.yml'));
+    }
+    if (stack.hasDjango) {
+      configArgs.push('--config', join(baseRulesDir, 'frameworks', 'django.yml'));
+    }
+    if (stack.hasGo) {
+      configArgs.push('--config', join(baseRulesDir, 'languages', 'golang.yml'));
     }
 
     const targets = stagedFiles && stagedFiles.length > 0 ? stagedFiles : [targetPath];
     const args = [
       'scan',
-      '--config', rulesPath,
+      ...configArgs,
       '--json',
       '--timeout', '30',
       '--exclude', 'node_modules',

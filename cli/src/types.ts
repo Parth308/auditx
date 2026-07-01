@@ -84,6 +84,11 @@ export interface StackInfo {
   hasGitHistory: boolean;
   hasTerraform: boolean;
   hasTypeScript: boolean;
+  hasReact: boolean;
+  hasDjango: boolean;
+  hasNextJs: boolean;
+  hasNestJs: boolean;
+  hasExpress: boolean;
 }
 
 /** Resolved CLI configuration after arg parsing. */

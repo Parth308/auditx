@@ -1,0 +1,50 @@
+rules:
+  - id: ai-express-no-return-after-send
+    message: >
+      Calling `res.send`, `res.json`, or `res.redirect` without `return` can lead to "Headers already sent" errors if execution continues. Add `return` before it, or return immediately after.
+    severity: WARNING
+    languages: [javascript, typescript]
+    pattern: |
+      if (...) {
+        ...
+        res.$SEND(...)
+        $SOMETHING_ELSE
+      }
+    metavariable-regex:
+      metavariable: $SEND
+      regex: ^(send|json|redirect|sendStatus|render)$
+
+  - id: ai-express-next-no-return
+    message: >
+      Calling `next(err)` inside an `if` block without `return` continues execution. Add `return next(err)`.
+    severity: ERROR
+    languages: [javascript, typescript]
+    pattern: |
+      if (...) {
+        ...
+        next(...)
+        $SOMETHING_ELSE
+      }
+
+  - id: ai-express-xss-res-send
+    message: >
+      Sending raw unescaped template literals in `res.send()` can lead to XSS. Use a template engine or sanitize input.
+    severity: WARNING
+    languages: [javascript, typescript]
+    pattern: res.send(`...${...}...`)
+
+  - id: ai-express-disable-x-powered-by
+    message: >
+      Express by default sends the `X-Powered-By: Express` header, which exposes your tech stack to attackers. Use `app.disable('x-powered-by')` or `helmet`.
+    severity: INFO
+    languages: [javascript, typescript]
+    patterns:
+      - pattern: const $APP = express()
+      - pattern-not-inside: |
+          const $APP = express()
+          ...
+          $APP.disable('x-powered-by')
+      - pattern-not-inside: |
+          const $APP = express()
+          ...
+          $APP.use(helmet())

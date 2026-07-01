@@ -12,13 +12,14 @@ import { runTypecheck } from './quality/typecheck.js';
 import { runGitHealth } from './health/githealth.js';
 import { runLizard } from './quality/lizard.js';
 import { runAiPatterns } from './ai/aipatterns.js';
+import { runIaC } from './security/iac.js';
 
 export type RunnerName = 'secrets' | 'deps' | 'sast' | 'deadcode' | 'iac' | 'patterns' | 'duplication' | 'complexity' | 'dephealth' | 'license' | 'aicode' | 'githealth' | 'typesafety';
 
 interface RunnerDef {
   name: RunnerName;
   label: string;
-  run: (targetDir: string, stagedFiles?: string[]) => Promise<ScanResult>;
+  run: (targetDir: string, stagedFiles: string[] | undefined, stack: StackInfo) => Promise<ScanResult>;
   /** Returns true if this runner is applicable for the detected stack */
   isApplicable: (stack: StackInfo) => boolean;
 }
@@ -36,6 +37,12 @@ const RUNNERS: RunnerDef[] = [
     label: 'trivy (deps/CVEs)',
     run: runTrivy,
     isApplicable: () => true, // trivy handles all ecosystems
+  },
+  {
+    name: 'iac',
+    label: 'trivy (IaC)',
+    run: runIaC,
+    isApplicable: (s) => s.hasTerraform || s.hasDocker || s.hasGit, // Trivy config scans kubernetes manifests, terraform, dockerfiles
   },
   {
     name: 'deps',
@@ -142,7 +149,7 @@ export async function runAll(
 
   const runAndReport = async (runner: (typeof RUNNERS)[0]) => {
     try {
-      const result = await runner.run(targetDir, config.stagedFiles);
+      const result = await runner.run(targetDir, config.stagedFiles, stack);
       onProgress?.({
         label: runner.label,
         status: result.ok ? 'done' : 'failed',

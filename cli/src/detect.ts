@@ -1,4 +1,4 @@
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import type { StackInfo } from './types.js';
 
@@ -54,6 +54,56 @@ export function detectStack(targetDir: string): StackInfo {
       existsSync(join(targetDir, 'terraform', 'main.tf')),
 
     hasTypeScript: has('tsconfig.json'),
+    
+    hasReact: (() => {
+      if (!has('package.json')) return false;
+      try {
+        const pkg = JSON.parse(readFileSync(join(targetDir, 'package.json'), 'utf-8'));
+        return !!(pkg.dependencies?.react || pkg.devDependencies?.react);
+      } catch {
+        return false;
+      }
+    })(),
+
+    hasNextJs: (() => {
+      if (!has('package.json')) return false;
+      try {
+        const pkg = JSON.parse(readFileSync(join(targetDir, 'package.json'), 'utf-8'));
+        return !!(pkg.dependencies?.next || pkg.devDependencies?.next);
+      } catch {
+        return false;
+      }
+    })(),
+
+    hasNestJs: (() => {
+      if (!has('package.json')) return false;
+      try {
+        const pkg = JSON.parse(readFileSync(join(targetDir, 'package.json'), 'utf-8'));
+        return !!(pkg.dependencies?.['@nestjs/core'] || pkg.devDependencies?.['@nestjs/core']);
+      } catch {
+        return false;
+      }
+    })(),
+
+    hasExpress: (() => {
+      if (!has('package.json')) return false;
+      try {
+        const pkg = JSON.parse(readFileSync(join(targetDir, 'package.json'), 'utf-8'));
+        return !!(pkg.dependencies?.express || pkg.devDependencies?.express);
+      } catch {
+        return false;
+      }
+    })(),
+
+    hasDjango: (() => {
+      if (!has('requirements.txt')) return false;
+      try {
+        const reqs = readFileSync(join(targetDir, 'requirements.txt'), 'utf-8');
+        return reqs.toLowerCase().includes('django');
+      } catch {
+        return false;
+      }
+    })(),
   };
 }
 
@@ -62,7 +112,12 @@ export function stackLabels(info: StackInfo): string[] {
   const labels: string[] = [];
   if (info.hasNodeJs) labels.push('Node.js');
   if (info.hasTypeScript) labels.push('TypeScript');
+  if (info.hasReact) labels.push('React');
+  if (info.hasNextJs) labels.push('Next.js');
+  if (info.hasNestJs) labels.push('NestJS');
+  if (info.hasExpress) labels.push('Express');
   if (info.hasPython) labels.push('Python');
+  if (info.hasDjango) labels.push('Django');
   if (info.hasRust) labels.push('Rust');
   if (info.hasGo) labels.push('Go');
   if (info.hasDocker) labels.push('Docker');

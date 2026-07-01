@@ -1,0 +1,33 @@
+rules:
+  - id: ai-nestjs-req-body
+    message: >
+      Extracting the body manually from `@Req()` bypasses NestJS validation pipes. Use `@Body()` instead to ensure DTO validation runs.
+    severity: WARNING
+    languages: [typescript]
+    pattern: |
+      @$METHOD(...)
+      $F(@Req() $REQ, ...) {
+        ...
+        $REQ.body
+        ...
+      }
+
+  - id: ai-nestjs-res-send
+    message: >
+      Using `@Res() res` and calling `res.send()` manually breaks NestJS interceptors and response mapping. Try to return the data directly from the controller.
+    severity: INFO
+    languages: [typescript]
+    pattern: |
+      @$METHOD(...)
+      $F(..., @Res() $RES, ...) {
+        ...
+        $RES.send(...)
+        ...
+      }
+
+  - id: ai-nestjs-global-prefix-hardcoded
+    message: >
+      Hardcoding route prefixes in `@Controller('api/v1/...')` makes versioning difficult. Use `app.setGlobalPrefix('api/v1')` in main.ts instead.
+    severity: INFO
+    languages: [typescript]
+    pattern: "@Controller('api/v1/...')"

@@ -1,0 +1,40 @@
+rules:
+  - id: ai-nextjs-a-tag
+    message: >
+      Using native `<a>` tag in Next.js causes full page reloads. Use `<Link>` from `next/link` instead for SPA navigation.
+    severity: WARNING
+    languages: [javascript, typescript, jsx, tsx]
+    paths:
+      include:
+        - "*.jsx"
+        - "*.tsx"
+    patterns:
+      - pattern-either:
+          - pattern: <a href="...">...</a>
+          - pattern: <a href={$X}>...</a>
+      - pattern-not-inside: |
+          <Link ...> ... </Link>
+      - pattern-not: <a href="..." target="_blank" ...>...</a>
+      - pattern-not: <a href={$X} target="_blank" ...>...</a>
+
+  - id: ai-nextjs-img-tag
+    message: >
+      Using native `<img>` tag bypasses Next.js Image Optimization. Use `<Image>` from `next/image` instead.
+    severity: INFO
+    languages: [javascript, typescript, jsx, tsx]
+    paths:
+      include:
+        - "*.jsx"
+        - "*.tsx"
+    pattern: <img ... />
+
+  - id: ai-nextjs-document-title
+    message: >
+      Setting `<title>` manually inside a component is discouraged in Next.js App Router. Export `metadata` instead.
+    severity: INFO
+    languages: [javascript, typescript, jsx, tsx]
+    paths:
+      include:
+        - "*.jsx"
+        - "*.tsx"
+    pattern: <title>...</title>

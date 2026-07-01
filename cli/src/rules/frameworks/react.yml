@@ -1,0 +1,47 @@
+rules:
+  - id: ai-react-useeffect-no-deps
+    message: >
+      useEffect with no dependency array runs after every render.
+      Add a deps array.
+    severity: WARNING
+    languages: [javascript, typescript, jsx, tsx]
+    pattern: |
+      useEffect(() => { ... })
+
+  - id: ai-react-key-index
+    message: >
+      Array index as React key. Breaks reconciliation on reorder.
+      Use stable unique ID.
+    severity: WARNING
+    languages: [javascript, typescript, jsx, tsx]
+    pattern-regex: \.map\([^,]+,\s*(?<idx>[a-zA-Z0-9_]+)\s*\)\s*=>\s*<[^>]+key=\{\k<idx>\}
+
+  - id: ai-react-state-mutate-direct
+    message: >
+      Directly mutating state object. React won't detect change —
+      use setState with new reference.
+    severity: ERROR
+    languages: [javascript, typescript, jsx, tsx]
+    paths:
+      include:
+        - "*.jsx"
+        - "*.tsx"
+    patterns:
+      - pattern-inside: |
+          const [$STATE, $SET] = useState(...);
+          ...
+      - pattern-either:
+          - pattern: $STATE.$PROP = $VAL
+          - pattern: $STATE.push($VAL)
+
+  - id: ai-react-usestate-object-no-spread
+    message: >
+      Replacing entire object state without spreading previous state loses
+      other fields. Use `setState(prev => ({ ...prev, key: val }))`.
+    severity: WARNING
+    languages: [javascript, typescript, jsx, tsx]
+    patterns:
+      - pattern: "$SET({ $KEY: $VAL })"
+      - metavariable-regex:
+          metavariable: $SET
+          regex: ^set[A-Z]\w*$

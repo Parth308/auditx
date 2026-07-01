@@ -1,0 +1,38 @@
+rules:
+  - id: ai-ts-any-cast
+    message: >
+      `as any` defeats TypeScript. Type the value properly.
+    severity: WARNING
+    languages: [typescript]
+    pattern: $X as any
+
+  - id: ai-ts-ignore-comment
+    message: >
+      @ts-ignore suppresses errors without fixing. Use @ts-expect-error with
+      explanation, or fix the type.
+    severity: WARNING
+    languages: [typescript]
+    pattern-regex: "// @ts-ignore"
+
+  - id: ai-ts-nocheck
+    message: "@ts-nocheck disables type checking for whole file. Never acceptable in prod."
+    severity: ERROR
+    languages: [typescript]
+    pattern-regex: "// @ts-nocheck"
+
+  - id: ai-ts-nonNull-assertion-chain
+    message: >
+      Chaining non-null assertions `a!.b!` gives up on type safety.
+      Add null checks or optional chaining with fallback.
+    severity: WARNING
+    languages: [typescript]
+    pattern: $A!.$B!
+
+  - id: ai-any-function-param
+    message: "Function parameter typed as `any`. Type it explicitly."
+    severity: WARNING
+    languages: [typescript]
+    pattern-either:
+      - pattern: "function $F($P: any) { ... }"
+      - pattern: "const $F = ($P: any) => { ... }"
+      - pattern: "const $F = ($P: any) => $EXPR"
