@@ -1,115 +1,113 @@
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 import type { StackInfo } from './types.js';
 
-/**
- * Inspects the target directory and returns a StackInfo object
- * that tells runners which scanners are relevant to run.
- *
- * From plan.md:
- *   package.json present  → enable npm audit, eslint, knip
- *   requirements.txt      → enable pip-audit
- *   Pipfile / pyproject   → enable pip-audit
- *   Cargo.toml            → enable cargo audit
- *   Dockerfile            → enable trivy config (IaC)
- *   .git present          → enable gitleaks (full history scan)
- *   go.mod                → enable trivy go module scan
- *   tsconfig.json         → enable eslint/typescript checks
- */
+const MAX_DEPTH = 4;
+const IGNORE_DIRS = new Set(['node_modules', '.git', '.next', 'dist', 'build', 'vendor', '.cache', 'coverage']);
+
+const TARGET_FILES = new Set([
+  'package.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml',
+  'requirements.txt', 'Pipfile', 'pyproject.toml', 'setup.py', 'setup.cfg',
+  'Cargo.toml', 'go.mod', 'Dockerfile', 'docker-compose.yml', 'docker-compose.yaml',
+  'main.tf', 'terraform.tf', 'tsconfig.json',
+  'schema.sql', 'schema.prisma', 'drizzle.config.ts'
+]);
+
+interface WorkspaceScan {
+  foundNames: Set<string>;
+  packageJsons: string[];
+  requirementsTxts: string[];
+}
+
+function scanWorkspace(dir: string, maxDepth: number, currentDepth = 0, result: WorkspaceScan = { foundNames: new Set(), packageJsons: [], requirementsTxts: [] }): WorkspaceScan {
+  if (currentDepth > maxDepth) return result;
+
+  try {
+    const entries = readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        if (!IGNORE_DIRS.has(entry.name)) {
+          scanWorkspace(join(dir, entry.name), maxDepth, currentDepth + 1, result);
+        }
+      } else if (entry.isFile()) {
+        const name = entry.name;
+        // Optimization: For the root dir (depth 0), we record special directory names like 'infra', 'prisma', 'migrations'
+        // But for files, we check if they are in TARGET_FILES
+        if (TARGET_FILES.has(name) || name.endsWith('.tf') || name.endsWith('.sql')) {
+          result.foundNames.add(name);
+          if (name === 'package.json') result.packageJsons.push(join(dir, name));
+          if (name === 'requirements.txt') result.requirementsTxts.push(join(dir, name));
+        }
+      }
+    }
+  } catch (err) {
+    // Ignore permissions errors or missing dirs
+  }
+
+  // Also check some common root directories for hints (e.g. prisma/, db/, migrations/, infra/, terraform/)
+  if (currentDepth === 0) {
+    const rootDirs = ['prisma', 'db', 'migrations', 'infra', 'terraform', '.git'];
+    for (const rd of rootDirs) {
+      if (existsSync(join(dir, rd))) {
+        result.foundNames.add(rd);
+      }
+    }
+  }
+
+  return result;
+}
+
 export function detectStack(targetDir: string): StackInfo {
-  const has = (file: string) => existsSync(join(targetDir, file));
+  const scan = scanWorkspace(targetDir, MAX_DEPTH);
+  const has = (name: string) => scan.foundNames.has(name);
+  const hasExt = (ext: string) => Array.from(scan.foundNames).some(n => n.endsWith(ext));
+
+  // Merge all dependencies from all package.json files
+  const allDeps = new Set<string>();
+  for (const pkgPath of scan.packageJsons) {
+    try {
+      const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+      if (pkg.dependencies) Object.keys(pkg.dependencies).forEach(d => allDeps.add(d));
+      if (pkg.devDependencies) Object.keys(pkg.devDependencies).forEach(d => allDeps.add(d));
+    } catch {
+      // Ignore invalid JSON
+    }
+  }
+
+  // Merge all requirements from all requirements.txt files
+  let allReqs = '';
+  for (const reqPath of scan.requirementsTxts) {
+    try {
+      allReqs += readFileSync(reqPath, 'utf-8').toLowerCase() + '\n';
+    } catch {
+      // Ignore read errors
+    }
+  }
 
   const hasGit = has('.git');
 
   return {
-    hasNodeJs:
-      has('package.json') ||
-      has('package-lock.json') ||
-      has('yarn.lock') ||
-      has('pnpm-lock.yaml'),
-
-    hasPython:
-      has('requirements.txt') ||
-      has('Pipfile') ||
-      has('pyproject.toml') ||
-      has('setup.py') ||
-      has('setup.cfg'),
-
+    hasNodeJs: has('package.json') || has('package-lock.json') || has('yarn.lock') || has('pnpm-lock.yaml'),
+    hasPython: has('requirements.txt') || has('Pipfile') || has('pyproject.toml') || has('setup.py') || has('setup.cfg'),
     hasRust: has('Cargo.toml'),
-
     hasGo: has('go.mod'),
-
     hasDocker: has('Dockerfile') || has('docker-compose.yml') || has('docker-compose.yaml'),
-
     hasGit,
-
-    // Treat any .git dir as having history. Gitleaks will scan it.
     hasGitHistory: hasGit,
-
-    hasTerraform:
-      has('main.tf') ||
-      has('terraform.tf') ||
-      // Check a couple of common subdirectory patterns
-      existsSync(join(targetDir, 'infra', 'main.tf')) ||
-      existsSync(join(targetDir, 'terraform', 'main.tf')),
-
+    hasTerraform: has('main.tf') || has('terraform.tf') || has('infra') || has('terraform') || hasExt('.tf'),
     hasTypeScript: has('tsconfig.json'),
     
-    hasReact: (() => {
-      if (!has('package.json')) return false;
-      try {
-        const pkg = JSON.parse(readFileSync(join(targetDir, 'package.json'), 'utf-8'));
-        return !!(pkg.dependencies?.react || pkg.devDependencies?.react);
-      } catch {
-        return false;
-      }
-    })(),
-
-    hasNextJs: (() => {
-      if (!has('package.json')) return false;
-      try {
-        const pkg = JSON.parse(readFileSync(join(targetDir, 'package.json'), 'utf-8'));
-        return !!(pkg.dependencies?.next || pkg.devDependencies?.next);
-      } catch {
-        return false;
-      }
-    })(),
-
-    hasNestJs: (() => {
-      if (!has('package.json')) return false;
-      try {
-        const pkg = JSON.parse(readFileSync(join(targetDir, 'package.json'), 'utf-8'));
-        return !!(pkg.dependencies?.['@nestjs/core'] || pkg.devDependencies?.['@nestjs/core']);
-      } catch {
-        return false;
-      }
-    })(),
-
-    hasExpress: (() => {
-      if (!has('package.json')) return false;
-      try {
-        const pkg = JSON.parse(readFileSync(join(targetDir, 'package.json'), 'utf-8'));
-        return !!(pkg.dependencies?.express || pkg.devDependencies?.express);
-      } catch {
-        return false;
-      }
-    })(),
-
-    hasDjango: (() => {
-      if (!has('requirements.txt')) return false;
-      try {
-        const reqs = readFileSync(join(targetDir, 'requirements.txt'), 'utf-8');
-        return reqs.toLowerCase().includes('django');
-      } catch {
-        return false;
-      }
-    })(),
-
-    hasSql: has('schema.sql') || has('schema.prisma') || has('drizzle.config.ts') || has('prisma') || has('migrations') || has('db'),
+    hasReact: allDeps.has('react'),
+    hasNextJs: allDeps.has('next'),
+    hasNestJs: allDeps.has('@nestjs/core'),
+    hasExpress: allDeps.has('express'),
+    
+    hasDjango: allReqs.includes('django'),
+    
+    hasSql: has('schema.sql') || has('schema.prisma') || has('drizzle.config.ts') || has('prisma') || has('migrations') || has('db') || hasExt('.sql'),
   };
 }
 
-/** Returns a human-readable list of detected stack labels for the report header. */
 export function stackLabels(info: StackInfo): string[] {
   const labels: string[] = [];
   if (info.hasNodeJs) labels.push('Node.js');
