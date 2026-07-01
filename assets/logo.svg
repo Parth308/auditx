@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1e24"/>
+      <stop offset="100%" stop-color="#0a0a0c"/>
+    </linearGradient>
+    <linearGradient id="border" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3f3f4a"/>
+      <stop offset="100%" stop-color="#15151a"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff3344"/>
+      <stop offset="100%" stop-color="#990011"/>
+    </linearGradient>
+    <filter id="neon" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur1" />
+      <feGaussianBlur in="SourceGraphic" stdDeviation="20" result="blur2" />
+      <feMerge>
+        <feMergeNode in="blur2" />
+        <feMergeNode in="blur1" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background App Icon shape -->
+  <rect width="512" height="512" rx="128" fill="url(#bg)" stroke="url(#border)" stroke-width="4"/>
+
+  <!-- Inner Shield -->
+  <path d="M256 100 L140 140 V260 C140 360 256 412 256 412 C256 412 372 360 372 260 V140 Z" 
+        fill="#121216" stroke="#2a2a35" stroke-width="16" stroke-linejoin="round"/>
+
+  <!-- Glowing X -->
+  <g filter="url(#neon)">
+    <path d="M204 204 L308 308 M308 204 L204 308" 
+          stroke="url(#accent)" stroke-width="40" stroke-linecap="round"/>
+  </g>
+</svg>
