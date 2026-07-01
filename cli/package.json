@@ -1,11 +1,11 @@
 {
   "name": "auditx",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "One command. Every vulnerability. AI-ready markdown report.",
   "type": "module",
   "bin": "dist/auditx.js",
   "scripts": {
-    "build": "tsup src/bin/auditx.ts --format esm --dts --outDir dist --clean --define.__VERSION__=\\\"0.1.8\\\"",
+    "build": "tsup src/bin/auditx.ts --format esm --dts --outDir dist --clean --define.__VERSION__=\\\"0.1.9\\\"",
     "dev": "tsx src/bin/auditx.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"

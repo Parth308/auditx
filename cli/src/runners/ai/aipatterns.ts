@@ -34,7 +34,18 @@ export async function runAiPatterns(targetPath: string, stagedFiles?: string[]):
     }
 
     const targets = stagedFiles && stagedFiles.length > 0 ? stagedFiles : [targetPath];
-    const args = ['scan', '--config', rulesPath, '--json', '--timeout', '30', ...targets];
+    const args = [
+      'scan',
+      '--config', rulesPath,
+      '--json',
+      '--timeout', '30',
+      '--exclude', 'node_modules',
+      '--exclude', '.next',
+      '--exclude', 'dist',
+      '--exclude', 'build',
+      '--exclude', '.git',
+      ...targets
+    ];
 
     let stdout = '';
     try {

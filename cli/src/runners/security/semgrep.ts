@@ -59,10 +59,17 @@ export async function runSemgrep(targetDir: string, stagedFiles?: string[]): Pro
   try {
     const bin = await getBinaryPath('semgrep');
     const args = [
+      'scan',
       '--config', 'p/security-audit',
       '--json',
       '--quiet',
+      '--timeout', '30',
       '--no-rewrite-rule-ids',
+      '--exclude', 'node_modules',
+      '--exclude', '.next',
+      '--exclude', 'dist',
+      '--exclude', 'build',
+      '--exclude', '.git',
     ];
     if (stagedFiles && stagedFiles.length > 0) {
       args.push(...stagedFiles);

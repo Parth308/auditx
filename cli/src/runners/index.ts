@@ -134,9 +134,14 @@ export async function runAll(
     return true;
   });
 
-  // Run all in parallel
-  const settled = await Promise.allSettled(
-    selected.map(async (runner) => {
+  const semgrepNames = new Set(['sast', 'aicode']);
+  const otherRunners = selected.filter((r) => !semgrepNames.has(r.name));
+  const semgrepRunners = selected.filter((r) => semgrepNames.has(r.name));
+
+  const results: ScanResult[] = [];
+
+  const runAndReport = async (runner: (typeof RUNNERS)[0]) => {
+    try {
       const result = await runner.run(targetDir, config.stagedFiles);
       onProgress?.({
         label: runner.label,
@@ -145,25 +150,42 @@ export async function runAll(
         error: result.error,
       });
       return result;
-    }),
-  );
-
-  const results: ScanResult[] = [];
-  for (const outcome of settled) {
-    if (outcome.status === 'fulfilled') {
-      results.push(outcome.value);
-    } else {
-      // Unexpected rejection (shouldn't happen since runners catch internally)
-      results.push({
-        scanner: 'unknown',
+    } catch (e: any) {
+      const errRes: ScanResult = {
+        scanner: runner.name,
         ok: false,
         findings: [],
-        error: String(outcome.reason),
+        error: String(e),
         durationMs: 0,
+      };
+      onProgress?.({
+        label: runner.label,
+        status: 'failed',
+        durationMs: 0,
+        error: String(e),
       });
+      return errRes;
     }
-  }
+  };
 
+  // Run all other scanners in parallel
+  const otherPromises = otherRunners.map(runAndReport);
+  
+  // Wait for other runners to finish? No, start them parallel
+  
+  // Run semgrep scanners sequentially to avoid CPU fight
+  const semgrepPromises = (async () => {
+    const res: ScanResult[] = [];
+    for (const runner of semgrepRunners) {
+      res.push(await runAndReport(runner));
+    }
+    return res;
+  })();
+
+  const otherResults = await Promise.all(otherPromises);
+  const semgrepResults = await semgrepPromises;
+
+  results.push(...otherResults, ...semgrepResults);
   return results;
 }
 
