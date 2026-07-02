@@ -5,14 +5,12 @@ const MUTE = '#737373';
 const HR   = '1px solid rgba(0,0,0,0.09)';
 
 const ROWS = [
-  { feature: 'Setup time',            manual: 'Hours — 5+ tools, configs, docs',   auditx: '0 minutes — npx auditx@latest .' },
-  { feature: 'Secrets scanning',      manual: 'Gitleaks alone, separate step',      auditx: '[+] Integrated, runs in parallel' },
-  { feature: 'Dep vulnerability',     manual: 'Trivy or Snyk, separate output',     auditx: '[+] Trivy + npm audit, one schema' },
-  { feature: 'AI code anti-patterns', manual: '[-] Nobody does this',               auditx: '[+] 44 custom rules — only auditx' },
-  { feature: 'AI agent output',       manual: '[-] Parse 5 JSON schemas manually',  auditx: '[+] --output agent: clean JSON' },
-  { feature: 'Git hooks',             manual: 'Write husky config per tool',        auditx: '[+] auditx hook install' },
-  { feature: 'Maintenance',           manual: 'Update each tool independently',     auditx: '[+] One dep. One version.' },
-  { feature: 'Data privacy',          manual: 'Snyk sends deps to cloud',           auditx: '[+] 100% local' },
+  { feature: 'Execution Speed', snyk: 'Cloud Upload + ML (~45s+)', sonarqube: 'Heavy Java Build (Minutes)', auditx: '[+] Local AST (Under 10s)' },
+  { feature: 'Execution Model', snyk: 'Requires SaaS Account', sonarqube: 'Requires Server Hosting', auditx: '[+] 100% Local CLI (Zero Config)' },
+  { feature: 'Scope', snyk: 'SCA, SAST, IaC', sonarqube: 'SAST, Code Quality', auditx: '[+] 13 Scanners (Secrets, AI, Dead Code, etc)' },
+  { feature: 'Data Privacy', snyk: '[-] Sends code to cloud', sonarqube: 'Depends on host', auditx: '[+] Code never leaves machine' },
+  { feature: 'Setup Time', snyk: 'API Keys, Configs', sonarqube: 'Database, JVM, Plugins', auditx: '[+] 0 minutes — npx auditx@latest .' },
+  { feature: 'Price', snyk: 'Expensive Enterprise', sonarqube: 'Expensive Enterprise', auditx: '[+] Free & Open Source' },
 ];
 
 export default function ComparisonTable() {
@@ -21,43 +19,52 @@ export default function ComparisonTable() {
       <ScrollReveal>
         <div style={{ borderBottom: HR, paddingBottom: 12, marginBottom: 32 }}>
           <div style={{ fontFamily: 'var(--font-sans)', fontSize: 20, fontWeight: 700, color: INK }}>
-            [+] auditx vs. manual toolchain
+            [+] auditx vs. Industry Standards
           </div>
         </div>
       </ScrollReveal>
 
       <ScrollReveal delay={80}>
         <div className="comparison-wrap">
-          <table className="comparison-table" style={{ fontFamily: 'inherit' }}>
+          <table className="comparison-table" style={{ fontFamily: 'inherit', minWidth: 800 }}>
             <colgroup>
-              <col style={{ width: '28%' }} />
-              <col style={{ width: '36%' }} />
-              <col style={{ width: '36%' }} />
+              <col style={{ width: '22%' }} />
+              <col style={{ width: '26%' }} />
+              <col style={{ width: '26%' }} />
+              <col style={{ width: '26%' }} />
             </colgroup>
             <thead>
               <tr>
                 <th style={{
                   fontWeight: 700, fontSize: 11, letterSpacing: '0.07em',
-                  textTransform: 'uppercase', padding: '10px 14px',
+                  textTransform: 'uppercase', padding: '12px 16px',
                   textAlign: 'left', color: MUTE,
                   borderRight: HR, borderBottom: HR,
                   backgroundColor: '#f5f4f2',
                 }}>
-                  Feature
+                  Benchmark
                 </th>
                 <th style={{
                   fontWeight: 700, fontSize: 11, letterSpacing: '0.07em',
-                  textTransform: 'uppercase', padding: '10px 14px',
+                  textTransform: 'uppercase', padding: '12px 16px',
                   textAlign: 'left', color: '#737373',
                   borderRight: HR, borderBottom: HR,
                   backgroundColor: '#f5f4f2',
                 }}>
-                  Manual toolchain
+                  Snyk
                 </th>
-                {/* Winner column — clearly highlighted */}
                 <th style={{
                   fontWeight: 700, fontSize: 11, letterSpacing: '0.07em',
-                  textTransform: 'uppercase', padding: '10px 14px',
+                  textTransform: 'uppercase', padding: '12px 16px',
+                  textAlign: 'left', color: '#737373',
+                  borderRight: HR, borderBottom: HR,
+                  backgroundColor: '#f5f4f2',
+                }}>
+                  SonarQube
+                </th>
+                <th style={{
+                  fontWeight: 700, fontSize: 11, letterSpacing: '0.07em',
+                  textTransform: 'uppercase', padding: '12px 16px',
                   textAlign: 'left', color: '#1a1a1a',
                   borderBottom: '2px solid #1a1a1a',
                   backgroundColor: '#e8e6e1',
@@ -69,28 +76,31 @@ export default function ComparisonTable() {
             <tbody>
               {ROWS.map((row, i) => {
                 const isAuditxWin = row.auditx.startsWith('[+]');
-                const isManualBad = row.manual.startsWith('[-]');
                 return (
                   <tr key={row.feature} style={{ borderBottom: i < ROWS.length - 1 ? HR : 'none' }}>
                     <td style={{
-                      fontWeight: 500, fontSize: 14, padding: '11px 14px',
-                      color: INK, borderRight: HR, verticalAlign: 'top',
+                      fontWeight: 600, fontSize: 13, padding: '14px 16px',
+                      color: INK, borderRight: HR, verticalAlign: 'middle',
                     }}>
                       {row.feature}
                     </td>
                     <td style={{
-                      fontSize: 14, padding: '11px 14px',
-                      color: isManualBad ? '#dc2626' : '#737373',
-                      borderRight: HR, verticalAlign: 'top',
+                      fontSize: 13, padding: '14px 16px',
+                      color: '#737373', borderRight: HR, verticalAlign: 'middle',
                     }}>
-                      {row.manual}
+                      {row.snyk}
                     </td>
                     <td style={{
-                      fontSize: 14, padding: '11px 14px',
+                      fontSize: 13, padding: '14px 16px',
+                      color: '#737373', borderRight: HR, verticalAlign: 'middle',
+                    }}>
+                      {row.sonarqube}
+                    </td>
+                    <td style={{
+                      fontSize: 14, padding: '14px 16px',
                       color: isAuditxWin ? '#16a34a' : INK,
-                      fontWeight: isAuditxWin ? 500 : 400,
-                      backgroundColor: '#f9f8f6',
-                      verticalAlign: 'top',
+                      fontWeight: isAuditxWin ? 600 : 400,
+                      backgroundColor: '#f9f8f6', verticalAlign: 'middle',
                     }}>
                       {row.auditx}
                     </td>

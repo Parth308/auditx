@@ -117,14 +117,14 @@ Running a comprehensive security audit today means:
 
 ## Why auditx
 
-| Feature | `auditx` | Snyk / Dependabot | SonarQube | GitHub Advanced Security |
+| Feature | `auditx` | Snyk | SonarQube | GitHub Advanced Security |
 |---|---|---|---|---|
 | **Price** | Free & Open Source | Expensive SaaS | Enterprise pricing | Enterprise pricing |
 | **Setup** | `npx auditx@latest .` — zero config | Cloud account required | Heavy Java server | Tied to GitHub |
 | **Data Privacy** | 100% local — nothing leaves your machine | Sends deps/code to cloud | Local or cloud | Cloud |
 | **Scope** | Secrets + Deps + SAST + IaC + Dead Code | Mostly Deps & SAST | SAST & Code Quality | Secrets + Deps + SAST |
 | **Underlying Engine** | Best-in-class OSS (Trivy, Semgrep, Gitleaks) | Proprietary | Proprietary | CodeQL (Proprietary) |
-| **AI Agent Ready** | Structured `.md` output, `--ci` flag | No | No | No |
+| **Execution Speed** | ~60s (Local AST, 13 parallel scanners) | ~45s (Cloud + ML) | Minutes (Build required) | Minutes (Build required) |
 
 ---
 

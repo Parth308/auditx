@@ -1,0 +1,131 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedBy": "auditx",
+  "meta": {
+    "target": "E:\\Projects\\auditx\\tests\\benchmark\\dummy-repo",
+    "scannedAt": "2026-07-02T18:08:54.199Z",
+    "durationMs": 46661,
+    "stack": [
+      "Node.js",
+      "Express",
+      "Docker"
+    ],
+    "scanners": [
+      "trivy",
+      "iac",
+      "npm-audit",
+      "semgrep",
+      "knip",
+      "jscpd",
+      "depcheck",
+      "license-checker",
+      "aipatterns",
+      "lizard"
+    ]
+  },
+  "summary": {
+    "critical": 0,
+    "high": 1,
+    "medium": 0,
+    "low": 4,
+    "info": 1,
+    "totalFindings": 6,
+    "fixableCount": 5,
+    "filesAffected": 3,
+    "urgentCount": 1
+  },
+  "exitCode": 1,
+  "findings": [
+    {
+      "id": "auditx-001",
+      "category": "IaC",
+      "severity": "high",
+      "title": "Image user should not be 'root'",
+      "file": "Dockerfile",
+      "rule": "DS-0002",
+      "scanner": "iac",
+      "description": "Running containers with 'root' user can lead to a container escape situation. It is a best practice to run containers as non-root users, which can be done by adding a 'USER' statement to the Dockerfile.",
+      "fix": "Add 'USER <non root user name>' line to the Dockerfile",
+      "fingerprint": "b0de84f7801a",
+      "fixable": true
+    },
+    {
+      "id": "auditx-002",
+      "category": "IaC",
+      "severity": "low",
+      "title": "No HEALTHCHECK defined",
+      "file": "Dockerfile",
+      "rule": "DS-0026",
+      "scanner": "iac",
+      "description": "You should add HEALTHCHECK instruction in your docker container images to perform the health check on running containers.",
+      "fix": "Add HEALTHCHECK instruction in Dockerfile",
+      "fingerprint": "f9b78c47ecd6",
+      "fixable": true
+    },
+    {
+      "id": "auditx-003",
+      "category": "DEAD_CODE",
+      "severity": "low",
+      "title": "Unused dependency: [object Object]",
+      "file": "package.json",
+      "scanner": "knip",
+      "description": "Package '[object Object]' is listed in dependencies but not used.",
+      "fix": "Run: npm uninstall [object Object]",
+      "fingerprint": "11ceec59bb29",
+      "fixable": true
+    },
+    {
+      "id": "auditx-004",
+      "category": "DEP_HEALTH",
+      "severity": "low",
+      "title": "Unused dependency: sanitize-html",
+      "file": "package.json",
+      "rule": "depcheck/unused-dependency",
+      "scanner": "depcheck",
+      "description": "The package 'sanitize-html' is defined in package.json but never used in the codebase.",
+      "fix": "npm uninstall sanitize-html",
+      "fingerprint": "d0c7fe6c1b35",
+      "fixable": true
+    },
+    {
+      "id": "auditx-005",
+      "category": "DEP_HEALTH",
+      "severity": "low",
+      "title": "Unused dependency: lodash",
+      "file": "package.json",
+      "rule": "depcheck/unused-dependency",
+      "scanner": "depcheck",
+      "description": "The package 'lodash' is defined in package.json but never used in the codebase.",
+      "fix": "npm uninstall lodash",
+      "fingerprint": "6c5f9ecba179",
+      "fixable": true
+    },
+    {
+      "id": "auditx-006",
+      "category": "AI_CODE",
+      "severity": "info",
+      "title": "Semgrep scan error",
+      "file": "unknown",
+      "rule": "aipatterns-internal",
+      "scanner": "aipatterns",
+      "description": "Rule parse error in rule cli.src.rules.core.ai-json-parse-no-try:\n Invalid pattern for JavaScript: Stdlib.Parsing.Parse_error\n----- pattern -----\ntry { ... } catch (...) { ... }\n\n----- end pattern -----\n",
+      "fingerprint": "e1110de836c2",
+      "fixable": false
+    }
+  ],
+  "findingsByFile": {
+    "Dockerfile": [
+      "auditx-001",
+      "auditx-002"
+    ],
+    "package.json": [
+      "auditx-003",
+      "auditx-004",
+      "auditx-005"
+    ],
+    "unknown": [
+      "auditx-006"
+    ]
+  },
+  "agentNote": "1 critical/high finding(s) require action. Iterate findingsByFile, fix each file, re-run auditx to verify. Findings with fixable:true have a suggested fix in the \"fix\" field."
+}
