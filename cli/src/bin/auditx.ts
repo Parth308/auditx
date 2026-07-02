@@ -25,8 +25,13 @@ import type { AiProvider } from '../types.js';
 
 // ─── Package version ──────────────────────────────────────────────────────────
 // Injected by tsup at build time via --define
-declare const __VERSION__: string;
-const VERSION = (typeof __VERSION__ !== 'undefined') ? __VERSION__ : '0.1.0';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const pkg = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8'));
+const VERSION = pkg.version;
 
 // ─── CLI definition ───────────────────────────────────────────────────────────
 

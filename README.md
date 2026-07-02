@@ -64,7 +64,20 @@ if report["exitCode"] != 0:
 
 The `--ai` flag calls your configured LLM provider and appends a plain-English risk analysis block directly to the `.md` report (for human consumption).
 
-An MCP server is also available (`npx auditx-mcp`) which provides an `audit_codebase` tool for Claude and other clients.
+An MCP server is also available which provides an `audit_codebase` tool for Claude and other clients. See [MCP.md](MCP.md) for full details.
+
+To add `auditx` to your Claude Desktop or Claude Code configuration, add the following to your MCP settings file (e.g. `claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "auditx": {
+      "command": "npx",
+      "args": ["-y", "--package", "auditx", "auditx-mcp"]
+    }
+  }
+}
+```
 
 ---
 
