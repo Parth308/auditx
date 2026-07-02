@@ -1,14 +1,16 @@
 import ScrollReveal from './ScrollReveal';
 
-const HR = '1px solid rgba(15,0,0,0.12)';
-const FONT = 'inherit';
+const INK  = '#1a1a1a';
+const BODY = '#404040';
+const MUTE = '#737373';
+const HR   = '1px solid rgba(0,0,0,0.09)';
 
 const SEV: Record<string, string> = {
-  critical: '#ff3b30',
-  high:     '#ff9f0a',
-  warning:  '#ff9f0a',
-  medium:   '#007aff',
-  low:      '#9a9898',
+  critical: '#dc2626',
+  high:     '#d97706',
+  warning:  '#d97706',
+  medium:   '#2563eb',
+  low:      '#737373',
 };
 
 const SCANNERS = [
@@ -32,41 +34,48 @@ export default function ScannerGrid() {
     <section id="scanners" className="page-section">
       <ScrollReveal>
         <div style={{ borderBottom: HR, paddingBottom: 12 }}>
-          <div style={{ fontFamily: FONT, fontSize: 16, fontWeight: 700, color: '#201d1d' }}>
+          <div style={{ fontFamily: 'inherit', fontSize: 20, fontWeight: 700, color: INK }}>
             [+] 13 scanner categories
           </div>
-          <div style={{ fontFamily: FONT, fontSize: 14, marginTop: 6, color: '#646262' }}>
+          <div style={{ fontFamily: 'inherit', fontSize: 15, marginTop: 5, color: MUTE }}>
             Every applicable scanner runs. Nothing skipped unless you ask.
           </div>
         </div>
       </ScrollReveal>
 
-      {/* scanner-grid CSS class: 3 col → 2 col → 1 col via media queries */}
       <div className="scanner-grid">
         {SCANNERS.map((s, i) => (
           <ScrollReveal key={s.id} delay={i * 40}>
-            <div style={{
-              padding: '16px',
-              backgroundColor: s.unique ? '#f8f7f7' : 'transparent',
-              height: '100%',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
-                <span style={{ fontFamily: FONT, fontWeight: 700, fontSize: 11, color: SEV[s.sev], letterSpacing: '0.05em' }}>
+            <div style={{ padding: '18px 16px', height: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span style={{
+                  fontFamily: 'inherit',
+                  fontWeight: 700,
+                  fontSize: 10,
+                  letterSpacing: '0.08em',
+                  color: SEV[s.sev],
+                }}>
                   {s.id}
                 </span>
                 {s.unique && (
                   <span style={{
-                    fontFamily: FONT, fontSize: 10, padding: '2px 6px', borderRadius: 4,
-                    backgroundColor: '#201d1d', color: '#fdfcfc', whiteSpace: 'nowrap',
+                    fontFamily: 'inherit',
+                    fontSize: 9,
+                    fontWeight: 600,
+                    letterSpacing: '0.06em',
+                    padding: '2px 6px',
+                    backgroundColor: INK,
+                    color: '#fafaf9',
+                    whiteSpace: 'nowrap',
                   }}>
                     [unique]
                   </span>
                 )}
               </div>
-              <div style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: '#646262', marginBottom: 6 }}>
+              <div style={{ fontFamily: 'inherit', fontWeight: 600, fontSize: 15, color: INK, marginBottom: 6 }}>
                 {s.tool}
               </div>
-              <p style={{ fontFamily: FONT, fontSize: 13, lineHeight: 1.6, color: '#424245', margin: 0 }}>
+              <p style={{ fontFamily: 'inherit', fontSize: 14, lineHeight: 1.65, color: BODY, margin: 0 }}>
                 {s.desc}
               </p>
             </div>

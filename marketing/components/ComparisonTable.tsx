@@ -1,7 +1,8 @@
 import ScrollReveal from './ScrollReveal';
 
-const HR = '1px solid rgba(15,0,0,0.12)';
-const FONT = 'inherit';
+const INK  = '#1a1a1a';
+const MUTE = '#737373';
+const HR   = '1px solid rgba(0,0,0,0.09)';
 
 const ROWS = [
   { feature: 'Setup time',            manual: 'Hours — 5+ tools, configs, docs',   auditx: '0 minutes — npx auditx@latest .' },
@@ -16,37 +17,86 @@ const ROWS = [
 
 export default function ComparisonTable() {
   return (
-    <section id="compare" className="page-section">
+    <section id="compare" className="page-section" style={{ paddingBottom: 0 }}>
       <ScrollReveal>
         <div style={{ borderBottom: HR, paddingBottom: 12, marginBottom: 32 }}>
-          <div style={{ fontFamily: FONT, fontSize: 16, fontWeight: 700, color: '#201d1d' }}>
+          <div style={{ fontFamily: 'inherit', fontSize: 20, fontWeight: 700, color: INK }}>
             [+] auditx vs. manual toolchain
           </div>
         </div>
       </ScrollReveal>
 
       <ScrollReveal delay={80}>
-        {/* comparison-wrap adds overflow-x: auto on narrow screens */}
         <div className="comparison-wrap">
-          <table className="comparison-table" style={{ borderCollapse: 'collapse', fontFamily: FONT }}>
+          <table className="comparison-table" style={{ fontFamily: 'inherit' }}>
+            <colgroup>
+              <col style={{ width: '28%' }} />
+              <col style={{ width: '36%' }} />
+              <col style={{ width: '36%' }} />
+            </colgroup>
             <thead>
-              <tr style={{ backgroundColor: '#f8f7f7', borderBottom: HR }}>
-                <th style={{ fontWeight: 700, fontSize: 12, padding: '10px 12px', textAlign: 'left', color: '#646262', borderRight: HR, width: '25%' }}>Feature</th>
-                <th style={{ fontWeight: 700, fontSize: 12, padding: '10px 12px', textAlign: 'left', color: '#646262', borderRight: HR, width: '37.5%' }}>Manual (eslint + semgrep + trivy…)</th>
-                <th style={{ fontWeight: 700, fontSize: 12, padding: '10px 12px', textAlign: 'left', color: '#201d1d', width: '37.5%' }}>auditx</th>
+              <tr>
+                <th style={{
+                  fontWeight: 700, fontSize: 11, letterSpacing: '0.07em',
+                  textTransform: 'uppercase', padding: '10px 14px',
+                  textAlign: 'left', color: MUTE,
+                  borderRight: HR, borderBottom: HR,
+                  backgroundColor: '#f5f4f2',
+                }}>
+                  Feature
+                </th>
+                <th style={{
+                  fontWeight: 700, fontSize: 11, letterSpacing: '0.07em',
+                  textTransform: 'uppercase', padding: '10px 14px',
+                  textAlign: 'left', color: '#737373',
+                  borderRight: HR, borderBottom: HR,
+                  backgroundColor: '#f5f4f2',
+                }}>
+                  Manual toolchain
+                </th>
+                {/* Winner column — clearly highlighted */}
+                <th style={{
+                  fontWeight: 700, fontSize: 11, letterSpacing: '0.07em',
+                  textTransform: 'uppercase', padding: '10px 14px',
+                  textAlign: 'left', color: '#1a1a1a',
+                  borderBottom: '2px solid #1a1a1a',
+                  backgroundColor: '#e8e6e1',
+                }}>
+                  auditx ✓
+                </th>
               </tr>
             </thead>
             <tbody>
-              {ROWS.map((row, i) => (
-                <tr
-                  key={row.feature}
-                  style={{ borderBottom: i < ROWS.length - 1 ? HR : 'none', backgroundColor: i % 2 === 1 ? '#f8f7f7' : 'transparent' }}
-                >
-                  <td style={{ fontWeight: 500, fontSize: 13, padding: '10px 12px', color: '#201d1d', borderRight: HR }}>{row.feature}</td>
-                  <td style={{ fontSize: 13, padding: '10px 12px', color: row.manual.startsWith('[-]') ? '#ff3b30' : '#646262', borderRight: HR }}>{row.manual}</td>
-                  <td style={{ fontSize: 13, padding: '10px 12px', color: row.auditx.startsWith('[+]') ? '#30d158' : '#201d1d' }}>{row.auditx}</td>
-                </tr>
-              ))}
+              {ROWS.map((row, i) => {
+                const isAuditxWin = row.auditx.startsWith('[+]');
+                const isManualBad = row.manual.startsWith('[-]');
+                return (
+                  <tr key={row.feature} style={{ borderBottom: i < ROWS.length - 1 ? HR : 'none' }}>
+                    <td style={{
+                      fontWeight: 500, fontSize: 14, padding: '11px 14px',
+                      color: INK, borderRight: HR, verticalAlign: 'top',
+                    }}>
+                      {row.feature}
+                    </td>
+                    <td style={{
+                      fontSize: 14, padding: '11px 14px',
+                      color: isManualBad ? '#dc2626' : '#737373',
+                      borderRight: HR, verticalAlign: 'top',
+                    }}>
+                      {row.manual}
+                    </td>
+                    <td style={{
+                      fontSize: 14, padding: '11px 14px',
+                      color: isAuditxWin ? '#16a34a' : INK,
+                      fontWeight: isAuditxWin ? 500 : 400,
+                      backgroundColor: '#f9f8f6',
+                      verticalAlign: 'top',
+                    }}>
+                      {row.auditx}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
