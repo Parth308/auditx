@@ -63,60 +63,92 @@ export default function Hero() {
           </p>
 
           {/* CTA row */}
-          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 mb-14 w-full">
-            <div className="flex items-center justify-center gap-3 py-3 px-5 bg-[#f5f4f2] border border-[rgba(0,0,0,0.09)] w-full md:w-auto">
-              <code style={{ fontFamily: 'inherit', fontSize: 15, color: INK }}>
+          <div style={{ 
+            display: 'flex', 
+            flexWrap: 'wrap',
+            alignItems: 'stretch',
+            gap: 16, 
+            marginBottom: 64 
+          }}>
+            {/* The Command Block */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'stretch',
+              border: '1px solid var(--color-hairline)',
+              backgroundColor: '#fff',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.04)'
+            }}>
+              <div style={{ 
+                padding: '14px 20px', 
+                fontFamily: 'var(--font-mono)', 
+                fontSize: 15, 
+                color: INK, 
+                borderRight: '1px solid var(--color-hairline)',
+                display: 'flex',
+                alignItems: 'center'
+              }}>
                 npx auditx@latest .
-              </code>
-              <CopyButton code="npx auditx@latest ." />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <CopyButton code="npx auditx@latest ." />
+              </div>
             </div>
+
+            {/* GitHub Button */}
             <a
               href="https://github.com/parth308/auditx"
-              className="flex items-center justify-center font-medium py-3 px-5 border border-black/20 text-[#1a1a1a] bg-transparent w-full md:w-auto"
-              style={{ fontFamily: 'inherit', fontSize: 15 }}
+              className="github-btn"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: 'var(--font-sans)',
+                fontWeight: 600,
+                fontSize: 15,
+                padding: '0 24px',
+                border: '1px solid var(--color-hairline)',
+                transition: 'all 0.2s ease',
+              }}
             >
               [→] GitHub
             </a>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:flex md:flex-row md:flex-nowrap mb-16 md:pb-16 md:border-b border-[var(--color-hairline)] w-full">
-            {STATS.map(({ val, label }, i) => (
-              <div 
-                key={label} 
-                className={`
-                  flex flex-col justify-center
-                  py-8 md:py-0
-                  md:pr-10 md:mr-10
-                  ${i % 2 === 0 ? 'border-r border-[var(--color-hairline)] pr-5 md:pr-10' : 'pl-5 md:pl-0'} 
-                  ${i < 2 ? 'border-b border-[var(--color-hairline)] md:border-b-0' : ''}
-                  ${i < STATS.length - 1 ? 'md:border-r md:border-[var(--color-hairline)]' : 'md:border-r-0'}
-                `}
-              >
-                <div style={{
-                  fontFamily: 'inherit',
-                  fontWeight: 700,
-                  fontSize: 40,
-                  lineHeight: 1,
-                  letterSpacing: '-2px',
-                  color: INK,
-                }}>{val}</div>
-                <div style={{
-                  fontFamily: 'inherit',
-                  fontSize: 12,
-                  fontWeight: 500,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: '#737373',
-                  marginTop: 8,
-                }}>{label}</div>
-              </div>
-            ))}
-          </div>
         </div>
         
         <div className="hero-visual">
           <TerminalDemo />
+        </div>
+      </div>
+
+      {/* Stats Marquee (Full Width) */}
+      <div style={{ width: '100%', maxWidth: 1440, margin: '96px auto 0' }}>
+        <div className="marquee-container" style={{ margin: 0, padding: '48px 0', borderTop: '1px solid var(--color-hairline)', borderBottom: '1px solid var(--color-hairline)' }}>
+          <div className="animate-marquee">
+            {[0, 1, 2, 3].map((setIndex) => (
+              <div key={setIndex} aria-hidden={setIndex > 0} style={{ display: 'flex', gap: 80, paddingRight: 80 }}>
+                {STATS.map(({ val, label }) => (
+                  <div key={`${setIndex}-${label}`} style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
+                    <div style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontWeight: 700,
+                      fontSize: 32,
+                      letterSpacing: '-1px',
+                      color: INK,
+                    }}>{val}</div>
+                    <div style={{
+                      fontFamily: 'var(--font-sans)',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      letterSpacing: '0.05em',
+                      textTransform: 'uppercase',
+                      color: '#737373',
+                    }}>{label}</div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

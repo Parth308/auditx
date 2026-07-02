@@ -380,3 +380,33 @@ pre {
     border-right: none;
   }
 }
+
+/* ─── Marquee ─────────────────────────────────────────────── */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-25%); }
+}
+
+.marquee-container {
+  overflow: hidden;
+  display: flex;
+  width: 100%;
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  border-top: 1px solid var(--color-hairline);
+  border-bottom: 1px solid var(--color-hairline);
+  padding: 32px 0;
+  margin-bottom: 64px;
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 25s linear infinite;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+.github-btn { color: var(--color-ink); background-color: transparent; }
+.github-btn:hover { color: #fff; background-color: var(--color-ink); }
