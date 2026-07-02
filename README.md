@@ -12,13 +12,61 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/parth308/auditx/test.yml?label=CI&color=crimson)](https://github.com/parth308/auditx/actions)
 [![TypeScript](https://img.shields.io/badge/built%20with-TypeScript-blue)](https://www.typescriptlang.org/)
 
-**[🌐 Visit Website](https://auditx-cli.vercel.app/)**
+**[🌐 Visit Website](https://auditx-cli.vercel.app/)** · **[💻 GitHub](https://github.com/parth308/auditx)**
 
 </div>
 
 ---
 
-`auditx` is a **zero-config CLI security auditing tool** that orchestrates Semgrep, Trivy, Gitleaks, Knip, and more — running them in parallel, normalizing their output, and producing a single structured `.md` report designed for both human review and AI agent pipelines.
+> 🤖 **AI agents**: run `npx auditx . --output agent --ci` for machine-readable JSON. See [AGENTS.md](AGENTS.md) for more details.
+
+## AI Agent Integration
+
+`auditx` is built as a **tool node in AI agent pipelines**. Use the `--output agent` flag to get a deterministic, token-cheap, single-line JSON string optimized specifically for LLMs. This suppresses all interactive CLI output.
+
+```
+┌─────────────────────────────────────────────────────┐
+│                   AI Agent Loop                     │
+│                                                     │
+│  1. shell("auditx . --output agent")                │
+│         │                                           │
+│         ├─ exitCode: 0 → ✅ codebase clean          │
+│         │                                           │
+│         └─ exitCode: 1 → findings exist             │
+│               │                                     │
+│               ├─ parse JSON object                  │
+│               ├─ loop findingsByFile keys           │
+│               ├─ send file + findings to LLM        │
+│               ├─ apply fixes to file                │
+│               └─ shell("auditx . --output agent")   │
+│                  (verify fixes)                     │
+└─────────────────────────────────────────────────────┘
+```
+
+```python
+# Example agent pseudocode
+result = shell("auditx . --output agent")
+report = json.loads(result.stdout)
+
+if report["exitCode"] != 0:
+    for file, finding_ids in report["findingsByFile"].items():
+        file_findings = [f for f in report["findings"] if f["id"] in finding_ids]
+        
+        for f in file_findings:
+            if f["fixable"]:
+                shell(f"npm install {f['fix']}") # Example dependency fix
+            else:
+                apply_llm_patch(file, f["msg"]) # Auto-fix pattern/sast
+                
+    # Verify fixes
+    shell("auditx . --output agent")
+```
+
+The `--ai` flag calls your configured LLM provider and appends a plain-English risk analysis block directly to the `.md` report (for human consumption).
+
+An MCP server is also available (`npx auditx-mcp`) which provides an `audit_codebase` tool for Claude and other clients.
+
+---
 
 ```bash
 npx auditx@latest .
@@ -267,53 +315,7 @@ Rotating the key is mandatory — removal from code alone is insufficient.
 
 </details>
 
----
 
-## AI Agent Integration
-
-`auditx` is built as a **tool node in AI agent pipelines**. Use the `--output agent` flag to get a deterministic, token-cheap, single-line JSON string optimized specifically for LLMs. This suppresses all interactive CLI output.
-
-```
-┌─────────────────────────────────────────────────────┐
-│                   AI Agent Loop                     │
-│                                                     │
-│  1. shell("auditx . --output agent")                │
-│         │                                           │
-│         ├─ exitCode: 0 → ✅ codebase clean          │
-│         │                                           │
-│         └─ exitCode: 1 → findings exist             │
-│               │                                     │
-│               ├─ parse JSON object                  │
-│               ├─ loop findingsByFile keys           │
-│               ├─ send file + findings to LLM        │
-│               ├─ apply fixes to file                │
-│               └─ shell("auditx . --output agent")   │
-│                  (verify fixes)                     │
-└─────────────────────────────────────────────────────┘
-```
-
-```python
-# Example agent pseudocode
-result = shell("auditx . --output agent")
-report = json.loads(result.stdout)
-
-if report["exitCode"] != 0:
-    for file, finding_ids in report["findingsByFile"].items():
-        file_findings = [f for f in report["findings"] if f["id"] in finding_ids]
-        
-        for f in file_findings:
-            if f["fixable"]:
-                shell(f"npm install {f['fix']}") # Example dependency fix
-            else:
-                apply_llm_patch(file, f["msg"]) # Auto-fix pattern/sast
-                
-    # Verify fixes
-    shell("auditx . --output agent")
-```
-
-The `--ai` flag calls your configured LLM provider and appends a plain-English risk analysis block directly to the `.md` report (for human consumption).
-
----
 
 ## Architecture
 
@@ -502,7 +504,7 @@ export async function run(targetPath: string): Promise<Finding[]> {
 
 ## License
 
-MIT © [Parth Mongia](https://github.com/parth308)
+MIT © [Parth Mongia](https://parthmongia.dev) ([GitHub](https://github.com/parth308))
 
 ---
 

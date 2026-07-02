@@ -504,7 +504,7 @@ export async function run(targetPath: string): Promise<Finding[]> {
 
 ## License
 
-MIT © [Parth](https://github.com/parth308)
+MIT © [Parth Mongia](https://parthmongia.dev) ([GitHub](https://github.com/parth308))
 
 ---
 

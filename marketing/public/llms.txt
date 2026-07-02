@@ -1,0 +1,51 @@
+# auditx
+
+**One command. Every vulnerability. JSON output built for AI coding agents to parse and self-fix.**
+
+`auditx` is a zero-config CLI security auditing tool that orchestrates Semgrep, Trivy, Gitleaks, and Knip.
+
+## Usage for AI Agents
+
+Run the following command to scan a repository:
+```bash
+npx auditx . --output agent --ci
+```
+
+### JSON Schema Output (`--output agent`)
+The output is a single-line JSON string with the following schema:
+```json
+{
+  "ok": boolean,
+  "exitCode": number,
+  "findingsByFile": {
+    "[filepath]": ["finding_id_1", "finding_id_2"]
+  },
+  "findings": [
+    {
+      "id": string,
+      "severity": "critical" | "high" | "medium" | "low" | "info",
+      "category": string,
+      "title": string,
+      "file": string,
+      "line": number,
+      "rule": string,
+      "msg": string,
+      "fix": string (optional, if fixable)
+    }
+  ]
+}
+```
+
+### Flags
+- `--output agent`: Returns machine-parseable JSON output.
+- `--ci`: Exits with code `1` if there are critical/high vulnerabilities, and code `0` if it's clean.
+- `--severity <level>`: Minimum severity to include (e.g. `critical`, `high`, `medium`, `low`, `info`).
+- `--skip <categories>`: Comma-separated list of categories to skip (e.g. `secrets`, `deps`, `sast`).
+- `--help-json`: Output command reference as JSON.
+
+### MCP Server
+An MCP server is also available for Claude and other MCP-compatible clients:
+```bash
+npx auditx-mcp
+```
+Provides the `audit_codebase` tool.

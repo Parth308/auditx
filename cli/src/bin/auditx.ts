@@ -34,7 +34,7 @@ program
   .name('auditx')
   .description('One command. Every vulnerability. AI-ready markdown report.')
   .version(VERSION, '-v, --version')
-  .argument('[target]', 'Directory to scan', '.')
+  .argument('[target]', 'Directory to scan, or "init-agent" to generate AI files', '.')
   .option(
     '-o, --output <mode>',
     'Output mode: markdown (default), json, terminal, agent',
@@ -62,7 +62,8 @@ program
   .option('--staged-list <file>', 'Path to a file containing a list of files to scan (used by git hooks)')
   .option('--fix', 'Auto-apply fixable issues (eslint --fix, knip --fix)')
   .option('--watch', 'Re-run on file changes (dev mode)')
-  .option('--check-deps', 'Verify all required external scanner tools are installed');
+  .option('--check-deps', 'Verify all required external scanner tools are installed')
+  .option('--help-json', 'Output command reference as JSON (for AI agents)');
 
 program.parse();
 
@@ -70,6 +71,16 @@ program.parse();
 
 const opts = program.opts();
 const [targetArg = '.'] = program.args;
+
+if (opts['helpJson']) {
+  const options = program.options.map(opt => ({
+    flags: opt.flags,
+    description: opt.description,
+    defaultValue: opt.defaultValue
+  }));
+  console.log(JSON.stringify({ options }, null, 2));
+  process.exit(0);
+}
 
 // Special "install" command
 if (targetArg === 'install') {
@@ -98,8 +109,13 @@ if (targetArg === 'install') {
   process.exit(0);
 }
 
-// Special "hook" command
-if (targetArg === 'hook') {
+// Special "init-agent" command
+if (targetArg === 'init-agent') {
+  import('../agent-init.js').then(({ initAgent }) => {
+    initAgent(process.cwd());
+    process.exit(0);
+  });
+} else if (targetArg === 'hook') {
   import('../hook.js').then(({ installHook, uninstallHook, installAll }) => {
     const action = program.args[1];
     const hookType = (opts['type'] || 'pre-commit') as any;
