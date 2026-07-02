@@ -21,7 +21,12 @@ export default function CopyButton({ code }: CopyButtonProps) {
       style={{
         fontFamily: 'inherit',
         fontSize: 12,
-        padding: '2px 8px',
+        padding: '8px 12px',
+        minHeight: 44,
+        minWidth: 44,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         borderRadius: 4,
         border: '1px solid rgba(15,0,0,0.2)',
         backgroundColor: copied ? '#201d1d' : 'transparent',

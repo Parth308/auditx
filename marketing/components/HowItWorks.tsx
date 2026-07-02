@@ -56,7 +56,7 @@ export default function HowItWorks() {
     <section id="how-it-works" className="page-section">
       <ScrollReveal>
         <div style={{ borderBottom: HR, paddingBottom: 12, marginBottom: 0 }}>
-          <span style={{ fontFamily: 'inherit', fontSize: 20, fontWeight: 700, color: INK }}>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 20, fontWeight: 700, color: INK }}>
             [+] How it works
           </span>
         </div>
@@ -78,7 +78,7 @@ export default function HowItWorks() {
             }}
           >
             <span style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: 11, color: MUTE }}>{s.num}</span>
-            <span style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: 11, letterSpacing: '0.07em', color: INK }}>{s.tag}</span>
+            <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 11, letterSpacing: '0.07em', color: INK }}>{s.tag}</span>
           </div>
         ))}
       </div>
@@ -87,15 +87,16 @@ export default function HowItWorks() {
       <div className="grid-2col">
         {STEPS.map((step, i) => (
           <ScrollReveal key={step.num} delay={i * 80}>
-            <div style={{
+            <div className="hover-lift" style={{
               padding: '24px 20px',
               height: '100%',
+              backgroundColor: '#fafaf9',
               borderLeft: `3px solid ${i === 0 ? '#1a1a1a' : i === 1 ? '#d97706' : i === 2 ? '#2563eb' : '#16a34a'}`,
             }}>
-              <div style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: 17, color: INK, marginBottom: 10 }}>
+              <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 17, color: INK, marginBottom: 10 }}>
                 {step.label}
               </div>
-              <p style={{ fontFamily: 'inherit', fontSize: 15, lineHeight: 1.7, color: BODY, marginBottom: 16 }}>
+              <p style={{ fontFamily: 'var(--font-sans)', fontSize: 15, lineHeight: 1.7, color: BODY, marginBottom: 16 }}>
                 {step.detail}
               </p>
               <pre

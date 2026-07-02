@@ -76,10 +76,10 @@ export default function CISection() {
     <section id="ci" className="page-section">
       <ScrollReveal>
         <div style={{ borderBottom: HR, paddingBottom: 12, marginBottom: 0 }}>
-          <div style={{ fontFamily: 'inherit', fontSize: 20, fontWeight: 700, color: INK }}>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 20, fontWeight: 700, color: INK }}>
             [+] CI / Git hook integration
           </div>
-          <div style={{ fontFamily: 'inherit', fontSize: 15, marginTop: 6, color: MUTE }}>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 15, marginTop: 6, color: MUTE }}>
             Exit code 1 on findings. Drops into any pipeline. Hooks in one command.
           </div>
         </div>

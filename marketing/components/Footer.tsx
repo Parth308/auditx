@@ -24,7 +24,7 @@ export default function Footer() {
         backgroundColor: '#f5f4f2',
       }}>
         <div style={{
-          maxWidth: 960,
+          maxWidth: 1440,
           margin: '0 auto',
           padding: '40px 24px',
           display: 'flex',
@@ -68,7 +68,7 @@ export default function Footer() {
       {/* Link row */}
       <div style={{ borderTop: HR, borderBottom: HR }}>
         <div style={{
-          maxWidth: 960,
+          maxWidth: 1440,
           margin: '0 auto',
           padding: '0 24px',
           display: 'flex',
@@ -100,7 +100,7 @@ export default function Footer() {
       </div>
 
       {/* Copyright */}
-      <div style={{ maxWidth: 960, margin: '0 auto', padding: '16px 24px 48px' }}>
+      <div style={{ maxWidth: 1440, margin: '0 auto', padding: '16px 24px 48px' }}>
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',

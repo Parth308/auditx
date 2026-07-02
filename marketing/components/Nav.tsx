@@ -21,7 +21,7 @@ export default function Nav() {
       borderBottom: '1px solid rgba(0,0,0,0.09)',
     }}>
       <div style={{
-        maxWidth: 960,
+        maxWidth: 1440,
         margin: '0 auto',
         padding: '0 24px',
         height: 64,

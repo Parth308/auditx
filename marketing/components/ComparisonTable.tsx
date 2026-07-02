@@ -20,7 +20,7 @@ export default function ComparisonTable() {
     <section id="compare" className="page-section" style={{ paddingBottom: 0 }}>
       <ScrollReveal>
         <div style={{ borderBottom: HR, paddingBottom: 12, marginBottom: 32 }}>
-          <div style={{ fontFamily: 'inherit', fontSize: 20, fontWeight: 700, color: INK }}>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 20, fontWeight: 700, color: INK }}>
             [+] auditx vs. manual toolchain
           </div>
         </div>

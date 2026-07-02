@@ -114,7 +114,7 @@ export default function AgentLoopSection() {
             </div>
 
             <h2 style={{
-              fontFamily: 'inherit',
+              fontFamily: 'var(--font-sans)',
               fontWeight: 700,
               fontSize: 'clamp(24px, 3.5vw, 36px)',
               letterSpacing: '-0.5px',
@@ -125,7 +125,7 @@ export default function AgentLoopSection() {
             </h2>
 
             <p style={{
-              fontFamily: 'inherit',
+              fontFamily: 'var(--font-sans)',
               fontSize: 16,
               lineHeight: 1.75,
               color: '#9a9898',

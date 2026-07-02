@@ -40,7 +40,7 @@ export default function TerminalDemo() {
   }, []);
 
   return (
-    <div style={{
+    <div className="hover-lift" style={{
       width: '100%',
       backgroundColor: '#141414',
       border: '1px solid rgba(255,255,255,0.08)',
