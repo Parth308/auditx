@@ -27,7 +27,7 @@ npx auditx@latest .
 ```
 🛡️  auditx — scanning /home/parth/codeoracle
   ✓  stack detected: Node.js · TypeScript · Docker
-  ✓  running 13 scanners in parallel...
+  ✓  running 18 scanners in parallel...
 
   ████████████████████████████████ 100% (9.4s)
 
@@ -75,7 +75,8 @@ Running a comprehensive security audit today means:
 | **Setup** | `npx auditx@latest .` — zero config | Cloud account required | Heavy Java server | Tied to GitHub |
 | **Data Privacy** | 100% local — nothing leaves your machine | Sends deps/code to cloud | Local or cloud | Cloud |
 | **Scope** | Secrets + Deps + SAST + IaC + Dead Code | Mostly Deps & SAST | SAST & Code Quality | Secrets + Deps + SAST |
-| **Underlying Engine** | Best-in-class OSS (Trivy, Semgrep, Gitleaks) | Proprietary | Proprietary | CodeQL (Proprietary) |
+| **Underlying Engine** | Best-in-class OSS (Trivy, Semgrep, OSV, Shellcheck, etc.) | Proprietary | Proprietary | CodeQL (Proprietary) |
+| **Execution Speed** | ~60s (Local AST, 18 parallel scanners) | ~45s (Cloud + ML) | Minutes (Build required) | Minutes (Build required) |
 | **AI Agent Ready** | Structured `.md` output, `--ci` flag | No | No | No |
 
 ---
@@ -155,12 +156,12 @@ auditx --check-deps
 
 | Category | Scanner | What It Finds |
 |---|---|---|
-| `SECRETS` | [Gitleaks](https://github.com/gitleaks/gitleaks) | Hardcoded API keys, tokens, passwords, connection strings — including git history |
-| `DEPS` | [Trivy](https://github.com/aquasecurity/trivy) + npm audit | CVEs in npm/pip/cargo packages with CVSS scores and fix versions |
-| `SAST` | [Semgrep](https://github.com/semgrep/semgrep) | SQL injection, eval usage, XSS, command injection, path traversal |
+| `SECRETS` | [Gitleaks](https://github.com/gitleaks/gitleaks) + [Trufflehog](https://github.com/trufflesecurity/trufflehog) | Hardcoded API keys, tokens, passwords — includes Active API validation! |
+| `DEPS` | [Trivy](https://github.com/aquasecurity/trivy) + [OSV-Scanner](https://github.com/google/osv-scanner) + npm | CVEs in npm/pip/cargo packages with deep dependency traversal |
+| `SAST` | [Semgrep](https://github.com/semgrep/semgrep) + [Shellcheck](https://github.com/koalaman/shellcheck) | SQL injection, XSS, eval usage, and unquoted variable bugs in `.sh` bash scripts |
 | `AI_CODE` | Semgrep (44 rules) | AI-generated anti-patterns (silent catches, floating promises, ts-any-cast, React state mutation) |
 | `DEAD_CODE` | [Knip](https://github.com/webpro-nl/knip) | Unused exports, unused imports, unused dependencies |
-| `PATTERNS` | ESLint + security plugins | Prototype pollution, unsafe regex, insecure randomness (JS/TS only) |
+| `PATTERNS` | ESLint + [CSpell](https://cspell.org/) | Prototype pollution, unsafe regex, and misspelled codebase variables/strings |
 | `DUPLICATION` | [jscpd](https://github.com/kucherenko/jscpd) | Copy-pasted code blocks and exact clones across multiple files (polyglot) |
 | `COMPLEXITY` | [Lizard](https://github.com/terryyin/lizard) | Cyclomatic complexity — functions too complex to test safely |
 | `DEP_HEALTH` | [depcheck](https://github.com/depcheck/depcheck) | Packages present in package.json but entirely unused in code |
@@ -510,7 +511,7 @@ MIT © [Parth Mongia](https://parthmongia.dev) ([GitHub](https://github.com/part
 
 <div align="center">
 
-Built with [Semgrep](https://semgrep.dev) · [Trivy](https://trivy.dev) · [Gitleaks](https://gitleaks.io) · [Knip](https://knip.dev)
+Built with [Semgrep](https://semgrep.dev) · [Trivy](https://trivy.dev) · [OSV-Scanner](https://osv.dev/) · [TruffleHog](https://trufflesecurity.com/) · [ShellCheck](https://www.shellcheck.net/)
 
 **If auditx found something in your codebase, it's working. ⭐ Star it.**
 

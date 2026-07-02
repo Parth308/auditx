@@ -4,7 +4,10 @@ import { runTrivy } from './security/trivy.js';
 import { runNpmAudit } from './security/npmaudit.js';
 import { runGitleaks } from './security/gitleaks.js';
 import { runTrufflehog } from './security/trufflehog.js';
+import { runOsvScanner } from './security/osv.js';
+import { runShellcheck } from './security/shellcheck.js';
 import { runKnip } from './quality/knip.js';
+import { runCspell } from './quality/cspell.js';
 import { runEslint } from './quality/eslint.js';
 import { runJscpd } from './quality/jscpd.js';
 import { runDepcheck } from './health/depcheck.js';
@@ -51,6 +54,13 @@ const RUNNERS: RunnerDef[] = [
     isApplicable: () => true, // trivy handles all ecosystems
   },
   {
+    name: 'deps',
+    label: 'osv-scanner (Google OSV)',
+    cost: 2,
+    run: runOsvScanner,
+    isApplicable: () => true,
+  },
+  {
     name: 'iac',
     label: 'trivy (IaC)',
     cost: 2,
@@ -69,6 +79,13 @@ const RUNNERS: RunnerDef[] = [
     label: 'semgrep (SAST)',
     cost: 3,
     run: runSemgrep,
+    isApplicable: () => true,
+  },
+  {
+    name: 'sast',
+    label: 'shellcheck (bash scripts)',
+    cost: 1,
+    run: runShellcheck,
     isApplicable: () => true,
   },
   {
@@ -132,6 +149,13 @@ const RUNNERS: RunnerDef[] = [
     label: 'lizard (complexity)',
     cost: 2,
     run: runLizard,
+    isApplicable: () => true,
+  },
+  {
+    name: 'patterns',
+    label: 'cspell (code spelling)',
+    cost: 2,
+    run: runCspell,
     isApplicable: () => true,
   },
 ];

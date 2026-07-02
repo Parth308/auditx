@@ -8,12 +8,14 @@ import { execFileSync } from 'child_process';
 import chalk from 'chalk';
 import ora from 'ora';
 
-export type ToolName = 'gitleaks' | 'trivy' | 'semgrep' | 'trufflehog';
+export type ToolName = 'gitleaks' | 'trivy' | 'semgrep' | 'trufflehog' | 'osv-scanner' | 'shellcheck';
 
 const GITLEAKS_VERSION = '8.30.1';
 const TRIVY_VERSION = '0.71.2';
 const SEMGREP_VERSION = '1.100.0';
 const TRUFFLEHOG_VERSION = '3.95.7';
+const OSV_SCANNER_VERSION = '1.8.1';
+const SHELLCHECK_VERSION = '0.11.0';
 
 const installPromises = new Map<string, Promise<string>>();
 
@@ -86,12 +88,23 @@ async function getBinaryPathInternal(tool: ToolName): Promise<string> {
       return 'semgrep'; // Relies on system PATH
     }
 
-    const { url, isZip } = getDownloadUrl(tool);
-    const archivePath = join(binDir, `${tool}-archive${isZip ? '.zip' : '.tar.gz'}`);
+    const { url, isZip, isRaw } = getDownloadUrl(tool);
+    const extRaw = platform() === 'win32' ? '.exe' : '';
+    const archivePath = join(binDir, `${tool}-archive${isRaw ? extRaw : isZip ? '.zip' : '.tar.gz'}`);
 
     await downloadFile(url, archivePath, (percent) => {
       spinner.text = `Downloading ${tool}... ${percent}%`;
     });
+    
+    if (isRaw) {
+      import('fs').then(({ renameSync, chmodSync }) => {
+        renameSync(archivePath, expectedBin);
+        if (platform() !== 'win32') chmodSync(expectedBin, 0o755);
+      });
+      spinner.succeed(`Installed ${tool}`);
+      return expectedBin;
+    }
+
     spinner.text = `Extracting ${tool}...`;
 
     if (isZip) {
@@ -123,7 +136,7 @@ async function getBinaryPathInternal(tool: ToolName): Promise<string> {
   }
 }
 
-function getDownloadUrl(tool: ToolName): { url: string; isZip: boolean } {
+function getDownloadUrl(tool: ToolName): { url: string; isZip: boolean; isRaw?: boolean } {
   const os = platform();
   const a = arch();
 
@@ -168,6 +181,35 @@ function getDownloadUrl(tool: ToolName): { url: string; isZip: boolean } {
     return {
       url: `https://github.com/trufflesecurity/trufflehog/releases/download/v${TRUFFLEHOG_VERSION}/trufflehog_${TRUFFLEHOG_VERSION}_${osStr}_${archStr}.${ext}`,
       isZip: false,
+    };
+  }
+
+  if (tool === 'osv-scanner') {
+    let osStr = os === 'win32' ? 'windows' : os === 'darwin' ? 'darwin' : 'linux';
+    let archStr = a === 'x64' ? 'amd64' : a === 'arm64' ? 'arm64' : 'amd64'; // fallback for x86
+    const ext = os === 'win32' ? '.exe' : '';
+    return {
+      url: `https://github.com/google/osv-scanner/releases/download/v${OSV_SCANNER_VERSION}/osv-scanner_${osStr}_${archStr}${ext}`,
+      isZip: false,
+      isRaw: true,
+    };
+  }
+
+  if (tool === 'shellcheck') {
+    let osStr = os === 'win32' ? 'windows' : os === 'darwin' ? 'darwin' : 'linux';
+    let archStr = a === 'x64' ? 'x86_64' : a === 'arm64' ? 'aarch64' : 'x86_64';
+    const ext = os === 'win32' ? 'zip' : 'tar.gz'; // For windows, koalaman hosts a zip
+    let url = '';
+    
+    // shellcheck windows releases are just zip files without arch
+    if (os === 'win32') {
+       url = `https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.zip`;
+    } else {
+       url = `https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.${osStr}.${archStr}.${ext}`;
+    }
+    return {
+      url,
+      isZip: ext === 'zip',
     };
   }
 

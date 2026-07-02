@@ -91,10 +91,12 @@ if (targetArg === 'install') {
     await getBinaryPath('trivy');
     await getBinaryPath('semgrep');
     await getBinaryPath('trufflehog');
+    await getBinaryPath('osv-scanner');
+    await getBinaryPath('shellcheck');
     
     console.log(chalk.cyan('  Installing npm-based scanners globally...'));
     import('child_process').then(({ execFileSync }) => {
-      execFileSync('npm', ['install', '-g', 'jscpd', 'depcheck', 'license-checker', 'typescript'], { stdio: 'ignore' });
+      execFileSync('npm', ['install', '-g', 'jscpd', 'depcheck', 'license-checker', 'typescript', 'cspell'], { stdio: 'ignore' });
       try {
         console.log(chalk.cyan('  Installing Python-based scanners globally...'));
         execFileSync('pip', ['install', 'lizard'], { stdio: 'ignore' });

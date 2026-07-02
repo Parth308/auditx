@@ -55,7 +55,8 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       ai: false,
       fix: false,
       watch: false,
-      checkDeps: false
+      checkDeps: false,
+      sbom: false
     };
 
     try {

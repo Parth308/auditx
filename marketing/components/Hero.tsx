@@ -5,7 +5,7 @@ const HR  = '1px solid rgba(0,0,0,0.09)';
 const INK = '#1a1a1a';
 
 const STATS = [
-  { val: '13',   label: 'scanner categories' },
+  { val: '18',   label: 'parallel scanners' },
   { val: '44',   label: 'AI-pattern rules' },
   { val: '0',    label: 'config required' },
   { val: '100%', label: 'local — no cloud' },
@@ -56,7 +56,7 @@ export default function Hero() {
             maxWidth: 580,
             marginBottom: 36,
           }}>
-            auditx auto-detects your stack, then orchestrates 13 scanner categories
+            auditx auto-detects your stack, then orchestrates 18 scanners
             in parallel across your CPU cores — secrets, deps, SAST, dead code,
             complexity, IaC, and AI-pattern anti-patterns. One command.
             One normalized report. No config.
