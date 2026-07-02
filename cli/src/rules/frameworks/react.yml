@@ -4,7 +4,7 @@ rules:
       useEffect with no dependency array runs after every render.
       Add a deps array.
     severity: WARNING
-    languages: [javascript, typescript, jsx, tsx]
+    languages: [javascript, typescript]
     pattern: |
       useEffect(() => { ... })
 
@@ -13,7 +13,7 @@ rules:
       Array index as React key. Breaks reconciliation on reorder.
       Use stable unique ID.
     severity: WARNING
-    languages: [javascript, typescript, jsx, tsx]
+    languages: [javascript, typescript]
     pattern-regex: \.map\([^,]+,\s*(?<idx>[a-zA-Z0-9_]+)\s*\)\s*=>\s*<[^>]+key=\{\k<idx>\}
 
   - id: ai-react-state-mutate-direct
@@ -21,7 +21,7 @@ rules:
       Directly mutating state object. React won't detect change —
       use setState with new reference.
     severity: ERROR
-    languages: [javascript, typescript, jsx, tsx]
+    languages: [javascript, typescript]
     paths:
       include:
         - "*.jsx"
@@ -39,7 +39,7 @@ rules:
       Replacing entire object state without spreading previous state loses
       other fields. Use `setState(prev => ({ ...prev, key: val }))`.
     severity: WARNING
-    languages: [javascript, typescript, jsx, tsx]
+    languages: [javascript, typescript]
     patterns:
       - pattern: "$SET({ $KEY: $VAL })"
       - metavariable-regex:

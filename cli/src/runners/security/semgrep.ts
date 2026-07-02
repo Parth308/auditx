@@ -77,7 +77,6 @@ export async function runSemgrep(targetDir: string, stagedFiles: string[] | unde
       '--quiet',
       '--timeout', '30',
       '--no-rewrite-rule-ids',
-      '--cache',
       '--exclude', 'node_modules',
       '--exclude', '.next',
       '--exclude', 'dist',

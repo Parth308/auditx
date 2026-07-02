@@ -27,7 +27,7 @@ export async function runAiPatterns(targetPath: string, stagedFiles: string[] | 
     const semgrepBin = await getBinaryPath('semgrep');
 
     const rulesRoot = fileURLToPath(new URL('../src/rules', import.meta.url));
-    const rulesDevRoot = fileURLToPath(new URL('../rules', import.meta.url));
+    const rulesDevRoot = fileURLToPath(new URL('../../rules', import.meta.url));
     const baseRulesDir = existsSync(rulesRoot) ? rulesRoot : rulesDevRoot;
 
     if (!existsSync(baseRulesDir)) {
@@ -66,7 +66,6 @@ export async function runAiPatterns(targetPath: string, stagedFiles: string[] | 
       ...configArgs,
       '--json',
       '--timeout', '30',
-      '--cache',
       '--exclude', 'node_modules',
       '--exclude', '.next',
       '--exclude', 'dist',

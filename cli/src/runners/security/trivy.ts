@@ -60,35 +60,25 @@ const TRIVY_SEV_MAP: Record<string, Severity> = {
 // ─── Runner ───────────────────────────────────────────────────────────────────
 
 /**
- * Runs `trivy fs` (dependency scan) and `trivy config` (IaC scan) against the
- * target directory. Returns normalized findings for both DEPS and IaC categories.
+ * Runs `trivy fs` (dependency scan) against the target directory. 
+ * Returns normalized findings for DEPS categories.
  */
 export async function runTrivy(targetDir: string): Promise<ScanResult> {
   const start = Date.now();
   const scanner = 'trivy';
 
-  const [fsResult, configResult] = await Promise.allSettled([
-    runTrivyFs(targetDir),
-    runTrivyConfig(targetDir),
-  ]);
-
-  const findings: Finding[] = [];
-
-  if (fsResult.status === 'fulfilled') {
-    findings.push(...fsResult.value);
+  try {
+    const findings = await runTrivyFs(targetDir);
+    return { scanner, ok: true, findings, durationMs: Date.now() - start };
+  } catch (err) {
+    return { 
+      scanner, 
+      ok: false, 
+      findings: [], 
+      error: 'trivy not found. Install: https://trivy.dev/docs/getting-started/installation/', 
+      durationMs: Date.now() - start 
+    };
   }
-  if (configResult.status === 'fulfilled') {
-    findings.push(...configResult.value);
-  }
-
-  // If both failed we consider it a failure
-  const ok = fsResult.status === 'fulfilled' || configResult.status === 'fulfilled';
-  const error =
-    !ok
-      ? 'trivy not found. Install: https://trivy.dev/docs/getting-started/installation/'
-      : undefined;
-
-  return { scanner, ok, findings, error, durationMs: Date.now() - start };
 }
 
 async function runTrivyFs(targetDir: string): Promise<Finding[]> {
@@ -138,37 +128,3 @@ async function runTrivyFs(targetDir: string): Promise<Finding[]> {
   return findings;
 }
 
-async function runTrivyConfig(targetDir: string): Promise<Finding[]> {
-  const bin = await getBinaryPath('trivy');
-  const { stdout } = await execFileAsync(
-    bin,
-    [
-      'config',
-      '--format', 'json',
-      '--quiet',
-      targetDir,
-    ],
-    { maxBuffer: 50 * 1024 * 1024 },
-  );
-
-  const report: TrivyReport = JSON.parse(stdout || '{}');
-  const findings: Finding[] = [];
-
-  for (const result of report.Results ?? []) {
-    for (const misconfig of result.Misconfigurations ?? []) {
-      findings.push({
-        id: '',
-        category: 'IaC',
-        severity: TRIVY_SEV_MAP[misconfig.Severity] ?? 'info',
-        title: misconfig.Title,
-        file: result.Target,
-        rule: misconfig.ID,
-        scanner: 'trivy',
-        description: misconfig.Description,
-        fix: misconfig.Resolution,
-      });
-    }
-  }
-
-  return findings;
-}

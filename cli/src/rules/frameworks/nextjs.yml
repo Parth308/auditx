@@ -3,7 +3,7 @@ rules:
     message: >
       Using native `<a>` tag in Next.js causes full page reloads. Use `<Link>` from `next/link` instead for SPA navigation.
     severity: WARNING
-    languages: [javascript, typescript, jsx, tsx]
+    languages: [javascript, typescript]
     paths:
       include:
         - "*.jsx"
@@ -21,7 +21,7 @@ rules:
     message: >
       Using native `<img>` tag bypasses Next.js Image Optimization. Use `<Image>` from `next/image` instead.
     severity: INFO
-    languages: [javascript, typescript, jsx, tsx]
+    languages: [javascript, typescript]
     paths:
       include:
         - "*.jsx"
@@ -32,7 +32,7 @@ rules:
     message: >
       Setting `<title>` manually inside a component is discouraged in Next.js App Router. Export `metadata` instead.
     severity: INFO
-    languages: [javascript, typescript, jsx, tsx]
+    languages: [javascript, typescript]
     paths:
       include:
         - "*.jsx"

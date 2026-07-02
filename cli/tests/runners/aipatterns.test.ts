@@ -1,11 +1,28 @@
 import { describe, it, expect } from 'vitest';
-import { runAiPatterns } from '../../src/runners/aipatterns.js';
+import { runAiPatterns } from '../../src/runners/ai/aipatterns.js';
 import { resolve } from 'path';
 
 describe('runAiPatterns', () => {
   it('should detect multiple AI anti-patterns in the fixture', async () => {
     const targetDir = resolve(__dirname, '../fixtures/ai-spaghetti.ts');
-    const result = await runAiPatterns(targetDir);
+    const stack = {
+      hasNodeJs: true,
+      hasPython: false,
+      hasRust: false,
+      hasGo: false,
+      hasDocker: false,
+      hasGit: false,
+      hasGitHistory: false,
+      hasTerraform: false,
+      hasTypeScript: true,
+      hasReact: false,
+      hasDjango: false,
+      hasNextJs: false,
+      hasNestJs: false,
+      hasExpress: false,
+      hasSql: false,
+    };
+    const result = await runAiPatterns(targetDir, undefined, stack);
 
     expect(result.ok).toBe(true);
     expect(result.scanner).toBe('aipatterns');
