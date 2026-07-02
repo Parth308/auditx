@@ -1,109 +1,118 @@
-import { writeFileSync, existsSync, mkdirSync } from 'fs';
+import { writeFileSync, existsSync, mkdirSync, readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import chalk from 'chalk';
 
-const AGENTS_MD = `# AGENTS.md
+const MARKER_START = '<!-- auditx-agent-config-start -->';
+const MARKER_END = '<!-- auditx-agent-config-end -->';
 
-## Security & Quality Auditing
-This repo uses \`auditx\` for security/quality scans. Before committing or opening a PR:
+const CORE_INSTRUCTION = `## Security & Quality Auditing
+This repo uses \`auditx\` for security, dependency, SAST, dead-code, and AI-generated-code-pattern audits.
 
-\`\`\`bash
-npx auditx . --output agent --ci
-\`\`\`
-
-Parses as JSON: \`{ok, exitCode, files, findings[]}\`. 
-If \`exitCode: 1\` or \`ok: false\`, fix findings grouped by file (\`findingsByFile\` or \`findings[].file\`), each has: severity, rule, msg, and fix (if fixable).
-Re-run to verify \`exitCode: 0\` before finishing.
-
-Full human-readable report: \`npx auditx .\` (writes \`audit-report.md\`)
-`;
-
-const CURSOR_RULES = `# Cursor Rules for auditx
-
-## Security & Quality Auditing
-This repo uses \`auditx\` for security/quality scans. Before committing or opening a PR, or when you are asked to review code quality/security:
+Run before finishing any task, committing, or opening a PR:
 
 \`\`\`bash
 npx auditx . --output agent --ci
 \`\`\`
 
-Parses as JSON: \`{ok, exitCode, files, findings[]}\`. 
-If \`exitCode: 1\` or \`ok: false\`, fix findings grouped by file (\`findingsByFile\` or \`findings[].file\`), each has: severity, rule, msg, and fix (if fixable).
-Re-run to verify \`exitCode: 0\` before finishing.
+Returns single-line JSON: \`{ok, exitCode, counts, files, findings}\`.
+- \`ok: false\` or \`exitCode: 1\` means critical/high findings exist — do not consider the task done.
+- Group findings by \`findings[].file\`, fix each. Findings with a \`fix\` field have a suggested resolution.
+- Re-run the command after fixing until \`ok: true\`.
 
-Full human-readable report: \`npx auditx .\` (writes \`audit-report.md\`)
-`;
+Full human-readable report: \`npx auditx .\` → writes \`audit-report.md\` in the repo root.`;
 
-const CLAUDE_SKILL = `---
-name: auditx
-description: Run a security, code quality, and AI-pattern audit on the codebase using auditx. Use this skill when asked to check for vulnerabilities, review code quality, or run security scans.
----
+const STAMPED = `${MARKER_START}\n${CORE_INSTRUCTION}\n${MARKER_END}`;
 
-# auditx Claude Skill
-
-This repository uses \`auditx\` for security, dependency, SAST, and quality scanning.
-
-## How to use
-
-Run the following command to get a machine-readable JSON output of the audit:
-
-\`\`\`bash
-npx auditx . --output agent --ci
-\`\`\`
-
-The output will be a JSON object containing \`{ok, exitCode, findingsByFile, findings}\`.
-If \`exitCode: 1\` or \`ok: false\`, you must fix the findings grouped by file in \`findingsByFile\`.
-Each finding has a severity, rule, message, and potentially a fix.
-Apply the necessary fixes, and then re-run the command to verify \`exitCode: 0\`.
-
-For a full, human-readable markdown report, run \`npx auditx .\` which will write \`audit-report.md\`.
-`;
-
-const COPILOT_INSTRUCTIONS = `# Copilot Instructions
-
-## Security & Quality Auditing
-This repository relies on \`auditx\` for comprehensive security and code quality auditing.
-
-Whenever you are asked to perform a review, security check, or before concluding a feature implementation, you should run:
-\`\`\`bash
-npx auditx . --output agent --ci
-\`\`\`
-
-This returns a JSON object. If \`exitCode: 1\` or \`ok: false\`, inspect the findings, apply the necessary fixes, and verify again until \`exitCode: 0\`.
-`;
+const TEMPLATES: Record<string, { path: string; content: string; label: string }> = {
+  agents: {
+    path: 'AGENTS.md',
+    content: `# AGENTS.md\n\n${STAMPED}\n`,
+    label: 'AGENTS.md (general — Claude Code, Antigravity, etc.)',
+  },
+  cursor: {
+    path: '.cursor/rules/auditx.mdc',
+    content: `---\ndescription: auditx security & quality auditing\nalwaysApply: true\n---\n\n${STAMPED}\n`,
+    label: '.cursor/rules/auditx.mdc (Cursor)',
+  },
+  cursorLegacy: {
+    path: '.cursorrules',
+    content: `# Cursor Rules\n\n${STAMPED}\n`,
+    label: '.cursorrules (Cursor legacy fallback)',
+  },
+  copilot: {
+    path: '.github/copilot-instructions.md',
+    content: `# Copilot Instructions\n\n${STAMPED}\n`,
+    label: '.github/copilot-instructions.md (GitHub Copilot)',
+  },
+  claude: {
+    path: '.claude/skills/auditx/SKILL.md',
+    content: `---\nname: auditx\ndescription: Run a security, code quality, and AI-pattern audit on the codebase. Use when asked to check vulnerabilities, review code quality, or run security scans.\n---\n\n# auditx Claude Skill\n\n${STAMPED}\n`,
+    label: '.claude/skills/auditx/SKILL.md (Claude Code skill)',
+  },
+};
 
 function ensureDir(filePath: string) {
   const dir = dirname(filePath);
-  if (!existsSync(dir)) {
-    mkdirSync(dir, { recursive: true });
-  }
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
 }
 
-export function initAgent(targetDir: string) {
-  console.log(chalk.cyan('\n  🤖 Initializing AI Agent configuration files...'));
+export interface InitAgentOptions {
+  only?: string[]; // subset of TEMPLATES keys, e.g. ['claude', 'cursor']
+}
 
-  const filesToCreate = [
-    { path: resolve(targetDir, 'AGENTS.md'), content: AGENTS_MD, name: 'AGENTS.md (General)' },
-    { path: resolve(targetDir, '.cursorrules'), content: CURSOR_RULES, name: '.cursorrules (Cursor)' },
-    { path: resolve(targetDir, '.github/copilot-instructions.md'), content: COPILOT_INSTRUCTIONS, name: '.github/copilot-instructions.md (GitHub Copilot)' },
-    { path: resolve(targetDir, '.claude/skills/auditx/SKILL.md'), content: CLAUDE_SKILL, name: '.claude/skills/auditx/SKILL.md (Claude Code)' },
-  ];
+export function initAgent(targetDir: string, opts: InitAgentOptions = {}) {
+  console.log(chalk.cyan('\n  🤖 Initializing AI agent configuration files...\n'));
 
-  let createdCount = 0;
-  for (const file of filesToCreate) {
-    if (existsSync(file.path)) {
-      console.log(chalk.dim(`  - ${file.name} already exists, skipping.`));
+  const keys = opts.only && opts.only.length > 0 ? opts.only : Object.keys(TEMPLATES);
+  let created = 0;
+  let updated = 0;
+  let merged = 0;
+
+  for (const key of keys) {
+    const tpl = TEMPLATES[key];
+    if (!tpl) {
+      console.log(chalk.yellow(`  ⚠️  Unknown target: ${key}, skipping.`));
+      continue;
+    }
+
+    const filePath = resolve(targetDir, tpl.path);
+
+    if (existsSync(filePath)) {
+      const existing = readFileSync(filePath, 'utf8');
+
+      if (existing.includes(MARKER_START) && existing.includes(MARKER_END)) {
+        // Extract the existing block to check if it needs updating
+        const startIdx = existing.indexOf(MARKER_START);
+        const endIdx = existing.indexOf(MARKER_END) + MARKER_END.length;
+        const existingBlock = existing.substring(startIdx, endIdx);
+
+        if (existingBlock === STAMPED) {
+          console.log(chalk.dim(`  = ${tpl.label} already up to date.`));
+          continue;
+        }
+
+        // Safely replace just our block, preserving user's other rules!
+        const newContent = existing.substring(0, startIdx) + STAMPED + existing.substring(endIdx);
+        writeFileSync(filePath, newContent, 'utf8');
+        console.log(chalk.green(`  ↻ Updated ${tpl.label}`));
+        updated++;
+      } else {
+        // File exists but has no auditx markers, append it safely
+        writeFileSync(filePath, `${existing.trimEnd()}\n\n${STAMPED}\n`, 'utf8');
+        console.log(chalk.yellow(`  + Appended auditx section into existing ${tpl.label}`));
+        merged++;
+      }
     } else {
-      ensureDir(file.path);
-      writeFileSync(file.path, file.content, 'utf8');
-      console.log(chalk.green(`  ✓ Created ${file.name}`));
-      createdCount++;
+      ensureDir(filePath);
+      writeFileSync(filePath, tpl.content, 'utf8');
+      console.log(chalk.green(`  ✓ Created ${tpl.label}`));
+      created++;
     }
   }
 
-  if (createdCount > 0) {
-    console.log(chalk.green('\n  ✅ Agent integration files successfully created.\n'));
-  } else {
-    console.log(chalk.cyan('\n  ✅ All agent integration files are already present.\n'));
-  }
+  console.log(
+    chalk.green(
+      `\n  ✅ Done. ${created} created, ${updated} updated, ${merged} merged into existing files.\n`,
+    ),
+  );
 }
