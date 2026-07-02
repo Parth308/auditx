@@ -132,6 +132,8 @@ export interface Config {
   watch: boolean;
   /** Check that all required external tools are installed */
   checkDeps: boolean;
+  /** Generate SBOM using Trivy */
+  sbom: boolean;
 }
 
 /** The fully aggregated scan report. */

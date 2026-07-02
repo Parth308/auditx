@@ -61,6 +61,7 @@ program
   .option('--ai-model <model>', 'Specific model override (optional)')
   .option('--staged-list <file>', 'Path to a file containing a list of files to scan (used by git hooks)')
   .option('--fix', 'Auto-apply fixable issues (eslint --fix, knip --fix)')
+  .option('--sbom', 'Generate a CycloneDX SBOM file (sbom.json)')
   .option('--watch', 'Re-run on file changes (dev mode)')
   .option('--check-deps', 'Verify all required external scanner tools are installed')
   .option('--help-json', 'Output command reference as JSON (for AI agents)');
@@ -89,6 +90,7 @@ if (targetArg === 'install') {
     await getBinaryPath('gitleaks');
     await getBinaryPath('trivy');
     await getBinaryPath('semgrep');
+    await getBinaryPath('trufflehog');
     
     console.log(chalk.cyan('  Installing npm-based scanners globally...'));
     import('child_process').then(({ execFileSync }) => {
@@ -174,6 +176,7 @@ async function runDefaultScan() {
   aiProvider: opts['aiProvider'] as AiProvider,
   aiModel: opts['aiModel'] as string,
   fix: Boolean(opts['fix']),
+  sbom: Boolean(opts['sbom']),
   watch: Boolean(opts['watch']),
   checkDeps: Boolean(opts['checkDeps']),
 };
@@ -340,6 +343,11 @@ async function runScan(): Promise<void> {
     applyFixes(config.target);
   }
 
+  // 8.5 --sbom
+  if (config.sbom) {
+    await generateSbom(config.target, isInteractive);
+  }
+
   // 9. --ci exit code
   const urgentFindings = findings.filter(
     (f) => f.severity === 'critical' || f.severity === 'high',
@@ -401,6 +409,20 @@ function applyFixes(targetDir: string): void {
     console.log(chalk.green('  ✓ eslint --fix applied'));
   } catch {
     console.log(chalk.yellow('  ⚠ eslint --fix had issues (see above)'));
+  }
+}
+
+// ─── --sbom ───────────────────────────────────────────────────────────────────
+
+async function generateSbom(targetDir: string, isInteractive: boolean): Promise<void> {
+  const dest = resolve(targetDir, 'sbom.json');
+  if (isInteractive) console.log(chalk.cyan('\n  📦 Generating CycloneDX SBOM…'));
+  try {
+    const bin = await getBinaryPath('trivy');
+    execSync(`"${bin}" fs --format cyclonedx --output "${dest}" .`, { cwd: targetDir, stdio: 'ignore' });
+    if (isInteractive) console.log(chalk.green(`  ✅ SBOM successfully written to: ${chalk.bold('sbom.json')}`));
+  } catch (err: any) {
+    if (isInteractive) console.log(chalk.red(`  ❌ Failed to generate SBOM: ${err.message}`));
   }
 }
 }

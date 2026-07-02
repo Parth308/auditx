@@ -8,11 +8,12 @@ import { execFileSync } from 'child_process';
 import chalk from 'chalk';
 import ora from 'ora';
 
-export type ToolName = 'gitleaks' | 'trivy' | 'semgrep';
+export type ToolName = 'gitleaks' | 'trivy' | 'semgrep' | 'trufflehog';
 
 const GITLEAKS_VERSION = '8.30.1';
 const TRIVY_VERSION = '0.71.2';
 const SEMGREP_VERSION = '1.100.0';
+const TRUFFLEHOG_VERSION = '3.95.7';
 
 const installPromises = new Map<string, Promise<string>>();
 
@@ -157,6 +158,16 @@ function getDownloadUrl(tool: ToolName): { url: string; isZip: boolean } {
     return {
       url: `https://github.com/semgrep/semgrep/releases/download/v${SEMGREP_VERSION}/semgrep-v${SEMGREP_VERSION}-${osStr}.${ext}`,
       isZip: ext === 'zip',
+    };
+  }
+
+  if (tool === 'trufflehog') {
+    let osStr = os === 'win32' ? 'windows' : os === 'darwin' ? 'darwin' : 'linux';
+    let archStr = a === 'x64' ? 'amd64' : a === 'arm64' ? 'arm64' : '386';
+    const ext = 'tar.gz'; // Trufflehog uses tar.gz for all platforms
+    return {
+      url: `https://github.com/trufflesecurity/trufflehog/releases/download/v${TRUFFLEHOG_VERSION}/trufflehog_${TRUFFLEHOG_VERSION}_${osStr}_${archStr}.${ext}`,
+      isZip: false,
     };
   }
 

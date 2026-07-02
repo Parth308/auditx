@@ -3,6 +3,7 @@ import { runSemgrep } from './security/semgrep.js';
 import { runTrivy } from './security/trivy.js';
 import { runNpmAudit } from './security/npmaudit.js';
 import { runGitleaks } from './security/gitleaks.js';
+import { runTrufflehog } from './security/trufflehog.js';
 import { runKnip } from './quality/knip.js';
 import { runEslint } from './quality/eslint.js';
 import { runJscpd } from './quality/jscpd.js';
@@ -34,6 +35,13 @@ const RUNNERS: RunnerDef[] = [
     cost: 1,
     run: runGitleaks,
     isApplicable: (s) => s.hasGit,
+  },
+  {
+    name: 'secrets',
+    label: 'trufflehog (active validation)',
+    cost: 1,
+    run: runTrufflehog,
+    isApplicable: () => true, // TruffleHog works on raw filesystem
   },
   {
     name: 'deps',
