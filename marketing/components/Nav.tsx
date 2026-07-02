@@ -85,16 +85,17 @@ export default function Nav() {
           {/* Mobile hamburger */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Toggle menu"
             className="mobile-menu-btn"
+            aria-label="Toggle mobile menu"
             style={{
               display: 'none',
-              fontFamily: 'inherit',
-              fontSize: 18,
-              background: 'none',
+              background: 'transparent',
               border: 'none',
-              cursor: 'pointer',
+              fontFamily: 'inherit',
+              fontSize: 20,
               color: '#1a1a1a',
+              cursor: 'pointer',
+              padding: '8px',
             }}
           >
             {menuOpen ? '[x]' : '[=]'}

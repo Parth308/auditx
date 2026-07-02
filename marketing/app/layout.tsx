@@ -70,6 +70,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { Analytics } from '@vercel/analytics/react';
+
 export default function RootLayout({
   children,
 }: {
@@ -77,7 +79,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} ${jbMono.variable}`}>
-      <body className="font-sans antialiased bg-canvas text-ink overflow-x-hidden">{children}</body>
+      <body className="font-sans antialiased bg-canvas text-ink overflow-x-hidden">
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
