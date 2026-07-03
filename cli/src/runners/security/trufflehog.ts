@@ -1,5 +1,8 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
+import { writeFileSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
 import type { Finding, ScanResult } from '../../types.js';
 import { getBinaryPath } from '../../installer.js';
 
@@ -17,10 +20,14 @@ export async function runTrufflehog(targetDir: string): Promise<ScanResult> {
     let stdout = '';
     let stderr = '';
     
+    // Create a temporary exclude file to ignore node_modules and other slow dirs
+    const tmpExclude = join(tmpdir(), `thog-exclude-${Date.now()}.txt`);
+    writeFileSync(tmpExclude, '.*node_modules.*\\n.*\\.git.*\\n.*dist.*\\n.*build.*\\n', 'utf8');
+    
     try {
       const res = await execFileAsync(
         bin,
-        ['filesystem', targetDir, '--json', '--verify', '--no-update'],
+        ['filesystem', targetDir, '--json', '--verify', '--no-update', '--exclude-paths', tmpExclude],
         { maxBuffer: 50 * 1024 * 1024 }
       );
       stdout = res.stdout;

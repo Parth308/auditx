@@ -14,7 +14,7 @@ export async function runIaC(targetPath: string): Promise<ScanResult> {
 
   try {
     const trivyBin = await getBinaryPath('trivy');
-    const args = ['config', '-q', '--skip-version-check', '--format', 'json', '--skip-dirs', '**/node_modules/**', '--skip-dirs', '**/.next/**', '--skip-dirs', '**/dist/**', targetPath];
+    const args = ['config', '-q', '--skip-version-check', '--format', 'json', '--skip-dirs', 'node_modules', '--skip-dirs', '.next', '--skip-dirs', 'dist', targetPath];
 
     let stdout = '';
     try {
