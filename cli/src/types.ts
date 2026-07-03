@@ -21,7 +21,8 @@ export type Category =
   | 'LICENSE'
   | 'AI_CODE'
   | 'GIT_HEALTH'
-  | 'TYPE_SAFETY';
+  | 'TYPE_SAFETY'
+  | 'COMPOUND';
 
 /** A single normalized security finding. */
 export interface Finding {
@@ -57,6 +58,8 @@ export interface Finding {
   inGitHistory?: boolean;
   /** The matched secret/code snippet (redacted safe preview) */
   match?: string;
+  /** IDs of underlying findings that were correlated into this compound finding */
+  correlations?: string[];
 }
 
 /** Result returned by each runner. */

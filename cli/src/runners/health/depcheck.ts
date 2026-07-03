@@ -1,19 +1,27 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { randomUUID } from 'crypto';
+import { existsSync } from 'fs';
+import { join } from 'path';
 import type { Finding, ScanResult } from '../../types.js';
 
 const execAsync = promisify(exec);
 
-export async function runDepcheck(targetPath: string): Promise<ScanResult> {
+export async function runDepcheck(targetDir: string): Promise<ScanResult> {
   const start = Date.now();
+  const scanner = 'depcheck';
   const findings: Finding[] = [];
 
   try {
+    const pkgPath = join(targetDir, 'package.json');
+    if (!existsSync(pkgPath)) {
+      return { scanner, ok: true, findings: [], durationMs: Date.now() - start };
+    }
+
     // depcheck exits with -1 or 1 if issues are found, so we must catch it
     let stdout = '';
     try {
-      const result = await execAsync(`npx --yes depcheck "${targetPath}" --json`, { maxBuffer: 10 * 1024 * 1024 });
+      const result = await execAsync(`npx --yes depcheck "${targetDir}" --json`, { maxBuffer: 10 * 1024 * 1024 });
       stdout = result.stdout;
     } catch (e: any) {
       if (e.stdout) {

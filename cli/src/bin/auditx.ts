@@ -30,7 +30,10 @@ import { dirname, join } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const pkg = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8'));
+const pkgPath = existsSync(join(__dirname, '../package.json')) 
+  ? join(__dirname, '../package.json') 
+  : join(__dirname, '../../package.json');
+const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
 const VERSION = pkg.version;
 
 // ─── CLI definition ───────────────────────────────────────────────────────────

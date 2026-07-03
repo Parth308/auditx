@@ -59,6 +59,9 @@ export async function runEslint(targetDir: string, stagedFiles?: string[]): Prom
 
   try {
     const args = [
+      '--package', 'eslint@8',
+      '--package', 'eslint-plugin-security',
+      '--',
       'eslint',
       '--format', 'json',
       '--no-eslintrc',

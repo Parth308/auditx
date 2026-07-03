@@ -89,6 +89,7 @@ async function runTrivyFs(targetDir: string): Promise<Finding[]> {
       'fs',
       '--format', 'json',
       '--quiet',
+      '--skip-version-check',
       '--scanners', 'vuln',
       targetDir,
     ],

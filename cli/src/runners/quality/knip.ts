@@ -46,7 +46,17 @@ export async function runKnip(targetDir: string): Promise<ScanResult> {
       throw err;
     });
 
-    const report: KnipReport = JSON.parse(result.stdout || '{}');
+    let rawStdout = result.stdout || '{}';
+    if (!rawStdout.trim().startsWith('{') && rawStdout.includes('{')) {
+      rawStdout = rawStdout.substring(rawStdout.indexOf('{'));
+    }
+    
+    let report: KnipReport = {};
+    try {
+      report = JSON.parse(rawStdout);
+    } catch (e) {
+      // Gracefully handle if Knip totally fails to output JSON
+    }
     const findings: Finding[] = [];
 
     // Unused files

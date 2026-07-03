@@ -5,7 +5,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { resolve } from "path";
 
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -17,7 +17,10 @@ import type { Config, Severity } from '../types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const pkg = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8'));
+const pkgPath = existsSync(join(__dirname, '../package.json')) 
+  ? join(__dirname, '../package.json') 
+  : join(__dirname, '../../package.json');
+const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
 const VERSION = pkg.version;
 
 const server = new Server(
