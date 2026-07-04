@@ -16,7 +16,7 @@ export default function CopyButton({ code }: { code: string }) {
       aria-label={copied ? 'Copied!' : 'Copy to clipboard'}
       style={{
         fontFamily: 'var(--font-mono)',
-        fontSize: 11,
+        fontSize: 12,
         padding: '8px 12px',
         minHeight: 36,
         minWidth: 60,

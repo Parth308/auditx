@@ -318,7 +318,7 @@ function AgentLoopGraphic() {
               }} />
               <span style={{
                 fontFamily: 'var(--font-mono)',
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: 700,
                 letterSpacing: '0.1em',
                 color: step.color,
@@ -485,7 +485,7 @@ export default function AgentLoopSection() {
                 }}>
                   <div style={{
                     fontFamily: 'var(--font-mono)',
-                    fontSize: 9,
+                    fontSize: 12,
                     fontWeight: 700,
                     letterSpacing: '0.1em',
                     color: s.color,
@@ -496,7 +496,7 @@ export default function AgentLoopSection() {
                   </div>
                   <div style={{
                     fontFamily: 'var(--font-mono)',
-                    fontSize: 11,
+                    fontSize: 12,
                     color: 'var(--color-mute)',
                     lineHeight: 1.5,
                   }}>

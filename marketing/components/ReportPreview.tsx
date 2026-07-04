@@ -163,7 +163,7 @@ export default function ReportPreview() {
               flexShrink: 0,
               backgroundColor: 'var(--color-canvas)',
             }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--color-mute)', fontWeight: 700 }}>[ TTY ]</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-mute)', fontWeight: 700 }}>[ TTY ]</span>
             </div>
 
             {TABS.map(tab => (

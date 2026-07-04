@@ -189,7 +189,7 @@ export default function InteractiveDemo() {
               flexShrink: 0,
               backgroundColor: 'var(--color-canvas)',
             }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--color-mute)', fontWeight: 700 }}>[ TTY ]</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-mute)', fontWeight: 700 }}>[ TTY ]</span>
             </div>
 
             {SNIPPETS.map(s => (
@@ -242,7 +242,7 @@ export default function InteractiveDemo() {
               }}>
                 <span style={{
                   fontFamily: 'var(--font-mono)',
-                  fontSize: 11,
+                  fontSize: 12,
                   color: 'var(--color-mute)',
                 }}>
                   example.ts
@@ -307,7 +307,7 @@ export default function InteractiveDemo() {
               }}>
                 <span style={{
                   fontFamily: 'var(--font-mono)',
-                  fontSize: 11,
+                  fontSize: 12,
                   color: 'var(--color-mute)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.08em',
@@ -363,7 +363,7 @@ export default function InteractiveDemo() {
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <span style={{
                               fontFamily: 'var(--font-mono)',
-                              fontSize: 10,
+                              fontSize: 12,
                               fontWeight: 700,
                               color: f.sevColor,
                               padding: '1px 6px',

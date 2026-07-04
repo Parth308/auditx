@@ -73,7 +73,7 @@ export default function ProblemSection() {
               {/* Number col */}
               <div style={{
                 fontFamily: 'var(--font-mono)',
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: 600,
                 color: 'var(--color-ash)',
                 paddingTop: 4,
@@ -89,7 +89,7 @@ export default function ProblemSection() {
                   alignItems: 'center',
                   gap: 6,
                   fontFamily: 'var(--font-mono)',
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: 700,
                   letterSpacing: '0.1em',
                   color: p.markerColor,
@@ -144,7 +144,7 @@ export default function ProblemSection() {
           }}>
             <div style={{
               fontFamily: 'var(--font-mono)',
-              fontSize: 11,
+              fontSize: 12,
               color: 'var(--color-mute)',
               letterSpacing: '0.06em',
             }}>
@@ -152,7 +152,7 @@ export default function ProblemSection() {
             </div>
             <div style={{
               fontFamily: 'var(--font-mono)',
-              fontSize: 10,
+              fontSize: 12,
               color: 'var(--color-accent)',
               letterSpacing: '0.08em',
             }}>

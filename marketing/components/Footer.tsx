@@ -114,7 +114,7 @@ export default function Footer() {
                   borderRight: '1px solid var(--color-hairline)', 
                   borderBottom: '1px solid var(--color-hairline)',
                   textTransform: 'uppercase',
-                  fontSize: 11,
+                  fontSize: 12,
                   letterSpacing: '0.05em'
                 }}
               >
@@ -133,20 +133,20 @@ export default function Footer() {
             borderLeft: '1px solid var(--color-hairline)',
             backgroundColor: 'var(--color-surface)'
           }}>
-             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--color-mute)', fontWeight: 700 }}>[ EOF ]</span>
+             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-mute)', fontWeight: 700 }}>[ EOF ]</span>
              <span className="cursor-blink" style={{ display: 'inline-block', width: 8, height: 14, backgroundColor: 'var(--color-accent)' }} />
           </div>
         </div>
 
         {/* Copyright */}
         <div style={{ maxWidth: 1400, margin: '0 auto', padding: '16px 28px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--color-mute)' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-mute)' }}>
             © 2026 auditx · MIT License · by{' '}
             <a href="https://parthmongia.dev" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-ink-light)' }}>
               Parth Mongia
             </a>
           </span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--color-mute)' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-mute)' }}>
             built with auditx · zero critical findings
           </span>
         </div>

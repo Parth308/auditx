@@ -77,7 +77,7 @@ export default function ComparisonTable() {
             <thead>
               <tr>
                 <th style={{
-                  fontSize: 11, fontWeight: 700, letterSpacing: '0.08em',
+                  fontSize: 12, fontWeight: 700, letterSpacing: '0.08em',
                   textTransform: 'uppercase', padding: '12px 16px',
                   textAlign: 'left', color: 'var(--color-mute)',
                   borderRight: HR, borderBottom: HR,
@@ -86,7 +86,7 @@ export default function ComparisonTable() {
                   Benchmark
                 </th>
                 <th style={{
-                  fontSize: 11, fontWeight: 700, letterSpacing: '0.08em',
+                  fontSize: 12, fontWeight: 700, letterSpacing: '0.08em',
                   textTransform: 'uppercase', padding: '12px 16px',
                   textAlign: 'left', color: 'var(--color-mute)',
                   borderRight: HR, borderBottom: HR,
@@ -95,7 +95,7 @@ export default function ComparisonTable() {
                   Snyk
                 </th>
                 <th style={{
-                  fontSize: 11, fontWeight: 700, letterSpacing: '0.08em',
+                  fontSize: 12, fontWeight: 700, letterSpacing: '0.08em',
                   textTransform: 'uppercase', padding: '12px 16px',
                   textAlign: 'left', color: 'var(--color-mute)',
                   borderRight: HR, borderBottom: HR,
@@ -104,7 +104,7 @@ export default function ComparisonTable() {
                   SonarQube
                 </th>
                 <th style={{
-                  fontSize: 11, fontWeight: 700, letterSpacing: '0.08em',
+                  fontSize: 12, fontWeight: 700, letterSpacing: '0.08em',
                   textTransform: 'uppercase', padding: '12px 16px',
                   textAlign: 'left', color: 'var(--color-accent)',
                   borderBottom: `2px solid var(--color-accent)`,

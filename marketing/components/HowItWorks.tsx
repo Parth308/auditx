@@ -56,7 +56,7 @@ function DetectAnimation() {
           </motion.g>
         ))}
       </svg>
-      <div className="absolute bottom-6 font-mono text-[10px] text-[var(--color-accent)] uppercase tracking-widest border border-[var(--color-accent)] px-2 py-1 bg-[var(--color-accent-dim)]">
+      <div className="absolute bottom-6 font-mono text-[12px] text-[var(--color-accent)] uppercase tracking-widest border border-[var(--color-accent)] px-2 py-1 bg-[var(--color-accent-dim)]">
         SCAN_ENGINE_INIT
       </div>
     </div>
@@ -86,15 +86,15 @@ function OrchestratorAnimation() {
   return (
     <div className="relative h-full w-full flex flex-col items-center justify-center p-6 bg-[var(--color-surface-2)] overflow-hidden" style={{ minHeight: '240px' }}>
       <div className="flex justify-between w-full mb-4">
-        <div className="text-[10px] text-[var(--color-mute)] uppercase tracking-widest font-mono">CPU_CORES [4]</div>
-        <div className="text-[10px] text-[var(--color-accent)] uppercase tracking-widest font-mono animate-pulse">ALLOCATING</div>
+        <div className="text-[12px] text-[var(--color-mute)] uppercase tracking-widest font-mono">CPU_CORES [4]</div>
+        <div className="text-[12px] text-[var(--color-accent)] uppercase tracking-widest font-mono animate-pulse">ALLOCATING</div>
       </div>
 
       {/* CPU Cores (Vertical Servers) */}
       <div className="flex gap-2 w-full mb-6">
         {[0, 1, 2, 3].map(core => (
           <div key={core} className="flex-1 h-16 border border-[var(--color-hairline)] bg-[var(--color-canvas)] relative flex items-end justify-center overflow-hidden p-1">
-            <span className="text-[9px] text-[var(--color-mute)] opacity-50 absolute top-1 left-1 font-mono">C{core}</span>
+            <span className="text-[12px] text-[var(--color-mute)] opacity-50 absolute top-1 left-1 font-mono">C{core}</span>
             {/* LPT Heavy Blocks */}
             <AnimatePresence mode="popLayout">
               {(active === 0 && core < 3) && (
@@ -105,7 +105,7 @@ function OrchestratorAnimation() {
                   exit={{ height: 0, opacity: 0 }}
                   className="w-full bg-[var(--color-accent)]/20 border-t-2 border-[var(--color-accent)] flex items-center justify-center"
                 >
-                  <span className="text-[9px] text-[var(--color-accent)] font-bold font-mono rotate-[-90deg] whitespace-nowrap">
+                  <span className="text-[12px] text-[var(--color-accent)] font-bold font-mono rotate-[-90deg] whitespace-nowrap">
                     {core === 1 ? '3X' : '...'}
                   </span>
                 </motion.div>
@@ -118,7 +118,7 @@ function OrchestratorAnimation() {
                   exit={{ height: 0, opacity: 0 }}
                   className="w-full bg-[var(--color-accent)]/10 border-t-2 border-[var(--color-accent)] flex items-center justify-center"
                 >
-                  <span className="text-[9px] text-[var(--color-accent)] font-bold font-mono rotate-[-90deg] whitespace-nowrap">
+                  <span className="text-[12px] text-[var(--color-accent)] font-bold font-mono rotate-[-90deg] whitespace-nowrap">
                     {core === 0 ? '2X' : '...'}
                   </span>
                 </motion.div>
@@ -131,7 +131,7 @@ function OrchestratorAnimation() {
                   exit={{ height: 0, opacity: 0 }}
                   className="w-full bg-[var(--color-surface-3)] border-t border-[var(--color-hairline)] flex items-center justify-center"
                 >
-                  <span className="text-[9px] text-[var(--color-mute)] font-bold font-mono">1X</span>
+                  <span className="text-[12px] text-[var(--color-mute)] font-bold font-mono">1X</span>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -139,7 +139,7 @@ function OrchestratorAnimation() {
         ))}
       </div>
 
-      <div className="text-[10px] text-[var(--color-mute)] mb-2 uppercase tracking-widest w-full text-left font-mono">LPT_QUEUE</div>
+      <div className="text-[12px] text-[var(--color-mute)] mb-2 uppercase tracking-widest w-full text-left font-mono">LPT_QUEUE</div>
       <div className="flex gap-1 w-full overflow-hidden items-center h-6">
         <AnimatePresence mode="popLayout">
           {visibleQueue.map((item) => (
@@ -148,9 +148,9 @@ function OrchestratorAnimation() {
               key={item.id}
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0, opacity: 0, width: 0, padding: 0, margin: 0, border: 0 }}
+              exit={{ scale: 0, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className={`h-full border flex items-center justify-center text-[9px] font-mono shrink-0
+              className={`h-full border flex items-center justify-center text-[12px] font-mono shrink-0
                 ${item.w === 3 ? 'w-10 bg-[var(--color-accent)]/20 border-[var(--color-accent)] text-[var(--color-accent)]' :
                   item.w === 2 ? 'w-8 bg-[var(--color-accent)]/10 border-[var(--color-accent)]/50 text-[var(--color-accent)]' :
                     'w-5 bg-[var(--color-surface-3)] border-[var(--color-hairline)] text-[var(--color-mute)]'}`}
@@ -185,7 +185,7 @@ function NormalizeAnimation() {
           <rect x="130" y="48" width="30" height="4" fill="var(--color-accent)" />
         </motion.g>
       </svg>
-      <div className="absolute bottom-6 font-mono text-[10px] text-[var(--color-ink)] uppercase tracking-widest border-t border-[var(--color-hairline)] pt-2 w-full text-center">
+      <div className="absolute bottom-6 font-mono text-[12px] text-[var(--color-ink)] uppercase tracking-widest border-t border-[var(--color-hairline)] pt-2 w-full text-center">
         DATA_SYNTHESIS
       </div>
     </div>
@@ -222,7 +222,7 @@ function OutputAnimation() {
           </g>
         ))}
       </svg>
-      <div className="absolute bottom-6 font-mono text-[10px] text-[var(--color-ink)] uppercase tracking-widest w-full text-center">
+      <div className="absolute bottom-6 font-mono text-[12px] text-[var(--color-ink)] uppercase tracking-widest w-full text-center">
         SIGNAL_DISPATCH
       </div>
     </div>
@@ -286,8 +286,8 @@ export default function HowItWorks() {
               backgroundColor: 'var(--color-surface)',
             }}
           >
-            <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, color: 'var(--color-mute)' }}>{s.num}</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, letterSpacing: '0.07em', color: 'var(--color-ink)' }}>{s.tag}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 12, color: 'var(--color-mute)' }}>{s.num}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 12, letterSpacing: '0.07em', color: 'var(--color-ink)' }}>{s.tag}</span>
           </div>
         ))}
       </div>
@@ -335,7 +335,7 @@ export default function HowItWorks() {
         }}>
           {/* Flags */}
           <div style={{ padding: '20px', borderRight: HR }}>
-            <div style={{ fontFamily: 'inherit', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--color-mute)', textTransform: 'uppercase', marginBottom: 10 }}>
+            <div style={{ fontFamily: 'inherit', fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--color-mute)', textTransform: 'uppercase', marginBottom: 10 }}>
               Also available
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
@@ -350,7 +350,7 @@ export default function HowItWorks() {
 
           {/* Stacks */}
           <div style={{ padding: '20px' }}>
-            <div style={{ fontFamily: 'inherit', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--color-mute)', textTransform: 'uppercase', marginBottom: 10 }}>
+            <div style={{ fontFamily: 'inherit', fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--color-mute)', textTransform: 'uppercase', marginBottom: 10 }}>
               Supported stacks
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
