@@ -48,3 +48,68 @@ rules:
           const $APP = express()
           ...
           $APP.use(helmet())
+
+  - id: ai-express-blind-cors
+    message: >
+      cors() called with no arguments allows ALL origins to make credentialed
+      requests to your API. Whitelist specific origins: cors({ origin: ['https://your-app.com'] }).
+    severity: ERROR
+    languages: [javascript, typescript]
+    pattern: $APP.use(cors())
+
+  - id: ai-express-path-traversal
+    message: >
+      Serving files using user-controlled input in path.join(__dirname, req...) allows
+      path traversal attacks (e.g., ../../etc/passwd). Validate and sanitize the input.
+    severity: ERROR
+    languages: [javascript, typescript]
+    pattern-either:
+      - pattern: res.sendFile(path.join(..., req.$INPUT))
+      - pattern: res.sendFile(path.join(..., req.params.$P))
+      - pattern: res.sendFile(path.join(..., req.query.$Q))
+
+  - id: ai-express-missing-rate-limit
+    message: >
+      Express route defined without rate limiting middleware. Without rate limiting,
+      attackers can brute-force credentials or perform denial-of-service attacks.
+      Use express-rate-limit or similar.
+    severity: INFO
+    languages: [javascript, typescript]
+    patterns:
+      - pattern: $APP.post($ROUTE, $HANDLER)
+      - metavariable-regex:
+          metavariable: $ROUTE
+          regex: .*(login|auth|signup|register|password|token).*
+
+  - id: ai-floating-promise
+    message: >
+      Async function called without await, return, or .catch(). In Node.js, an
+      unhandled rejection from a floating promise will crash the process.
+      Add await or .catch(err => ...) to handle errors.
+    severity: ERROR
+    languages: [javascript, typescript]
+    patterns:
+      - pattern: |
+          async function $F(...) {
+            ...
+            $G(...)
+            ...
+          }
+      - pattern-not: |
+          async function $F(...) {
+            ...
+            await $G(...)
+            ...
+          }
+      - pattern-not: |
+          async function $F(...) {
+            ...
+            return $G(...)
+            ...
+          }
+      - pattern-not: |
+          async function $F(...) {
+            ...
+            $G(...).catch(...)
+            ...
+          }

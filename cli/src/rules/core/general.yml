@@ -497,3 +497,91 @@ rules:
     languages: [javascript, typescript]
     pattern: |
       switch ($X) { case ...: ...; }
+
+  - id: ai-math-random-crypto
+    message: >
+      Math.random() is not cryptographically secure and is predictable.
+      Never use it for tokens, session IDs, or security values.
+      Use crypto.randomBytes() or crypto.randomUUID() instead.
+    severity: ERROR
+    languages: [javascript, typescript]
+    pattern-either:
+      - pattern: Math.random().toString(...)
+      - pattern: Math.random() * $N
+      - pattern: Math.floor(Math.random() * $N)
+
+  - id: ai-hardcoded-placeholder-secret
+    message: >
+      Hardcoded placeholder secret found. This is a typical LLM-generated stub
+      that must be replaced with a real secret from an environment variable before deployment.
+    severity: ERROR
+    languages: [javascript, typescript, python]
+    pattern-regex: "(?i)(YOUR_API_KEY|YOUR_SECRET|sk-[a-zA-Z0-9]{32,}|REPLACE_ME|INSERT_TOKEN|<API_KEY>|your-secret-key-here|changeme|abc123|password123)"
+
+  - id: ai-env-secret-fallback
+    message: >
+      process.env.SECRET_KEY || 'hardcoded' silently activates a hardcoded secret
+      if the env var is missing in production. Fail loudly instead:
+      if (!process.env.SECRET_KEY) throw new Error('SECRET_KEY is required');
+    severity: ERROR
+    languages: [javascript, typescript]
+    pattern-regex: "process\\.env\\.\\w*(KEY|SECRET|TOKEN|PASSWORD|PWD)\\w*\\s*\\|\\|\\s*['\"][^'\"]{4,}['\"]"
+
+  - id: ai-inmemory-cache-no-ttl
+    message: >
+      Module-scoped Map/object used as a cache with no size limit or TTL eviction
+      strategy. This is a guaranteed memory leak — the cache will grow unbounded
+      in production until the process runs out of memory. Use lru-cache or node-cache.
+    severity: WARNING
+    languages: [javascript, typescript]
+    patterns:
+      - pattern: "const $CACHE = new Map()"
+      - pattern-not-inside: |
+          class $C {
+            ...
+          }
+      - pattern-not: "$CACHE.delete($KEY)"
+
+  - id: ai-console-log-sensitive
+    message: >
+      console.log() potentially logging sensitive data (passwords, tokens, keys).
+      Remove before deploying to production — these will appear in log aggregation services.
+    severity: WARNING
+    languages: [javascript, typescript]
+    pattern-regex: "console\\.(log|info|debug|warn|error)\\(.*(?i)(password|token|secret|key|auth|credential).*\\)"
+
+  - id: ai-settimeout-zero
+    message: >
+      setTimeout(() => ..., 0) is used to defer execution to next tick.
+      This is a code smell indicating a race condition or ordering problem.
+      Use proper async/await or event-driven patterns instead.
+    severity: INFO
+    languages: [javascript, typescript]
+    pattern-either:
+      - pattern: setTimeout($F, 0)
+      - pattern: setTimeout(() => { ... }, 0)
+
+  - id: ai-regex-redos
+    message: >
+      Regex with nested quantifiers like (a+)+ or (a|a)* is vulnerable to
+      ReDoS (Regular Expression Denial of Service). Simplify or use a safe
+      regex library.
+    severity: ERROR
+    languages: [javascript, typescript]
+    pattern-regex: "/\\([^)]*[+*]\\)[+*]/"
+
+  - id: ai-prototype-pollution
+    message: >
+      Setting a property via dynamic key on an object literal can allow
+      prototype pollution if key comes from user input (e.g., '__proto__').
+      Validate key against an allowlist first.
+    severity: ERROR
+    languages: [javascript, typescript]
+    patterns:
+      - pattern: $OBJ[$KEY] = $VAL
+      - pattern-either:
+          - pattern-inside: |
+              function $F(req, ...) { ... }
+          - pattern-inside: |
+              ($REQ, ...) => { ... }
+

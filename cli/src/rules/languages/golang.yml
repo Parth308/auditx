@@ -46,3 +46,56 @@ rules:
     severity: ERROR
     languages: [go]
     pattern: md5.New()
+
+  - id: ai-golang-http-timeout-missing
+    message: >
+      http.Get() and http.Post() use the default http.Client which has no timeout.
+      In production, a slow server will hang goroutines indefinitely, causing resource exhaustion.
+      Use a custom client: &http.Client{Timeout: 10 * time.Second}.
+    severity: ERROR
+    languages: [go]
+    pattern-either:
+      - pattern: http.Get(...)
+      - pattern: http.Post(...)
+      - pattern: http.PostForm(...)
+
+  - id: ai-golang-panic-in-handler
+    message: >
+      Calling panic() inside an HTTP handler will crash the entire server.
+      Handle errors gracefully and return an appropriate HTTP error response instead.
+    severity: ERROR
+    languages: [go]
+    pattern: |
+      func $HANDLER($W http.ResponseWriter, $R *http.Request) {
+        ...
+        panic($MSG)
+        ...
+      }
+
+  - id: ai-golang-context-todo
+    message: >
+      context.TODO() is a placeholder. In production code, pass a real context
+      from the caller (e.g., r.Context()) to enable proper cancellation and deadlines.
+    severity: WARNING
+    languages: [go]
+    pattern: context.TODO()
+
+  - id: ai-golang-ioutil-deprecated
+    message: >
+      ioutil.ReadAll, ioutil.ReadFile etc are deprecated since Go 1.16.
+      Use io.ReadAll, os.ReadFile, etc instead.
+    severity: INFO
+    languages: [go]
+    pattern-either:
+      - pattern: ioutil.ReadAll(...)
+      - pattern: ioutil.ReadFile(...)
+      - pattern: ioutil.WriteFile(...)
+      - pattern: ioutil.TempFile(...)
+
+  - id: ai-golang-sha1-password
+    message: >
+      SHA1 is cryptographically broken. Never use it for password hashing or
+      security-sensitive operations. Use bcrypt, argon2id, or scrypt instead.
+    severity: ERROR
+    languages: [go]
+    pattern: sha1.New()

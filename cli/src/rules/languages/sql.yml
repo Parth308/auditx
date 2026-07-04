@@ -30,3 +30,40 @@ rules:
     severity: WARNING
     languages: [sql]
     pattern: INSERT INTO $TABLE VALUES (...)
+
+  - id: ai-sql-select-no-limit
+    message: >
+      SELECT query without a LIMIT clause on a large table will fetch all rows,
+      causing massive memory usage and slow response times in production.
+    severity: WARNING
+    languages: [sql]
+    pattern: SELECT ... FROM $TABLE WHERE ...
+    pattern-not: SELECT ... FROM $TABLE WHERE ... LIMIT $N
+
+  - id: ai-sql-orderby-dynamic
+    message: >
+      Dynamic ORDER BY via string interpolation allows SQL injection.
+      Whitelist allowed column names server-side before injecting into the query.
+    severity: ERROR
+    languages: [javascript, typescript, python]
+    pattern-either:
+      - pattern: "`SELECT ... ORDER BY ${$VAR}`"
+      - pattern: '"SELECT ... ORDER BY " + $VAR'
+      - pattern: "f'SELECT ... ORDER BY {$VAR}'"
+
+  - id: ai-sql-n-plus-one-map
+    message: >
+      Database query inside .map()/.forEach() creates an N+1 query problem.
+      This works in small demos but destroys performance in production.
+      Use a JOIN, include(), or a single batched query instead.
+    severity: ERROR
+    languages: [javascript, typescript]
+    pattern-either:
+      - pattern: $ARR.map(async ($ITEM) => { ... $DB.$QUERY(...) ... })
+      - pattern: $ARR.forEach(async ($ITEM) => { ... $DB.$QUERY(...) ... })
+      - pattern: |
+          for (const $ITEM of $ARR) {
+            ...
+            await $DB.$QUERY(...)
+            ...
+          }

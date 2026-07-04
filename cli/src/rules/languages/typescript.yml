@@ -36,3 +36,45 @@ rules:
       - pattern: "function $F($P: any) { ... }"
       - pattern: "const $F = ($P: any) => { ... }"
       - pattern: "const $F = ($P: any) => $EXPR"
+
+  - id: ai-ts-json-parse-any
+    message: >
+      JSON.parse() returns `any` by default. Cast to a typed interface or
+      use a validation library (zod, io-ts) to ensure runtime safety.
+    severity: WARNING
+    languages: [typescript]
+    pattern: JSON.parse($X) as any
+
+  - id: ai-ts-explicit-any-array
+    message: >
+      Array typed as `any[]` loses all element type information.
+      Define a specific item type.
+    severity: WARNING
+    languages: [typescript]
+    pattern-regex: ":\\s*any\\[\\]"
+
+  - id: ai-ts-double-assertion
+    message: >
+      Double assertion `as unknown as T` is a type system escape hatch.
+      It means the types are incompatible — fix the underlying mismatch.
+    severity: WARNING
+    languages: [typescript]
+    pattern: $X as unknown as $T
+
+  - id: ai-ts-object-any
+    message: >
+      Type annotation `Record<string, any>` or `{ [key: string]: any }` loses all
+      value type safety. Define a specific value type.
+    severity: WARNING
+    languages: [typescript]
+    pattern-either:
+      - pattern: "Record<string, any>"
+      - pattern-regex: "\{\\s*\\[\\s*[a-zA-Z]+\\s*:\\s*string\\s*\\]\\s*:\\s*any\\s*\\}"
+
+  - id: ai-ts-global-any-override
+    message: >
+      Overriding built-in types with `any` via global declaration merging
+      is a critical type safety violation.
+    severity: ERROR
+    languages: [typescript]
+    pattern-regex: "declare\\s+global\\s*\\{[^}]*any[^}]*\\}"

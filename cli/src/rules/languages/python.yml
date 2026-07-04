@@ -46,3 +46,45 @@ rules:
     severity: ERROR
     languages: [python]
     pattern: $APP.run(..., debug=True, ...)
+
+  - id: ai-python-silent-catch-print
+    message: >
+      Exception silenced with only a print(). Critical production errors will
+      vanish silently. Use logging.exception(e) or re-raise.
+    severity: ERROR
+    languages: [python]
+    pattern: |
+      try:
+        ...
+      except $E:
+        print(...)
+
+  - id: ai-python-pickle-load
+    message: >
+      pickle.load() deserializes arbitrary Python objects — a critical RCE vulnerability.
+      Never deserialize data from untrusted sources with pickle.
+    severity: ERROR
+    languages: [python]
+    pattern-either:
+      - pattern: pickle.load(...)
+      - pattern: pickle.loads(...)
+
+  - id: ai-python-hardcoded-secret-env-fallback
+    message: >
+      Using os.getenv() with a hardcoded fallback secret. If the env var is
+      missing in production, the hardcoded value silently becomes active.
+      Fail loudly instead: os.environ['SECRET_KEY']
+    severity: ERROR
+    languages: [python]
+    pattern-regex: "os\\.getenv\\(['\"]\\w*(KEY|SECRET|TOKEN|PASSWORD|PWD)\\w*['\"],\\s*['\"][^'\"]{4,}['\"]\\)"
+
+  - id: ai-python-open-no-encoding
+    message: >
+      open() called without explicit encoding. This is locale-dependent and
+      causes crashes on non-UTF-8 systems. Always use: open(f, encoding='utf-8').
+    severity: INFO
+    languages: [python]
+    patterns:
+      - pattern: open($PATH, $MODE)
+      - pattern-not: open($PATH, $MODE, encoding=...)
+      - pattern-not: open($PATH, encoding=...)

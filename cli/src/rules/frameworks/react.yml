@@ -45,3 +45,94 @@ rules:
       - metavariable-regex:
           metavariable: $SET
           regex: ^set[A-Z]\w*$
+
+  - id: ai-react-uncanceled-fetch
+    message: >
+      fetch() inside useEffect without AbortController cleanup causes
+      memory leaks and race conditions when the component unmounts.
+      Add: const ctrl = new AbortController(); ... return () => ctrl.abort();
+    severity: ERROR
+    languages: [javascript, typescript]
+    patterns:
+      - pattern: |
+          useEffect(() => {
+            ...
+            fetch($URL)
+            ...
+          }, ...)
+      - pattern-not: |
+          useEffect(() => {
+            ...
+            new AbortController()
+            ...
+          }, ...)
+
+  - id: ai-react-useeffect-missing-cleanup
+    message: >
+      useEffect adds an event listener or timer without returning a cleanup function.
+      This causes memory leaks when the component unmounts.
+    severity: ERROR
+    languages: [javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              useEffect(() => {
+                ...
+                window.addEventListener(...)
+                ...
+              }, ...)
+          - pattern: |
+              useEffect(() => {
+                ...
+                setInterval(...)
+                ...
+              }, ...)
+      - pattern-not: |
+          useEffect(() => {
+            ...
+            return () => { ... }
+          }, ...)
+
+  - id: ai-react-dangerously-set-innerhtml
+    message: >
+      dangerouslySetInnerHTML bypasses React's XSS protection.
+      Sanitize HTML with DOMPurify before setting.
+    severity: ERROR
+    languages: [javascript, typescript]
+    pattern: "dangerouslySetInnerHTML={{ __html: $VAL }}"
+    pattern-not: "dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(...) }}"
+
+  - id: ai-react-stale-interval-closure
+    message: >
+      setInterval inside useEffect referencing state without functional
+      setState causes stale closures — the interval captures the initial
+      value of the state and never updates. Use setState(prev => prev + 1).
+    severity: WARNING
+    languages: [javascript, typescript]
+    patterns:
+      - pattern-inside: |
+          const [$STATE, $SET] = useState(...);
+          ...
+      - pattern: |
+          useEffect(() => {
+            setInterval(() => {
+              ...$SET($STATE ...)...
+            }, ...)
+          }, ...)
+
+  - id: ai-react-props-spreading-all
+    message: >
+      Spreading all props {...props} into a DOM element passes unknown
+      HTML attributes and can introduce XSS vectors or unintended behavior.
+      Destructure only the props you need.
+    severity: WARNING
+    languages: [javascript, typescript]
+    pattern-regex: '<[a-z][a-zA-Z]*\s+\{\.\.\.props\}'
+
+  - id: ai-react-inline-function-heavy
+    message: >
+      Defining a complex function directly inside JSX creates a new function
+      on every render, preventing memoization. Extract it or wrap with useCallback.
+    severity: INFO
+    languages: [javascript, typescript]
+    pattern: "$ELEM $PROP={($ARGS) => { $STMT1; $STMT2; ... }}"
