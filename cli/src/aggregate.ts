@@ -1,5 +1,16 @@
+import { createHash } from 'crypto';
 import type { Finding, ScanResult, Severity, SEVERITY_ORDER } from './types.js';
 import { SEVERITY_ORDER as ORDER } from './types.js';
+
+/**
+ * Generates a stable, deterministic 8-char hex ID from a finding's fingerprint.
+ * This ensures IDs never shift when unrelated findings are fixed.
+ */
+function deterministicId(prefix: string, rule: string, file: string, line: string | number | undefined, title: string): string {
+  const fingerprint = `${rule}::${file}::${line ?? ''}::${title}`;
+  const hash = createHash('sha1').update(fingerprint).digest('hex').slice(0, 8);
+  return `${prefix}-${hash}`;
+}
 
 /**
  * Aggregates findings from all scan results:
@@ -27,9 +38,10 @@ export function aggregate(results: ScanResult[]): Finding[] {
   // Sort: most severe first
   merged.sort((a, b) => ORDER[a.severity] - ORDER[b.severity]);
 
-  // Assign stable sequential IDs so we can reference them in correlations
-  merged.forEach((f, i) => {
-    f.id = `auditx-${String(i + 1).padStart(3, '0')}`;
+  // Assign stable deterministic IDs so they survive across scans even when
+  // other findings are added or removed. Critical for CI baselining.
+  merged.forEach((f) => {
+    f.id = deterministicId('auditx', f.rule ?? '', f.file ?? '', f.line, f.title);
   });
 
   const correlated = correlateFindings(merged);
@@ -51,23 +63,24 @@ function correlateFindings(findings: Finding[]): Finding[] {
     byFile[f.file].push(f);
   }
 
-  let compoundCount = 1;
 
   for (const [file, fileFindings] of Object.entries(byFile)) {
-    const secrets = fileFindings.filter(f => f.category === 'SECRETS');
-    const sast = fileFindings.filter(f => ['SAST', 'AI_CODE', 'PATTERNS'].includes(f.category));
-    const deadCode = fileFindings.filter(f => f.category === 'DEAD_CODE');
-    const hotspots = fileFindings.filter(f => f.category === 'GIT_HEALTH');
-    const duplicates = fileFindings.filter(f => f.category === 'DUPLICATION');
+    // Never re-correlate findings already promoted to a COMPOUND category
+    const raw = fileFindings.filter(f => f.category !== 'COMPOUND');
+    const secrets = raw.filter(f => f.category === 'SECRETS');
+    const deadCode = raw.filter(f => f.category === 'DEAD_CODE');
+    const hotspots = raw.filter(f => f.category === 'GIT_HEALTH');
+    const duplicates = raw.filter(f => f.category === 'DUPLICATION');
 
     // 1. Secrets in High-Churn Files (CRITICAL)
     for (const secret of secrets) {
       if (hotspots.length > 0 && !handled.has(secret.id)) {
+        const compTitle = `Actively exploited-looking secret in high-churn file`;
         correlated.push({
-          id: `auditx-c-${String(compoundCount++).padStart(3, '0')}`,
+          id: deterministicId('auditx-c', secret.rule ?? 'compound-secret-churn', file, secret.line, compTitle),
           category: 'COMPOUND',
           severity: 'critical',
-          title: `Actively exploited-looking secret in high-churn file`,
+          title: compTitle,
           description: `A secret was found in a file with extremely high git churn. This indicates the secret is likely active, frequently deployed, and highly exposed. Original: ${secret.title}`,
           file,
           line: secret.line,
@@ -84,12 +97,13 @@ function correlateFindings(findings: Finding[]): Finding[] {
     if (deadCode.length > 0) {
       const vulns = fileFindings.filter(f => ['SAST', 'SECRETS', 'AI_CODE'].includes(f.category) && !handled.has(f.id));
       for (const vuln of vulns) {
+        const unreachTitle = `[Unreachable] ${vuln.title}`;
         correlated.push({
           ...vuln,
-          id: `auditx-c-${String(compoundCount++).padStart(3, '0')}`,
+          id: deterministicId('auditx-c', vuln.rule ?? 'compound-dead-code', file, vuln.line, unreachTitle),
           category: 'COMPOUND',
           severity: 'low',
-          title: `[Unreachable] ${vuln.title}`,
+          title: unreachTitle,
           description: `This vulnerability is located in a file flagged as containing dead/unused code. It may not be reachable in production. Original: ${vuln.description || vuln.title}`,
           scanner: 'auditx-correlator',
           correlations: [vuln.id, ...deadCode.map(d => d.id)]
@@ -103,12 +117,13 @@ function correlateFindings(findings: Finding[]): Finding[] {
     if (duplicates.length > 0) {
       const vulns = fileFindings.filter(f => ['SAST', 'AI_CODE', 'PATTERNS'].includes(f.category) && !handled.has(f.id));
       for (const vuln of vulns) {
+        const propTitle = `[Propagated] ${vuln.title}`;
         correlated.push({
           ...vuln,
-          id: `auditx-c-${String(compoundCount++).padStart(3, '0')}`,
+          id: deterministicId('auditx-c', vuln.rule ?? 'compound-duplication', file, vuln.line, propTitle),
           category: 'COMPOUND',
           severity: 'high',
-          title: `[Propagated] ${vuln.title}`,
+          title: propTitle,
           description: `This vulnerability is inside a file with duplicated code blocks. You MUST check the other locations where this code was copy-pasted. Original: ${vuln.description || vuln.title}`,
           scanner: 'auditx-correlator',
           correlations: [vuln.id, ...duplicates.map(d => d.id)],
@@ -122,18 +137,20 @@ function correlateFindings(findings: Finding[]): Finding[] {
   // 4. Vulnerable Dependencies + Unauthenticated / Unsafe SAST logic (CRITICAL)
   // Cross-file correlation: If a DEPS scan found a critical CVE in 'express' or 'jsonwebtoken', 
   // and SAST found weak crypto or open endpoints, flag it.
+  // allSast must also exclude already-handled COMPOUND findings
   const allDeps = findings.filter(f => f.category === 'DEPS');
   const allSast = findings.filter(f => f.category === 'SAST' && !handled.has(f.id));
   
   const hasCriticalDep = allDeps.some(d => d.severity === 'critical' || d.severity === 'high');
   if (hasCriticalDep && allSast.length > 0) {
     for (const sast of allSast) {
+      const riskTitle = `[High Risk Exposure] ${sast.title}`;
       correlated.push({
         ...sast,
-        id: `auditx-c-${String(compoundCount++).padStart(3, '0')}`,
+        id: deterministicId('auditx-c', sast.rule ?? 'compound-vuln-dep', sast.file ?? '', sast.line, riskTitle),
         category: 'COMPOUND',
         severity: 'critical',
-        title: `[High Risk Exposure] ${sast.title}`,
+        title: riskTitle,
         description: `This codebase contains high-severity vulnerable dependencies AND this unsafe code logic. Attackers can chain these. Original: ${sast.description || sast.title}`,
         scanner: 'auditx-correlator',
         correlations: [sast.id, ...allDeps.filter(d => d.severity === 'critical').map(d => d.id)]

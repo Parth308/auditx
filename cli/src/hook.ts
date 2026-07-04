@@ -26,7 +26,7 @@ fi
   if (type === 'pre-commit') {
     // scan staged files only — fast, scales to huge repos
     return `${common}
-STAGED=$(git diff --cached --name-only --diff-filter=ACMR)
+STAGED=$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACMR)
 if [ -z "$STAGED" ]; then
   exit 0
 fi

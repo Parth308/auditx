@@ -61,7 +61,7 @@ export interface InitAgentOptions {
 }
 
 export function initAgent(targetDir: string, opts: InitAgentOptions = {}) {
-  console.log(chalk.cyan('\n  🤖 Initializing AI agent configuration files...\n'));
+  console.log(chalk.cyan('\n  [init] Initializing AI agent configuration files...\n'));
 
   const keys = opts.only && opts.only.length > 0 ? opts.only : Object.keys(TEMPLATES);
   let created = 0;

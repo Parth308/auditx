@@ -1,6 +1,6 @@
 import { join } from 'path';
 import { homedir, platform, arch } from 'os';
-import { existsSync, mkdirSync, createWriteStream, rmSync } from 'fs';
+import { existsSync, mkdirSync, createWriteStream, rmSync, renameSync, chmodSync } from 'fs';
 import https from 'https';
 import * as tar from 'tar';
 import AdmZip from 'adm-zip';
@@ -97,10 +97,8 @@ async function getBinaryPathInternal(tool: ToolName): Promise<string> {
     });
     
     if (isRaw) {
-      import('fs').then(({ renameSync, chmodSync }) => {
-        renameSync(archivePath, expectedBin);
-        if (platform() !== 'win32') chmodSync(expectedBin, 0o755);
-      });
+      renameSync(archivePath, expectedBin);
+      if (platform() !== 'win32') chmodSync(expectedBin, 0o755);
       spinner.succeed(`Installed ${tool}`);
       return expectedBin;
     }

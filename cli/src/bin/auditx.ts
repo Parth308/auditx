@@ -123,28 +123,25 @@ if (targetArg === 'install') {
 
 // Special "init-agent" command
 if (targetArg === 'init-agent') {
-  import('../agent-init.js').then(({ initAgent }) => {
-    initAgent(process.cwd());
-    process.exit(0);
-  });
+  const { initAgent } = await import('../agent-init.js');
+  initAgent(process.cwd());
+  process.exit(0);
 } else if (targetArg === 'hook') {
-  import('../hook.js').then(({ installHook, uninstallHook, installAll }) => {
-    const action = program.args[1];
-    const hookType = (opts['type'] || 'pre-commit') as any;
-    
-    if (action === 'install') {
-      installHook(hookType);
-    } else if (action === 'install-all') {
-      installAll();
-    } else if (action === 'uninstall') {
-      uninstallHook(hookType);
-    } else {
-      console.error(chalk.red(`\n  [-] Unknown hook action: ${action}. Use 'install', 'install-all', or 'uninstall'.\n`));
-      process.exit(1);
-    }
-    process.exit(0);
-  });
-  // We need to return here or wait to prevent the rest of the script from executing synchronously
+  const { installHook, uninstallHook, installAll } = await import('../hook.js');
+  const action = program.args[1];
+  const hookType = (opts['type'] || 'pre-commit') as any;
+
+  if (action === 'install') {
+    installHook(hookType);
+  } else if (action === 'install-all') {
+    installAll();
+  } else if (action === 'uninstall') {
+    uninstallHook(hookType);
+  } else {
+    console.error(chalk.red(`\n  [-] Unknown hook action: ${action}. Use 'install', 'install-all', or 'uninstall'.\n`));
+    process.exit(1);
+  }
+  process.exit(0);
 } else {
   runDefaultScan();
 }
@@ -217,15 +214,22 @@ if (config.checkDeps) {
 // ─── --watch mode ─────────────────────────────────────────────────────────────
 
 if (config.watch) {
-  console.log(chalk.cyan('👁  Watch mode enabled. Press Ctrl+C to stop.\n'));
+  console.log(chalk.cyan('  [i] Watch mode enabled. Press Ctrl+C to stop.\n'));
   await runScan();
 
-  // Use chokidar-style polling via a simple loop
+  // Debounced watcher: batch rapid file changes (e.g. "save all" in VS Code)
+  // into a single re-scan to prevent cascading concurrent scan executions.
+  let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+  const DEBOUNCE_MS = 500;
+
   const { watch } = await import('fs');
-  watch(config.target, { recursive: true }, async (event, filename) => {
+  watch(config.target, { recursive: true }, (event, filename) => {
     if (filename?.endsWith('.md') || filename?.includes('node_modules')) return;
-    console.log(chalk.dim(`\n[${new Date().toLocaleTimeString()}] File changed: ${filename}. Re-scanning…\n`));
-    await runScan();
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(async () => {
+      console.log(chalk.dim(`\n[${new Date().toLocaleTimeString()}] File changed: ${filename}. Re-scanning…\n`));
+      await runScan();
+    }, DEBOUNCE_MS);
   });
 
   // Keep process alive
@@ -251,7 +255,7 @@ async function runScan(): Promise<void> {
   if (config.ai && !config.aiProvider) {
     const globalConfig = readGlobalConfig();
     if (!globalConfig.aiProvider) {
-      if (isInteractive) console.log(chalk.cyan('  🤖 First time using --ai. Let\'s set up your provider!'));
+      if (isInteractive) console.log(chalk.cyan('  [ai] First time using --ai. Let\'s set up your provider!'));
       await promptForAiConfig();
       const updatedConfig = readGlobalConfig();
       config.aiProvider = updatedConfig.aiProvider;
@@ -428,13 +432,21 @@ async function checkDependencies(): Promise<void> {
 // ─── --fix ────────────────────────────────────────────────────────────────────
 
 function applyFixes(targetDir: string): void {
-  console.log(chalk.cyan('\n  🔧 Applying auto-fixes…\n'));
+  console.log(chalk.cyan('\n  [fix] Applying auto-fixes...\n'));
 
   try {
     execSync('npx eslint --fix .', { cwd: targetDir, stdio: 'inherit' });
-    console.log(chalk.green('  ✓ eslint --fix applied'));
+    console.log(chalk.green('  [+] eslint --fix applied'));
   } catch {
-    console.log(chalk.yellow('  ⚠ eslint --fix had issues (see above)'));
+    console.log(chalk.yellow('  [!] eslint --fix had issues (see above)'));
+  }
+
+  try {
+    execSync('npx knip --fix --allow-remove-files', { cwd: targetDir, stdio: 'inherit' });
+    console.log(chalk.green('  [+] knip --fix applied'));
+  } catch {
+    // knip exits non-zero if it removed files — that's expected, not a failure
+    console.log(chalk.dim('  [.] knip --fix complete'));
   }
 }
 
@@ -442,7 +454,7 @@ function applyFixes(targetDir: string): void {
 
 async function generateSbom(targetDir: string, isInteractive: boolean): Promise<void> {
   const dest = resolve(targetDir, 'sbom.json');
-  if (isInteractive) console.log(chalk.cyan('\n  📦 Generating CycloneDX SBOM…'));
+  if (isInteractive) console.log(chalk.cyan('\n  [sbom] Generating CycloneDX SBOM...'));
   try {
     const bin = await getBinaryPath('trivy');
     execSync(`"${bin}" fs --format cyclonedx --output "${dest}" .`, { cwd: targetDir, stdio: 'ignore' });

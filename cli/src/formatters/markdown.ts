@@ -1,12 +1,12 @@
 import type { AuditReport, Category, Finding, Severity } from '../types.js';
 import { relative, isAbsolute } from 'path';
 
-const SEV_EMOJI: Record<Severity, string> = {
-  critical: '🔴',
-  high: '🟠',
-  medium: '🟡',
-  low: '🔵',
-  info: '⚪',
+const SEV_ICON: Record<Severity, string> = {
+  critical: '[!!]',
+  high:     '[ !]',
+  medium:   '[ ~]',
+  low:      '[ -]',
+  info:     '[ .]',
 };
 
 const SEV_LABEL: Record<Severity, string> = {
@@ -31,6 +31,7 @@ const CAT_LABEL: Record<Category, string> = {
   AI_CODE: 'AI Code',
   GIT_HEALTH: 'Git Health',
   TYPE_SAFETY: 'Type Safety',
+  COMPOUND: 'Compound',
 };
 
 export function formatMarkdown(report: AuditReport, aiSummary?: string): string {
@@ -51,7 +52,7 @@ export function formatMarkdown(report: AuditReport, aiSummary?: string): string 
   // ─── Summary table — FIXED: iterate every category, not hardcoded subset ──
   lines.push('## Summary');
   lines.push('');
-  lines.push('| Category | 🔴 Critical | 🟠 High | 🟡 Medium | 🔵 Low | ⚪ Info |');
+  lines.push('| Category | [!!] Critical | [ !] High | [ ~] Medium | [ -] Low | [ .] Info |');
   lines.push('|---|---|---|---|---|---|');
 
   const allCategories = Object.keys(CAT_LABEL) as Category[];
@@ -88,7 +89,7 @@ export function formatMarkdown(report: AuditReport, aiSummary?: string): string 
     const sevFindings = report.findings.filter((f) => f.severity === sev);
     if (sevFindings.length === 0) continue;
 
-    lines.push(`## ${SEV_EMOJI[sev]} ${SEV_LABEL[sev]} (${sevFindings.length})`);
+    lines.push(`## ${SEV_ICON[sev]} ${SEV_LABEL[sev]} (${sevFindings.length})`);
     lines.push('');
 
     // low/info collapsed by default — keeps report scannable at scale, still fully present for agents
@@ -114,7 +115,7 @@ export function formatMarkdown(report: AuditReport, aiSummary?: string): string 
 
   // ─── AI Analysis (LLM-generated summary, if --ai used) ─────────────────
   if (aiSummary) {
-    lines.push('## 🤖 AI Analysis');
+    lines.push('## [AI] AI Analysis');
     lines.push('');
     lines.push(aiSummary);
     lines.push('');

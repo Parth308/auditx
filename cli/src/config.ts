@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, chmodSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 import { select, password } from '@inquirer/prompts';
@@ -34,6 +34,9 @@ export function writeGlobalConfig(config: GlobalConfig): void {
   const current = readGlobalConfig();
   const next = { ...current, ...config };
   writeFileSync(CONFIG_FILE, JSON.stringify(next, null, 2), 'utf-8');
+  // Restrict to owner-read-only (0600) so API keys can't be read by other
+  // users on shared machines. No-op on Windows (chmod is unsupported there).
+  try { chmodSync(CONFIG_FILE, 0o600); } catch { /* Windows — ignore */ }
 }
 
 export async function promptForAiConfig(): Promise<void> {

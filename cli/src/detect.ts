@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
+import { execSync } from 'child_process';
 import type { StackInfo } from './types.js';
 
 const MAX_DEPTH = 4;
@@ -7,7 +8,8 @@ const IGNORE_DIRS = new Set(['node_modules', '.git', '.next', 'dist', 'build', '
 
 const TARGET_FILES = new Set([
   'package.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml',
-  'requirements.txt', 'Pipfile', 'pyproject.toml', 'setup.py', 'setup.cfg',
+  'bun.lockb', 'bun.lock',
+  'requirements.txt', 'Pipfile', 'pyproject.toml', 'setup.py', 'setup.cfg', 'poetry.lock',
   'Cargo.toml', 'go.mod', 'Dockerfile', 'docker-compose.yml', 'docker-compose.yaml',
   'main.tf', 'terraform.tf', 'tsconfig.json',
   'schema.sql', 'schema.prisma', 'drizzle.config.ts'
@@ -86,9 +88,21 @@ export function detectStack(targetDir: string): StackInfo {
 
   const hasGit = has('.git');
 
+  // Distinguish between an initialised repo and one that actually has commits.
+  // git-history scanners (githealth, trufflehog) are useless on empty repos.
+  let hasGitHistory = false;
+  if (hasGit) {
+    try {
+      const out = execSync('git log --oneline -1', { cwd: targetDir, encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] });
+      hasGitHistory = out.trim().length > 0;
+    } catch {
+      hasGitHistory = false;
+    }
+  }
+
   return {
-    hasNodeJs: has('package.json') || has('package-lock.json') || has('yarn.lock') || has('pnpm-lock.yaml'),
-    hasPython: has('requirements.txt') || has('Pipfile') || has('pyproject.toml') || has('setup.py') || has('setup.cfg'),
+    hasNodeJs: has('package.json') || has('package-lock.json') || has('yarn.lock') || has('pnpm-lock.yaml') || has('bun.lockb') || has('bun.lock'),
+    hasPython: has('requirements.txt') || has('Pipfile') || has('pyproject.toml') || has('setup.py') || has('setup.cfg') || has('poetry.lock'),
     hasRust: has('Cargo.toml'),
     hasGo: has('go.mod'),
     hasDocker: has('Dockerfile') || has('docker-compose.yml') || has('docker-compose.yaml'),
