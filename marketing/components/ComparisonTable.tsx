@@ -52,7 +52,6 @@ export default function ComparisonTable() {
     <section id="compare" className="page-section" style={{ paddingBottom: 0 }}>
       <ScrollReveal>
         <div style={{ marginBottom: 36 }}>
-          <div className="section-label">Comparison</div>
           <h2 style={{
             fontFamily: 'var(--font-sans)',
             fontSize: 'clamp(24px, 3vw, 36px)',

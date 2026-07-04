@@ -51,7 +51,6 @@ export default function Footer() {
         gap: 40,
       }}>
         <div>
-          <div className="section-label" style={{ marginBottom: 16 }}>Deploy Globally</div>
           <div style={{
             fontFamily: 'var(--font-sans)',
             fontWeight: 800,
@@ -72,13 +71,11 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Command block */}
         <div style={{
           display: 'flex',
           alignItems: 'stretch',
           border: '1px solid var(--color-accent)',
           backgroundColor: 'var(--color-canvas)',
-          boxShadow: '0 0 30px rgba(234, 88, 12, 0.15)',
           flexShrink: 0,
         }}>
           <code style={{
@@ -143,14 +140,14 @@ export default function Footer() {
 
         {/* Copyright */}
         <div style={{ maxWidth: 1400, margin: '0 auto', padding: '16px 28px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--color-ash)', textTransform: 'uppercase' }}>
-            © 2026 AUDITX · MIT LICENSE · BY{' '}
-            <a href="https://parthmongia.dev" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-mute)' }}>
-              PARTH MONGIA
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--color-mute)' }}>
+            © 2026 auditx · MIT License · by{' '}
+            <a href="https://parthmongia.dev" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-ink-light)' }}>
+              Parth Mongia
             </a>
           </span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--color-ash)', textTransform: 'uppercase' }}>
-            BUILT WITH AUDITX · ZERO CRITICAL FINDINGS
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--color-mute)' }}>
+            built with auditx · zero critical findings
           </span>
         </div>
       </div>

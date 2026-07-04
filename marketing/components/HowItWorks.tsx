@@ -30,7 +30,7 @@ function DetectAnimation() {
         <circle cx="60" cy="60" r="30" fill="none" stroke="var(--color-hairline)" strokeWidth="1" strokeDasharray="2 4" />
         <line x1="10" y1="60" x2="110" y2="60" stroke="var(--color-hairline)" strokeWidth="1" />
         <line x1="60" y1="10" x2="60" y2="110" stroke="var(--color-hairline)" strokeWidth="1" />
-        
+
         {/* Sweeping arm */}
         <motion.g
           animate={{ rotate: 360 }}
@@ -51,8 +51,8 @@ function DetectAnimation() {
           { cx: 90, cy: 75, delay: 2.1 }
         ].map((node, i) => (
           <motion.g key={i} animate={{ opacity: [0, 1, 0] }} transition={{ duration: 3, repeat: Infinity, delay: node.delay }}>
-             <circle cx={node.cx} cy={node.cy} r="4" fill="var(--color-accent)" />
-             <circle cx={node.cx} cy={node.cy} r="10" fill="none" stroke="var(--color-accent)" strokeWidth="1" />
+            <circle cx={node.cx} cy={node.cy} r="4" fill="var(--color-accent)" />
+            <circle cx={node.cx} cy={node.cy} r="10" fill="none" stroke="var(--color-accent)" strokeWidth="1" />
           </motion.g>
         ))}
       </svg>
@@ -74,10 +74,10 @@ function OrchestratorAnimation() {
   }, []);
 
   const QUEUE_ITEMS = [
-    { id: 'q1', w: 3 }, { id: 'q2', w: 3 }, { id: 'q3', w: 2 }, 
+    { id: 'q1', w: 3 }, { id: 'q2', w: 3 }, { id: 'q3', w: 2 },
     { id: 'q4', w: 1 }, { id: 'q5', w: 1 }, { id: 'q6', w: 1 }, { id: 'q7', w: 1 }, { id: 'q8', w: 1 }
   ];
-  
+
   let visibleQueue = QUEUE_ITEMS;
   if (active === 1) visibleQueue = QUEUE_ITEMS.slice(1);
   if (active === 2) visibleQueue = QUEUE_ITEMS.slice(2);
@@ -89,7 +89,7 @@ function OrchestratorAnimation() {
         <div className="text-[10px] text-[var(--color-mute)] uppercase tracking-widest font-mono">CPU_CORES [4]</div>
         <div className="text-[10px] text-[var(--color-accent)] uppercase tracking-widest font-mono animate-pulse">ALLOCATING</div>
       </div>
-      
+
       {/* CPU Cores (Vertical Servers) */}
       <div className="flex gap-2 w-full mb-6">
         {[0, 1, 2, 3].map(core => (
@@ -106,7 +106,7 @@ function OrchestratorAnimation() {
                   className="w-full bg-[var(--color-accent)]/20 border-t-2 border-[var(--color-accent)] flex items-center justify-center"
                 >
                   <span className="text-[9px] text-[var(--color-accent)] font-bold font-mono rotate-[-90deg] whitespace-nowrap">
-                    {core === 1 ? 'SEMGREP_3X' : '...'}
+                    {core === 1 ? '3X' : '...'}
                   </span>
                 </motion.div>
               )}
@@ -119,7 +119,7 @@ function OrchestratorAnimation() {
                   className="w-full bg-[var(--color-accent)]/10 border-t-2 border-[var(--color-accent)] flex items-center justify-center"
                 >
                   <span className="text-[9px] text-[var(--color-accent)] font-bold font-mono rotate-[-90deg] whitespace-nowrap">
-                    {core === 0 ? 'TRIVY_2X' : '...'}
+                    {core === 0 ? '2X' : '...'}
                   </span>
                 </motion.div>
               )}
@@ -138,7 +138,7 @@ function OrchestratorAnimation() {
           </div>
         ))}
       </div>
-      
+
       <div className="text-[10px] text-[var(--color-mute)] mb-2 uppercase tracking-widest w-full text-left font-mono">LPT_QUEUE</div>
       <div className="flex gap-1 w-full overflow-hidden items-center h-6">
         <AnimatePresence mode="popLayout">
@@ -151,9 +151,9 @@ function OrchestratorAnimation() {
               exit={{ scale: 0, opacity: 0, width: 0, padding: 0, margin: 0, border: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
               className={`h-full border flex items-center justify-center text-[9px] font-mono shrink-0
-                ${item.w === 3 ? 'w-10 bg-[var(--color-accent)]/20 border-[var(--color-accent)] text-[var(--color-accent)]' : 
-                  item.w === 2 ? 'w-8 bg-[var(--color-accent)]/10 border-[var(--color-accent)]/50 text-[var(--color-accent)]' : 
-                  'w-5 bg-[var(--color-surface-3)] border-[var(--color-hairline)] text-[var(--color-mute)]'}`}
+                ${item.w === 3 ? 'w-10 bg-[var(--color-accent)]/20 border-[var(--color-accent)] text-[var(--color-accent)]' :
+                  item.w === 2 ? 'w-8 bg-[var(--color-accent)]/10 border-[var(--color-accent)]/50 text-[var(--color-accent)]' :
+                    'w-5 bg-[var(--color-surface-3)] border-[var(--color-hairline)] text-[var(--color-mute)]'}`}
             >
               {item.w}X
             </motion.div>
@@ -205,13 +205,13 @@ function OutputAnimation() {
         {/* Central Dispatch Hub */}
         <circle cx="100" cy="60" r="10" fill="var(--color-accent)" />
         <circle cx="100" cy="60" r="20" fill="none" stroke="var(--color-accent)" strokeWidth="1" strokeDasharray="2 2" />
-        
+
         {/* Connecting lines */}
         {nodes.map((n, i) => (
           <g key={i}>
             <line x1="100" y1="60" x2={n.x + 30} y2={n.y + 10} stroke="var(--color-hairline)" strokeWidth="2" />
             {/* Signal pulse */}
-            <motion.circle 
+            <motion.circle
               cx="100" cy="60" r="3" fill="var(--color-accent)"
               animate={{ cx: [100, n.x + 30], cy: [60, n.y + 10], opacity: [1, 0] }}
               transition={{ duration: 1, repeat: Infinity, delay: i * 0.25 }}

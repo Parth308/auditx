@@ -3,19 +3,21 @@ import CopyButton from './CopyButton';
 
 const HR = '1px solid var(--color-hairline)';
 
+function YamlLine({ line }: { line: string }) {
+  const html = line
+    .replace(/^(\s*)(#.*)$/, '$1<span style="color:var(--color-mute)">$2</span>')
+    .replace(/^(\s*)([a-zA-Z_-]+)(:)/, '$1<span style="color:var(--color-accent)">$2</span>$3')
+    .replace(/\[([^\]]+)\]/g, '[<span style="color:var(--color-ok)">$1</span>]')
+    .replace(/'([^']+)'/g, `'<span style="color:var(--color-warning)">$1</span>'`)
+    .replace(/(npx auditx@latest)/g, '<span style="color:var(--color-accent)">$1</span>')
+    .replace(/(--severity high)/g, '<span style="color:var(--color-danger)">$1</span>')
+    .replace(/(--ci)/g, '<span style="color:var(--color-danger)">$1</span>')
+    .replace(/(actions\/[a-z@0-9-]+)/g, '<span style="color:var(--color-ok)">$1</span>');
+  return <div dangerouslySetInnerHTML={{ __html: html || '\u00A0' }} />;
+}
+
 function YamlBlock({ code }: { code: string }) {
-  const lines = code.split('\n').map((line, i) => {
-    const html = line
-      .replace(/^(\s*)(#.*)$/, '$1<span style="color:var(--color-mute)">$2</span>')
-      .replace(/^(\s*)([a-zA-Z_-]+)(:)/, '$1<span style="color:#22d3ee">$2</span>$3')
-      .replace(/\[([^\]]+)\]/g, '[<span style="color:#34d399">$1</span>]')
-      .replace(/'([^']+)'/g, `'<span style="color:#fb923c">$1</span>'`)
-      .replace(/(npx auditx@latest)/g, '<span style="color:var(--color-accent)">$1</span>')
-      .replace(/(--severity high)/g, '<span style="color:var(--color-danger)">$1</span>')
-      .replace(/(--ci)/g, '<span style="color:var(--color-danger)">$1</span>')
-      .replace(/(actions\/[a-z@0-9-]+)/g, '<span style="color:#34d399">$1</span>');
-    return <div key={i} dangerouslySetInnerHTML={{ __html: html || '\u00A0' }} />;
-  });
+  const lines = code.split('\n').map((line, i) => <YamlLine key={i} line={line} />);
   return <>{lines}</>;
 }
 
@@ -63,7 +65,6 @@ export default function CISection() {
     <section id="ci" className="page-section">
       <ScrollReveal>
         <div style={{ marginBottom: 36 }}>
-          <div className="section-label">CI / Git Hooks</div>
           <h2 style={{
             fontFamily: 'var(--font-sans)',
             fontSize: 'clamp(24px, 3vw, 36px)',

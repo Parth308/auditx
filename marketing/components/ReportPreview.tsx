@@ -127,7 +127,6 @@ export default function ReportPreview() {
     <section id="report" className="page-section">
       <ScrollReveal>
         <div style={{ marginBottom: 36 }}>
-          <div className="section-label">Live Report Preview</div>
           <h2 style={{
             fontFamily: 'var(--font-sans)',
             fontSize: 'clamp(24px, 3vw, 36px)',
@@ -153,25 +152,18 @@ export default function ReportPreview() {
             overflowX: 'auto',
           }}>
             {/* Window dots */}
+            {/* Terminal header block */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 6,
-              padding: '0 14px',
+              justifyContent: 'center',
+              padding: '0 16px',
               borderRight: '1px solid var(--color-hairline)',
               height: '100%',
               flexShrink: 0,
+              backgroundColor: 'var(--color-canvas)',
             }}>
-              {['#f43f5e', '#fb923c', '#34d399'].map(c => (
-                <span key={c} style={{
-                  display: 'inline-block',
-                  width: 9,
-                  height: 9,
-                  borderRadius: '50%',
-                  backgroundColor: c,
-                  opacity: 0.65,
-                }} />
-              ))}
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--color-mute)', fontWeight: 700 }}>[ TTY ]</span>
             </div>
 
             {TABS.map(tab => (

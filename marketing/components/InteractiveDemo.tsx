@@ -139,7 +139,6 @@ export default function InteractiveDemo() {
     <section id="demo" className="page-section">
       <ScrollReveal>
         <div style={{ marginBottom: 36 }}>
-          <div className="section-label">Try It</div>
           <h2 style={{
             fontFamily: 'var(--font-sans)',
             fontSize: 'clamp(24px, 3vw, 36px)',
@@ -154,6 +153,18 @@ export default function InteractiveDemo() {
       </ScrollReveal>
 
       <ScrollReveal delay={80}>
+        <style>{`
+          @media (max-width: 768px) {
+            #demo .demo-split {
+              flex-direction: column !important;
+            }
+            #demo .demo-editor {
+              border-right: none !important;
+              border-bottom: 1px solid var(--color-hairline) !important;
+            }
+          }
+        `}</style>
+
         <div style={{
           border: '1px solid var(--color-hairline)',
           overflow: 'hidden',
@@ -167,25 +178,18 @@ export default function InteractiveDemo() {
             borderBottom: '1px solid var(--color-hairline)',
             overflowX: 'auto',
           }}>
-            {/* Window dots */}
+            {/* TTY block */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 6,
+              justifyContent: 'center',
               padding: '0 16px',
               borderRight: '1px solid var(--color-hairline)',
+              height: '100%',
               flexShrink: 0,
+              backgroundColor: 'var(--color-canvas)',
             }}>
-              {['#f43f5e', '#fb923c', '#34d399'].map(c => (
-                <span key={c} style={{
-                  display: 'inline-block',
-                  width: 10,
-                  height: 10,
-                  borderRadius: '50%',
-                  backgroundColor: c,
-                  opacity: 0.7,
-                }} />
-              ))}
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--color-mute)', fontWeight: 700 }}>[ TTY ]</span>
             </div>
 
             {SNIPPETS.map(s => (
@@ -213,13 +217,13 @@ export default function InteractiveDemo() {
           </div>
 
           {/* Editor + Output split */}
-          <div style={{
+          <div className="demo-split" style={{
             display: 'flex',
             flexDirection: 'row',
             minHeight: 320,
           }}>
             {/* Code editor panel */}
-            <div style={{
+            <div className="demo-editor" style={{
               flex: '1 1 55%',
               borderRight: '1px solid var(--color-hairline)',
               backgroundColor: '#0d0d14',

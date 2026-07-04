@@ -367,7 +367,6 @@ export default function AgentLoopSection() {
           background: 'linear-gradient(135deg, var(--color-surface) 0%, var(--color-surface-2) 100%)',
         }}>
           <ScrollReveal>
-            <div className="section-label" style={{ marginBottom: 14 }}>For AI Agent Loops</div>
             <h2 style={{
               fontFamily: 'var(--font-sans)',
               fontWeight: 800,
@@ -399,7 +398,7 @@ export default function AgentLoopSection() {
         </div>
 
         {/* Two-column body: graphic + JSON */}
-        <div style={{
+        <div className="agent-body-grid" style={{
           display: 'grid',
           gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)',
           alignItems: 'start',

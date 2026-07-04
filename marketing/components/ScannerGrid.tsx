@@ -64,7 +64,6 @@ export default function ScannerGrid() {
     <section id="scanners" className="page-section">
       <ScrollReveal>
         <div style={{ marginBottom: 40 }}>
-          <div className="section-label">15 Scanner Categories</div>
           <h2 style={{
             fontFamily: 'var(--font-sans)',
             fontSize: 'clamp(24px, 3vw, 36px)',

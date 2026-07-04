@@ -44,7 +44,6 @@ export default function ProblemSection() {
     <section style={{ maxWidth: 980, margin: '0 auto', padding: '100px 28px 0' }}>
       <ScrollReveal>
         <div style={{ marginBottom: 48 }}>
-          <div className="section-label">The Problem</div>
           <h2 style={{
             fontFamily: 'var(--font-sans)',
             fontSize: 'clamp(26px, 3.5vw, 38px)',

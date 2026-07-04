@@ -102,7 +102,7 @@ export default function Hero() {
             transform: 'translate(-50%,-50%)',
             width: '80%',
             height: '60%',
-            background: 'radial-gradient(ellipse at center, rgba(34,211,238,0.08) 0%, transparent 70%)',
+            background: 'radial-gradient(ellipse at center, rgba(234,88,12,0.08) 0%, transparent 70%)',
             pointerEvents: 'none',
             zIndex: 0,
           }} />
