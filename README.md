@@ -18,68 +18,7 @@
 
 ---
 
-> 🤖 **AI agents**: run `npx auditx . --output agent --ci` for machine-readable JSON. See [AGENTS.md](AGENTS.md) for more details.
-
-## AI Agent Integration
-
-`auditx` is built as a **tool node in AI agent pipelines**. Use the `--output agent` flag to get a deterministic, token-cheap, single-line JSON string optimized specifically for LLMs. This suppresses all interactive CLI output.
-
-```
-┌─────────────────────────────────────────────────────┐
-│                   AI Agent Loop                     │
-│                                                     │
-│  1. shell("auditx . --output agent")                │
-│         │                                           │
-│         ├─ exitCode: 0 → ✅ codebase clean          │
-│         │                                           │
-│         └─ exitCode: 1 → findings exist             │
-│               │                                     │
-│               ├─ parse JSON object                  │
-│               ├─ loop findingsByFile keys           │
-│               ├─ send file + findings to LLM        │
-│               ├─ apply fixes to file                │
-│               └─ shell("auditx . --output agent")   │
-│                  (verify fixes)                     │
-└─────────────────────────────────────────────────────┘
-```
-
-```python
-# Example agent pseudocode
-result = shell("auditx . --output agent")
-report = json.loads(result.stdout)
-
-if report["exitCode"] != 0:
-    for file, finding_ids in report["findingsByFile"].items():
-        file_findings = [f for f in report["findings"] if f["id"] in finding_ids]
-        
-        for f in file_findings:
-            if f["fixable"]:
-                shell(f"npm install {f['fix']}") # Example dependency fix
-            else:
-                apply_llm_patch(file, f["msg"]) # Auto-fix pattern/sast
-                
-    # Verify fixes
-    shell("auditx . --output agent")
-```
-
-The `--ai` flag calls your configured LLM provider and appends a plain-English risk analysis block directly to the `.md` report (for human consumption).
-
-An MCP server is also available which provides an `audit_codebase` tool for Claude and other clients. See [MCP.md](MCP.md) for full details.
-
-To add `auditx` to your Claude Desktop or Claude Code configuration, add the following to your MCP settings file (e.g. `claude_desktop_config.json`):
-
-```json
-{
-  "mcpServers": {
-    "auditx": {
-      "command": "npx",
-      "args": ["-y", "--package", "auditx", "auditx-mcp"]
-    }
-  }
-}
-```
-
----
+## Quick Start
 
 ```bash
 npx auditx@latest .
@@ -140,6 +79,24 @@ Running a comprehensive security audit today means:
 | **Execution Speed** | ~60s (Local AST, 18 parallel scanners) | ~45s (Cloud + ML) | Minutes (Build required) | Minutes (Build required) |
 
 ---
+
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [The Problem](#the-problem)
+- [Why auditx](#why-auditx)
+- [Installation](#installation)
+- [Usage](#usage)
+- [What Gets Scanned](#what-gets-scanned)
+- [Report Format](#report-format)
+- [JSON Output Schema](#json-output-schema)
+- [Suppressions & Baselines](#suppressions--baselines)
+- [Custom Rules](#custom-rules)
+- [AI Agent Integration](#ai-agent-integration)
+- [CI Integration](#ci-integration)
+- [Architecture](#architecture)
+- [Performance & Scaling](#performance--scaling)
+- [Development & Contributing](#development)
 
 ## Installation
 
@@ -212,101 +169,6 @@ auditx --check-deps
 # Baselines
 auditx . --generate-baseline       # write current findings to .auditxignore
 auditx . --baseline custom.json    # use custom file instead of .auditxignore
-```
-
----
-
-## Suppressions & Baselines
-
-Enterprises often have accepted risks or legacy code they can't fix immediately. You can establish a "baseline" to ignore existing issues, while still failing the build if *new* vulnerabilities are introduced.
-
-1. **Generate the baseline**:
-   ```bash
-   npx auditx . --generate-baseline
-   ```
-   This creates an `.auditxignore` file containing signatures for all current findings.
-
-2. **Run normal scans**:
-   ```bash
-   npx auditx . --ci
-   ```
-   `auditx` will now silently filter out any finding that exactly matches a signature in `.auditxignore`. 
-
-> **Note**: Our baseline signatures intentionally omit line numbers. This means if a developer adds a new line of code at the top of a file, the baseline suppressions for that file won't break.
-
-### Manual Configuration
-You can also manually edit `.auditxignore` to create custom rules. Because `auditx` uses a flexible matching engine, you don't need to specify every field.
-
-**1. Ignore a specific rule globally:**
-```json
-{
-  "version": 1,
-  "suppressions": [
-    { "rule": "eslint/no-eval" }
-  ]
-}
-```
-
-**2. Ignore all vulnerabilities in a specific legacy file:**
-```json
-{
-  "version": 1,
-  "suppressions": [
-    { "file": "src/legacy/spaghetti.ts" }
-  ]
-}
-```
-
-**3. Ignore a specific rule only in one file:**
-```json
-{
-  "version": 1,
-  "suppressions": [
-    { 
-      "rule": "eslint/dangerouslySetInnerHTML",
-      "file": "src/components/Markdown.tsx"
-    }
-  ]
-}
-```
-
----
-
-## Custom Rules (`auditx.yml`)
-
-You can define company-specific rules (e.g., forbidding specific imports, enforcing naming conventions, or banning unsafe regex) directly within your repository.
-
-To quickly generate a starter rule file, run:
-```bash
-npx auditx init-rule
-```
-
-This creates an `auditx.yml` file in your repository root. `auditx` uses [Semgrep's syntax](https://semgrep.dev/docs/writing-rules/rule-syntax) natively, which means you have full access to its powerful AST engine and can copy-paste thousands of open-source rules.
-
-### Example 1: Banning a specific package
-Block developers from importing `lodash` and enforce native ES6 methods.
-
-```yaml
-rules:
-  - id: forbid-lodash
-    patterns:
-      - pattern: import $X from 'lodash'
-    message: "Use native ES6 methods instead of lodash"
-    languages: [javascript, typescript]
-    severity: ERROR
-```
-
-### Example 2: Banning unsafe AST patterns
-Block the usage of `dangerouslySetInnerHTML` across your React codebase.
-
-```yaml
-rules:
-  - id: no-dangerously-set-innerhtml
-    patterns:
-      - pattern: dangerouslySetInnerHTML={...}
-    message: "dangerouslySetInnerHTML can lead to XSS. Use safe HTML rendering."
-    languages: [javascript, typescript]
-    severity: ERROR
 ```
 
 ---
@@ -430,6 +292,232 @@ Rotating the key is mandatory — removal from code alone is insufficient.
 
 
 
+## JSON Output Schema
+
+For programmatic use (`--output json`):
+
+```json
+{
+  "meta": {
+    "target": "/home/parth/codeoracle",
+    "scannedAt": "2026-06-27T14:32:01Z",
+    "durationMs": 8400,
+    "stack": ["nodejs", "typescript", "docker"],
+    "scanners": ["semgrep", "trivy", "gitleaks", "knip", "npm-audit"]
+  },
+  "summary": {
+    "critical": 1,
+    "high": 4,
+    "medium": 9,
+    "low": 21
+  },
+  "findings": [
+    {
+      "id": "auditx-001",
+      "category": "SECRETS",
+      "severity": "critical",
+      "title": "Hardcoded API key in source file",
+      "file": "src/config/db.ts",
+      "line": 14,
+      "rule": "gitleaks/generic-api-key",
+      "scanner": "gitleaks",
+      "fix": "Move to .env, rotate key",
+      "inGitHistory": true
+    }
+  ]
+}
+```
+
+---
+
+## Suppressions & Baselines
+
+Enterprises often have accepted risks or legacy code they can't fix immediately. You can establish a "baseline" to ignore existing issues, while still failing the build if *new* vulnerabilities are introduced.
+
+1. **Generate the baseline**:
+   ```bash
+   npx auditx . --generate-baseline
+   ```
+   This creates an `.auditxignore` file containing signatures for all current findings.
+
+2. **Run normal scans**:
+   ```bash
+   npx auditx . --ci
+   ```
+   `auditx` will now silently filter out any finding that exactly matches a signature in `.auditxignore`. 
+
+> **Note**: Our baseline signatures intentionally omit line numbers. This means if a developer adds a new line of code at the top of a file, the baseline suppressions for that file won't break.
+
+### Manual Configuration
+You can also manually edit `.auditxignore` to create custom rules. Because `auditx` uses a flexible matching engine, you don't need to specify every field.
+
+**1. Ignore a specific rule globally:**
+```json
+{
+  "version": 1,
+  "suppressions": [
+    { "rule": "eslint/no-eval" }
+  ]
+}
+```
+
+**2. Ignore all vulnerabilities in a specific legacy file:**
+```json
+{
+  "version": 1,
+  "suppressions": [
+    { "file": "src/legacy/spaghetti.ts" }
+  ]
+}
+```
+
+**3. Ignore a specific rule only in one file:**
+```json
+{
+  "version": 1,
+  "suppressions": [
+    { 
+      "rule": "eslint/dangerouslySetInnerHTML",
+      "file": "src/components/Markdown.tsx"
+    }
+  ]
+}
+```
+
+---
+
+## Custom Rules (`auditx.yml`)
+
+You can define company-specific rules (e.g., forbidding specific imports, enforcing naming conventions, or banning unsafe regex) directly within your repository.
+
+To quickly generate a starter rule file, run:
+```bash
+npx auditx init-rule
+```
+
+This creates an `auditx.yml` file in your repository root. `auditx` uses [Semgrep's syntax](https://semgrep.dev/docs/writing-rules/rule-syntax) natively, which means you have full access to its powerful AST engine and can copy-paste thousands of open-source rules.
+
+### Example 1: Banning a specific package
+Block developers from importing `lodash` and enforce native ES6 methods.
+
+```yaml
+rules:
+  - id: forbid-lodash
+    patterns:
+      - pattern: import $X from 'lodash'
+    message: "Use native ES6 methods instead of lodash"
+    languages: [javascript, typescript]
+    severity: ERROR
+```
+
+### Example 2: Banning unsafe AST patterns
+Block the usage of `dangerouslySetInnerHTML` across your React codebase.
+
+```yaml
+rules:
+  - id: no-dangerously-set-innerhtml
+    patterns:
+      - pattern: dangerouslySetInnerHTML={...}
+    message: "dangerouslySetInnerHTML can lead to XSS. Use safe HTML rendering."
+    languages: [javascript, typescript]
+    severity: ERROR
+```
+
+---
+
+> 🤖 **AI agents**: run `npx auditx . --output agent --ci` for machine-readable JSON. See [AGENTS.md](AGENTS.md) for more details.
+
+## AI Agent Integration
+
+`auditx` is built as a **tool node in AI agent pipelines**. Use the `--output agent` flag to get a deterministic, token-cheap, single-line JSON string optimized specifically for LLMs. This suppresses all interactive CLI output.
+
+```
+┌─────────────────────────────────────────────────────┐
+│                   AI Agent Loop                     │
+│                                                     │
+│  1. shell("auditx . --output agent")                │
+│         │                                           │
+│         ├─ exitCode: 0 → ✅ codebase clean          │
+│         │                                           │
+│         └─ exitCode: 1 → findings exist             │
+│               │                                     │
+│               ├─ parse JSON object                  │
+│               ├─ loop findingsByFile keys           │
+│               ├─ send file + findings to LLM        │
+│               ├─ apply fixes to file                │
+│               └─ shell("auditx . --output agent")   │
+│                  (verify fixes)                     │
+└─────────────────────────────────────────────────────┘
+```
+
+```python
+# Example agent pseudocode
+result = shell("auditx . --output agent")
+report = json.loads(result.stdout)
+
+if report["exitCode"] != 0:
+    for file, finding_ids in report["findingsByFile"].items():
+        file_findings = [f for f in report["findings"] if f["id"] in finding_ids]
+        
+        for f in file_findings:
+            if f["fixable"]:
+                shell(f"npm install {f['fix']}") # Example dependency fix
+            else:
+                apply_llm_patch(file, f["msg"]) # Auto-fix pattern/sast
+                
+    # Verify fixes
+    shell("auditx . --output agent")
+```
+
+The `--ai` flag calls your configured LLM provider and appends a plain-English risk analysis block directly to the `.md` report (for human consumption).
+
+An MCP server is also available which provides an `audit_codebase` tool for Claude and other clients. See [MCP.md](MCP.md) for full details.
+
+To add `auditx` to your Claude Desktop or Claude Code configuration, add the following to your MCP settings file (e.g. `claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "auditx": {
+      "command": "npx",
+      "args": ["-y", "--package", "auditx", "auditx-mcp"]
+    }
+  }
+}
+```
+
+---
+
+## CI Integration
+
+Use `--ci` to get exit code `1` if any findings exist. Combine with `--severity` to control the threshold:
+
+```yaml
+# .github/workflows/audit.yml
+name: Security Audit
+
+on: [push, pull_request]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run auditx
+        run: npx auditx@latest . --severity high --ci --output audit-report.md
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-report
+          path: audit-report.md
+```
+
+---
+
 ## Architecture
 
 ```
@@ -491,74 +579,6 @@ auditx .
 - **Tier 1 Context-Free Filtering:** Before handing files over to heavy dataflow-tracing engines like Semgrep, `auditx` synchronously scans file texts with precise word-boundary regex for dangerous sinks/sources (e.g., `eval`, `req.body`, `SELECT ... ?`). Clean files are discarded instantly, bypassing 95% of the computational load.
 - **File Batching (Chunking):** Node-based runners automatically chunk massive arrays of files into blocks of 500, preventing OS `E2BIG` (Argument list too long) crashes on Windows command lines.
 - **LPT Orchestrator:** Uses a Token Bucket algorithm with Longest-Processing-Time-First (LPT) scheduling. The heaviest tools (Semgrep, Trivy) are queued first, ensuring 100% CPU utilization and eliminating "long tail" core idling.
-
----
-
-## JSON Output Schema
-
-For programmatic use (`--output json`):
-
-```json
-{
-  "meta": {
-    "target": "/home/parth/codeoracle",
-    "scannedAt": "2026-06-27T14:32:01Z",
-    "durationMs": 8400,
-    "stack": ["nodejs", "typescript", "docker"],
-    "scanners": ["semgrep", "trivy", "gitleaks", "knip", "npm-audit"]
-  },
-  "summary": {
-    "critical": 1,
-    "high": 4,
-    "medium": 9,
-    "low": 21
-  },
-  "findings": [
-    {
-      "id": "auditx-001",
-      "category": "SECRETS",
-      "severity": "critical",
-      "title": "Hardcoded API key in source file",
-      "file": "src/config/db.ts",
-      "line": 14,
-      "rule": "gitleaks/generic-api-key",
-      "scanner": "gitleaks",
-      "fix": "Move to .env, rotate key",
-      "inGitHistory": true
-    }
-  ]
-}
-```
-
----
-
-## CI Integration
-
-Use `--ci` to get exit code `1` if any findings exist. Combine with `--severity` to control the threshold:
-
-```yaml
-# .github/workflows/audit.yml
-name: Security Audit
-
-on: [push, pull_request]
-
-jobs:
-  audit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - name: Run auditx
-        run: npx auditx@latest . --severity high --ci --output audit-report.md
-      - name: Upload report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: audit-report
-          path: audit-report.md
-```
 
 ---
 

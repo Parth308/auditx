@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/parth308/auditx/main/assets/logo.svg" alt="auditx" width="80" />
+<img src="https://raw.githubusercontent.com/parth/auditx/main/assets/logo.svg" alt="auditx" width="80" />
 
 # auditx
 
@@ -8,17 +8,17 @@
 
 [![npm version](https://img.shields.io/npm/v/auditx?color=crimson&label=auditx)](https://www.npmjs.com/package/auditx)
 [![npm downloads](https://img.shields.io/npm/dm/auditx?color=crimson)](https://www.npmjs.com/package/auditx)
-[![License: MIT](https://img.shields.io/badge/license-MIT-crimson)](https://github.com/parth308/auditx/blob/main/LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-crimson)](LICENSE)
 [![CI](https://img.shields.io/github/actions/workflow/status/parth308/auditx/test.yml?label=CI&color=crimson)](https://github.com/parth308/auditx/actions)
 [![TypeScript](https://img.shields.io/badge/built%20with-TypeScript-blue)](https://www.typescriptlang.org/)
 
-**[🌐 Visit Website](https://auditx-cli.vercel.app/)**
+**[🌐 Visit Website](https://auditx-cli.vercel.app/)** · **[💻 GitHub](https://github.com/parth308/auditx)**
 
 </div>
 
 ---
 
-`auditx` is a **zero-config CLI security auditing tool** that orchestrates Semgrep, Trivy, Gitleaks, Knip, and more — running them in parallel, normalizing their output, and producing a single structured `.md` report designed for both human review and AI agent pipelines.
+## Quick Start
 
 ```bash
 npx auditx@latest .
@@ -69,7 +69,7 @@ Running a comprehensive security audit today means:
 
 ## Why auditx
 
-| Feature | `auditx` | Snyk / Dependabot | SonarQube | GitHub Advanced Security |
+| Feature | `auditx` | Snyk | SonarQube | GitHub Advanced Security |
 |---|---|---|---|---|
 | **Price** | Free & Open Source | Expensive SaaS | Enterprise pricing | Enterprise pricing |
 | **Setup** | `npx auditx@latest .` — zero config | Cloud account required | Heavy Java server | Tied to GitHub |
@@ -77,9 +77,26 @@ Running a comprehensive security audit today means:
 | **Scope** | Secrets + Deps + SAST + IaC + Dead Code | Mostly Deps & SAST | SAST & Code Quality | Secrets + Deps + SAST |
 | **Underlying Engine** | Best-in-class OSS (Trivy, Semgrep, OSV, Shellcheck, etc.) | Proprietary | Proprietary | CodeQL (Proprietary) |
 | **Execution Speed** | ~60s (Local AST, 18 parallel scanners) | ~45s (Cloud + ML) | Minutes (Build required) | Minutes (Build required) |
-| **AI Agent Ready** | Structured `.md` output, `--ci` flag | No | No | No |
 
 ---
+
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [The Problem](#the-problem)
+- [Why auditx](#why-auditx)
+- [Installation](#installation)
+- [Usage](#usage)
+- [What Gets Scanned](#what-gets-scanned)
+- [Report Format](#report-format)
+- [JSON Output Schema](#json-output-schema)
+- [Suppressions & Baselines](#suppressions--baselines)
+- [Custom Rules](#custom-rules)
+- [AI Agent Integration](#ai-agent-integration)
+- [CI Integration](#ci-integration)
+- [Architecture](#architecture)
+- [Performance & Scaling](#performance--scaling)
+- [Development & Contributing](#development)
 
 ## Installation
 
@@ -156,101 +173,6 @@ auditx . --baseline custom.json    # use custom file instead of .auditxignore
 
 ---
 
-## Suppressions & Baselines
-
-Enterprises often have accepted risks or legacy code they can't fix immediately. You can establish a "baseline" to ignore existing issues, while still failing the build if *new* vulnerabilities are introduced.
-
-1. **Generate the baseline**:
-   ```bash
-   npx auditx . --generate-baseline
-   ```
-   This creates an `.auditxignore` file containing signatures for all current findings.
-
-2. **Run normal scans**:
-   ```bash
-   npx auditx . --ci
-   ```
-   `auditx` will now silently filter out any finding that exactly matches a signature in `.auditxignore`. 
-
-> **Note**: Our baseline signatures intentionally omit line numbers. This means if a developer adds a new line of code at the top of a file, the baseline suppressions for that file won't break.
-
-### Manual Configuration
-You can also manually edit `.auditxignore` to create custom rules. Because `auditx` uses a flexible matching engine, you don't need to specify every field.
-
-**1. Ignore a specific rule globally:**
-```json
-{
-  "version": 1,
-  "suppressions": [
-    { "rule": "eslint/no-eval" }
-  ]
-}
-```
-
-**2. Ignore all vulnerabilities in a specific legacy file:**
-```json
-{
-  "version": 1,
-  "suppressions": [
-    { "file": "src/legacy/spaghetti.ts" }
-  ]
-}
-```
-
-**3. Ignore a specific rule only in one file:**
-```json
-{
-  "version": 1,
-  "suppressions": [
-    { 
-      "rule": "eslint/dangerouslySetInnerHTML",
-      "file": "src/components/Markdown.tsx"
-    }
-  ]
-}
-```
-
----
-
-## Custom Rules (`auditx.yml`)
-
-You can define company-specific rules (e.g., forbidding specific imports, enforcing naming conventions, or banning unsafe regex) directly within your repository.
-
-To quickly generate a starter rule file, run:
-```bash
-npx auditx init-rule
-```
-
-This creates an `auditx.yml` file in your repository root. `auditx` uses [Semgrep's syntax](https://semgrep.dev/docs/writing-rules/rule-syntax) natively, which means you have full access to its powerful AST engine and can copy-paste thousands of open-source rules.
-
-### Example 1: Banning a specific package
-Block developers from importing `lodash` and enforce native ES6 methods.
-
-```yaml
-rules:
-  - id: forbid-lodash
-    patterns:
-      - pattern: import $X from 'lodash'
-    message: "Use native ES6 methods instead of lodash"
-    languages: [javascript, typescript]
-    severity: ERROR
-```
-
-### Example 2: Banning unsafe AST patterns
-Block the usage of `dangerouslySetInnerHTML` across your React codebase.
-
-```yaml
-rules:
-  - id: no-dangerously-set-innerhtml
-    patterns:
-      - pattern: dangerouslySetInnerHTML={...}
-    message: "dangerouslySetInnerHTML can lead to XSS. Use safe HTML rendering."
-    languages: [javascript, typescript]
-    severity: ERROR
-```
-
----
-
 ## What Gets Scanned
 
 | Category | Scanner | What It Finds |
@@ -260,14 +182,13 @@ rules:
 | `SAST` | [Semgrep](https://github.com/semgrep/semgrep) + [Shellcheck](https://github.com/koalaman/shellcheck) | SQL injection, XSS, eval usage, and unquoted variable bugs in `.sh` bash scripts |
 | `AI_CODE` | `aipatterns` (100+ AST rules) | AI-generated anti-patterns & flaws (silent catches, React state mutation, NextJS/Express/Django/Go/Python bugs) |
 | `DEAD_CODE` | [Knip](https://github.com/webpro-nl/knip) | Unused exports, unused imports, unused dependencies |
+| `IaC` | [Trivy](https://github.com/aquasecurity/trivy) config | Dockerfile misconfig, k8s insecure defaults, Terraform issues |
 | `PATTERNS` | ESLint + [CSpell](https://cspell.org/) | Prototype pollution, unsafe regex, and misspelled codebase variables/strings |
 | `DUPLICATION` | [jscpd](https://github.com/kucherenko/jscpd) | Copy-pasted code blocks and exact clones across multiple files (polyglot) |
-| `COMPLEXITY` | [Lizard](https://github.com/terryyin/lizard) | Cyclomatic complexity — functions too complex to test safely |
 | `DEP_HEALTH` | [depcheck](https://github.com/depcheck/depcheck) | Packages present in package.json but entirely unused in code |
 | `LICENSE` | [license-checker](https://github.com/davglass/license-checker) | Restrictive licenses (GPL/AGPL) that pose a legal risk |
 | `TYPE_SAFETY` | `tsc` | TypeScript compilation errors and missing types |
 | `GIT_HEALTH` | `git log` | Hotspot analysis — flags files modified 50+ times indicating architectural churn |
-| `IaC` | [Trivy](https://github.com/aquasecurity/trivy) config | Dockerfile misconfig, k8s insecure defaults, Terraform issues |
 
 ### Stack Auto-Detection
 
@@ -369,7 +290,142 @@ Rotating the key is mandatory — removal from code alone is insufficient.
 
 </details>
 
+
+
+## JSON Output Schema
+
+For programmatic use (`--output json`):
+
+```json
+{
+  "meta": {
+    "target": "/home/parth/codeoracle",
+    "scannedAt": "2026-06-27T14:32:01Z",
+    "durationMs": 8400,
+    "stack": ["nodejs", "typescript", "docker"],
+    "scanners": ["semgrep", "trivy", "gitleaks", "knip", "npm-audit"]
+  },
+  "summary": {
+    "critical": 1,
+    "high": 4,
+    "medium": 9,
+    "low": 21
+  },
+  "findings": [
+    {
+      "id": "auditx-001",
+      "category": "SECRETS",
+      "severity": "critical",
+      "title": "Hardcoded API key in source file",
+      "file": "src/config/db.ts",
+      "line": 14,
+      "rule": "gitleaks/generic-api-key",
+      "scanner": "gitleaks",
+      "fix": "Move to .env, rotate key",
+      "inGitHistory": true
+    }
+  ]
+}
+```
+
 ---
+
+## Suppressions & Baselines
+
+Enterprises often have accepted risks or legacy code they can't fix immediately. You can establish a "baseline" to ignore existing issues, while still failing the build if *new* vulnerabilities are introduced.
+
+1. **Generate the baseline**:
+   ```bash
+   npx auditx . --generate-baseline
+   ```
+   This creates an `.auditxignore` file containing signatures for all current findings.
+
+2. **Run normal scans**:
+   ```bash
+   npx auditx . --ci
+   ```
+   `auditx` will now silently filter out any finding that exactly matches a signature in `.auditxignore`. 
+
+> **Note**: Our baseline signatures intentionally omit line numbers. This means if a developer adds a new line of code at the top of a file, the baseline suppressions for that file won't break.
+
+### Manual Configuration
+You can also manually edit `.auditxignore` to create custom rules. Because `auditx` uses a flexible matching engine, you don't need to specify every field.
+
+**1. Ignore a specific rule globally:**
+```json
+{
+  "version": 1,
+  "suppressions": [
+    { "rule": "eslint/no-eval" }
+  ]
+}
+```
+
+**2. Ignore all vulnerabilities in a specific legacy file:**
+```json
+{
+  "version": 1,
+  "suppressions": [
+    { "file": "src/legacy/spaghetti.ts" }
+  ]
+}
+```
+
+**3. Ignore a specific rule only in one file:**
+```json
+{
+  "version": 1,
+  "suppressions": [
+    { 
+      "rule": "eslint/dangerouslySetInnerHTML",
+      "file": "src/components/Markdown.tsx"
+    }
+  ]
+}
+```
+
+---
+
+## Custom Rules (`auditx.yml`)
+
+You can define company-specific rules (e.g., forbidding specific imports, enforcing naming conventions, or banning unsafe regex) directly within your repository.
+
+To quickly generate a starter rule file, run:
+```bash
+npx auditx init-rule
+```
+
+This creates an `auditx.yml` file in your repository root. `auditx` uses [Semgrep's syntax](https://semgrep.dev/docs/writing-rules/rule-syntax) natively, which means you have full access to its powerful AST engine and can copy-paste thousands of open-source rules.
+
+### Example 1: Banning a specific package
+Block developers from importing `lodash` and enforce native ES6 methods.
+
+```yaml
+rules:
+  - id: forbid-lodash
+    patterns:
+      - pattern: import $X from 'lodash'
+    message: "Use native ES6 methods instead of lodash"
+    languages: [javascript, typescript]
+    severity: ERROR
+```
+
+### Example 2: Banning unsafe AST patterns
+Block the usage of `dangerouslySetInnerHTML` across your React codebase.
+
+```yaml
+rules:
+  - id: no-dangerously-set-innerhtml
+    patterns:
+      - pattern: dangerouslySetInnerHTML={...}
+    message: "dangerouslySetInnerHTML can lead to XSS. Use safe HTML rendering."
+    languages: [javascript, typescript]
+    severity: ERROR
+```
+
+---
+
+> 🤖 **AI agents**: run `npx auditx . --output agent --ci` for machine-readable JSON. See [AGENTS.md](AGENTS.md) for more details.
 
 ## AI Agent Integration
 
@@ -414,6 +470,51 @@ if report["exitCode"] != 0:
 ```
 
 The `--ai` flag calls your configured LLM provider and appends a plain-English risk analysis block directly to the `.md` report (for human consumption).
+
+An MCP server is also available which provides an `audit_codebase` tool for Claude and other clients. See [MCP.md](MCP.md) for full details.
+
+To add `auditx` to your Claude Desktop or Claude Code configuration, add the following to your MCP settings file (e.g. `claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "auditx": {
+      "command": "npx",
+      "args": ["-y", "--package", "auditx", "auditx-mcp"]
+    }
+  }
+}
+```
+
+---
+
+## CI Integration
+
+Use `--ci` to get exit code `1` if any findings exist. Combine with `--severity` to control the threshold:
+
+```yaml
+# .github/workflows/audit.yml
+name: Security Audit
+
+on: [push, pull_request]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run auditx
+        run: npx auditx@latest . --severity high --ci --output audit-report.md
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-report
+          path: audit-report.md
+```
 
 ---
 
@@ -466,76 +567,18 @@ auditx .
   ├─ deduplicate overlapping findings
   ├─ sort by severity
   │
-  └─ format → markdown | json | terminal
+  ├─ format → markdown | json | terminal
 ```
 
 ---
 
-## JSON Output Schema
+## Performance & Scaling (v0.1.23+)
 
-For programmatic use (`--output json`):
+`auditx` is optimized to run on massive enterprise monorepos (10,000+ files) with extreme speed:
 
-```json
-{
-  "meta": {
-    "target": "/home/parth/codeoracle",
-    "scannedAt": "2026-06-27T14:32:01Z",
-    "durationMs": 8400,
-    "stack": ["nodejs", "typescript", "docker"],
-    "scanners": ["semgrep", "trivy", "gitleaks", "knip", "npm-audit"]
-  },
-  "summary": {
-    "critical": 1,
-    "high": 4,
-    "medium": 9,
-    "low": 21
-  },
-  "findings": [
-    {
-      "id": "auditx-001",
-      "category": "SECRETS",
-      "severity": "critical",
-      "title": "Hardcoded API key in source file",
-      "file": "src/config/db.ts",
-      "line": 14,
-      "rule": "gitleaks/generic-api-key",
-      "scanner": "gitleaks",
-      "fix": "Move to .env, rotate key",
-      "inGitHistory": true
-    }
-  ]
-}
-```
-
----
-
-## CI Integration
-
-Use `--ci` to get exit code `1` if any findings exist. Combine with `--severity` to control the threshold:
-
-```yaml
-# .github/workflows/audit.yml
-name: Security Audit
-
-on: [push, pull_request]
-
-jobs:
-  audit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - name: Run auditx
-        run: npx auditx@latest . --severity high --ci --output audit-report.md
-      - name: Upload report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: audit-report
-          path: audit-report.md
-```
+- **Tier 1 Context-Free Filtering:** Before handing files over to heavy dataflow-tracing engines like Semgrep, `auditx` synchronously scans file texts with precise word-boundary regex for dangerous sinks/sources (e.g., `eval`, `req.body`, `SELECT ... ?`). Clean files are discarded instantly, bypassing 95% of the computational load.
+- **File Batching (Chunking):** Node-based runners automatically chunk massive arrays of files into blocks of 500, preventing OS `E2BIG` (Argument list too long) crashes on Windows command lines.
+- **LPT Orchestrator:** Uses a Token Bucket algorithm with Longest-Processing-Time-First (LPT) scheduling. The heaviest tools (Semgrep, Trivy) are queued first, ensuring 100% CPU utilization and eliminating "long tail" core idling.
 
 ---
 
@@ -564,7 +607,7 @@ npm test
 
 ## Contributing
 
-Contributions welcome. See [CONTRIBUTING.md](https://github.com/parth308/auditx/blob/main/CONTRIBUTING.md) for guidelines.
+Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 **Good first issues:**
 - Add a new scanner runner (`src/runners/`)
