@@ -109,13 +109,13 @@ if (targetArg === 'install') {
         console.log(chalk.cyan('  Installing Python-based scanners globally...'));
         execFileSync('pip', ['install', 'lizard'], { stdio: 'ignore' });
       } catch (e) {
-        console.log(chalk.yellow('  ⚠️  pip not found, skipping Python scanners (lizard).'));
+        console.log(chalk.yellow('  [!]  pip not found, skipping Python scanners (lizard).'));
       }
     });
 
-    console.log(chalk.green('\n  ✅ All scanners installed successfully.\n'));
+    console.log(chalk.green('\n  [+] All scanners installed successfully.\n'));
   } catch (err: any) {
-    console.error(chalk.red(`\n  ❌ Installation failed: ${err.message}\n`));
+    console.error(chalk.red(`\n  [-] Installation failed: ${err.message}\n`));
     process.exit(1);
   }
   process.exit(0);
@@ -139,7 +139,7 @@ if (targetArg === 'init-agent') {
     } else if (action === 'uninstall') {
       uninstallHook(hookType);
     } else {
-      console.error(chalk.red(`\n  ❌ Unknown hook action: ${action}. Use 'install', 'install-all', or 'uninstall'.\n`));
+      console.error(chalk.red(`\n  [-] Unknown hook action: ${action}. Use 'install', 'install-all', or 'uninstall'.\n`));
       process.exit(1);
     }
     process.exit(0);
@@ -161,13 +161,13 @@ async function runDefaultScan() {
       const touchedGlobal = files.some(f => globalConfigs.some(g => f.endsWith(g)) || f.endsWith('.yml') || f.endsWith('.yaml'));
       
       if (touchedGlobal) {
-        console.log(chalk.yellow('\n  ⚠️  Global configuration files modified. Ignoring --staged-list and performing a full scan.'));
+        console.log(chalk.yellow('\n  [!]  Global configuration files modified. Ignoring --staged-list and performing a full scan.'));
         stagedFiles = undefined;
       } else {
         stagedFiles = files;
       }
     } catch (err: any) {
-      console.error(chalk.red(`\n  ❌ Failed to read staged-list file: ${err.message}\n`));
+      console.error(chalk.red(`\n  [-] Failed to read staged-list file: ${err.message}\n`));
       process.exit(1);
     }
   }
@@ -243,7 +243,7 @@ async function runScan(): Promise<void> {
 
   if (isInteractive) {
     console.log('');
-    console.log(chalk.bold.cyan('  🛡️  auditx') + chalk.dim(` v${VERSION}`));
+    console.log(chalk.bold.cyan('  [*]  auditx') + chalk.dim(` v${VERSION}`));
     console.log(chalk.dim(`  Scanning: ${config.target}`));
     console.log('');
   }
@@ -268,7 +268,7 @@ async function runScan(): Promise<void> {
 
   if (isInteractive) {
     if (labels.length === 0) {
-      console.log(chalk.yellow('  ⚠️  No recognized stack detected. Running generic scanners only.'));
+      console.log(chalk.yellow('  [!]  No recognized stack detected. Running generic scanners only.'));
     } else {
       console.log(chalk.dim(`  Stack detected: ${chalk.cyan(labels.join(' · '))}`));
     }
@@ -340,7 +340,7 @@ async function runScan(): Promise<void> {
       const md = formatMarkdown(report, aiSummary);
       writeFileSync(config.outputFile, md, 'utf8');
       console.log('');
-      console.log(chalk.green(`  ✅ Report written to: ${chalk.bold(config.outputFile)}`));
+      console.log(chalk.green(`  [+] Report written to: ${chalk.bold(config.outputFile)}`));
       printCiSummary(report);
       break;
     }
@@ -382,12 +382,12 @@ async function runScan(): Promise<void> {
   if (config.ci && urgentFindings.length > 0) {
     if (isInteractive) {
       console.log(
-        chalk.red(`\n  ❌ CI mode: ${urgentFindings.length} critical/high finding(s). Exiting with code 1.`),
+        chalk.red(`\n  [-] CI mode: ${urgentFindings.length} critical/high finding(s). Exiting with code 1.`),
       );
     }
     process.exit(1);
   } else if (config.ci) {
-    if (isInteractive) console.log(chalk.green('\n  ✅ CI mode: No critical/high findings. Clean!'));
+    if (isInteractive) console.log(chalk.green('\n  [+] CI mode: No critical/high findings. Clean!'));
   }
 } // End of runDefaultScan
 
@@ -446,9 +446,9 @@ async function generateSbom(targetDir: string, isInteractive: boolean): Promise<
   try {
     const bin = await getBinaryPath('trivy');
     execSync(`"${bin}" fs --format cyclonedx --output "${dest}" .`, { cwd: targetDir, stdio: 'ignore' });
-    if (isInteractive) console.log(chalk.green(`  ✅ SBOM successfully written to: ${chalk.bold('sbom.json')}`));
+    if (isInteractive) console.log(chalk.green(`  [+] SBOM successfully written to: ${chalk.bold('sbom.json')}`));
   } catch (err: any) {
-    if (isInteractive) console.log(chalk.red(`  ❌ Failed to generate SBOM: ${err.message}`));
+    if (isInteractive) console.log(chalk.red(`  [-] Failed to generate SBOM: ${err.message}`));
   }
 }
 }

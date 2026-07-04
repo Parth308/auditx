@@ -102,7 +102,7 @@ export async function promptForAiConfig(): Promise<void> {
       });
     }
   } catch (err: any) {
-    console.log(chalk.yellow(`\n  ⚠️  Failed to fetch models: ${err.message}`));
+    console.log(chalk.yellow(`\n  [!]  Failed to fetch models: ${err.message}`));
     console.log(chalk.dim('  Using default model for this provider.\n'));
   }
 
@@ -116,5 +116,5 @@ export async function promptForAiConfig(): Promise<void> {
   else if (provider === 'claude') update.claudeApiKey = apiKey;
 
   writeGlobalConfig(update);
-  console.log(chalk.green('\n  ✅ Configuration saved successfully!\n'));
+  console.log(chalk.green('\n  [+] Configuration saved successfully!\n'));
 }

@@ -36,7 +36,7 @@ export function printScannerResult(result: ScanResult): void {
 export function printTerminalReport(report: AuditReport): void {
   console.log('');
   console.log(chalk.bold.cyan('━'.repeat(60)));
-  console.log(chalk.bold.cyan('  🛡️  auditx Security Report'));
+  console.log(chalk.bold.cyan('  [*]  auditx Security Report'));
   console.log(chalk.bold.cyan('━'.repeat(60)));
   console.log('');
   console.log(`  ${chalk.dim('Target:')}    ${chalk.white(report.meta.target)}`);
@@ -58,7 +58,7 @@ export function printTerminalReport(report: AuditReport): void {
   console.log('');
 
   if (report.findings.length === 0) {
-    console.log(chalk.green('  ✅ No findings. Clean scan.'));
+    console.log(chalk.green('  [+] No findings. Clean scan.'));
     console.log('');
     return;
   }
@@ -113,7 +113,7 @@ function printFinding(f: Finding): void {
   if (f.rule) console.log(`    ${chalk.dim('Rule:')} ${chalk.gray(f.rule)}`);
   if (f.fix) console.log(`    ${chalk.dim('Fix:')}  ${chalk.green(f.fix)}`);
   if (f.inGitHistory) {
-    console.log(`    ${chalk.red('⚠️  Found in git history — rotate this credential immediately!')}`);
+    console.log(`    ${chalk.red('[!]  Found in git history — rotate this credential immediately!')}`);
   }
   console.log('');
 }
@@ -123,10 +123,10 @@ export function printCiSummary(report: AuditReport): void {
   const total = s.critical + s.high + s.medium + s.low + s.info;
 
   if (total === 0) {
-    console.log(chalk.green('auditx: ✅ No security findings.'));
+    console.log(chalk.green('auditx: [+] No security findings.'));
   } else {
     console.log(
-      chalk.red(`auditx: ❌ ${total} findings`) +
+      chalk.red(`auditx: [-] ${total} findings`) +
       chalk.dim(` — critical: ${s.critical}, high: ${s.high}, medium: ${s.medium}, low: ${s.low}`),
     );
   }

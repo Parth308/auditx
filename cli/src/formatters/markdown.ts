@@ -37,7 +37,7 @@ export function formatMarkdown(report: AuditReport, aiSummary?: string): string 
   const lines: string[] = [];
 
   // ─── Header ──────────────────────────────────────────────────────────────
-  lines.push(`# 🛡️ auditx Security Report`);
+  lines.push(`# [*] auditx Security Report`);
   lines.push('');
   lines.push(`**Target**: \`${report.meta.target}\``);
   lines.push(`**Scanned**: ${new Date(report.meta.scannedAt).toLocaleString()}`);
@@ -73,9 +73,9 @@ export function formatMarkdown(report: AuditReport, aiSummary?: string): string 
 
   const urgentCount = total.critical + total.high;
   if (urgentCount > 0) {
-    lines.push(`> ⚠️ ${urgentCount} high/critical finding${urgentCount > 1 ? 's' : ''} require immediate attention.`);
+    lines.push(`> [!] ${urgentCount} high/critical finding${urgentCount > 1 ? 's' : ''} require immediate attention.`);
   } else {
-    lines.push('> ✅ No critical or high severity findings.');
+    lines.push('> [+] No critical or high severity findings.');
   }
   lines.push('');
   lines.push('---');
@@ -179,7 +179,7 @@ function renderFinding(f: Finding, target: string): string {
   if (f.description) lines.push(`- **Description**: ${f.description}`);
   if (f.match) lines.push(`- **Match**: \`${f.match}\``);
   if (f.inGitHistory) {
-    lines.push(`- **In git history**: ⚠️ Yes — rotating the credential is mandatory`);
+    lines.push(`- **In git history**: [!] Yes — rotating the credential is mandatory`);
   }
   if (f.fix) lines.push(`- **Fix**: ${f.fix}`);
 

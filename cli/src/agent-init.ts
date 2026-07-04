@@ -71,7 +71,7 @@ export function initAgent(targetDir: string, opts: InitAgentOptions = {}) {
   for (const key of keys) {
     const tpl = TEMPLATES[key];
     if (!tpl) {
-      console.log(chalk.yellow(`  ⚠️  Unknown target: ${key}, skipping.`));
+      console.log(chalk.yellow(`  [!]  Unknown target: ${key}, skipping.`));
       continue;
     }
 
@@ -112,7 +112,7 @@ export function initAgent(targetDir: string, opts: InitAgentOptions = {}) {
 
   console.log(
     chalk.green(
-      `\n  ✅ Done. ${created} created, ${updated} updated, ${merged} merged into existing files.\n`,
+      `\n  [+] Done. ${created} created, ${updated} updated, ${merged} merged into existing files.\n`,
     ),
   );
 }
