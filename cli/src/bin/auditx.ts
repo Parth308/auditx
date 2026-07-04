@@ -172,6 +172,22 @@ async function runDefaultScan() {
     }
   }
 
+  // Explicit File Scoping via Git: If no explicit staged list, fetch git-tracked files
+  // to avoid scanners blindly crawling the filesystem (e.g. entering node_modules).
+  if (!stagedFiles) {
+    try {
+      // Get all tracked files, resolving to absolute paths so runners can handle them correctly
+      const output = execSync('git ls-files', { cwd: resolve(targetArg), encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] });
+      const files = output.split('\n').map(s => s.trim()).filter(Boolean);
+      if (files.length > 0) {
+        stagedFiles = files.map(f => resolve(targetArg, f));
+      }
+    } catch {
+      // Not a git repository or git not installed, fallback to undefined (full directory scan)
+      stagedFiles = undefined;
+    }
+  }
+
   const config: Config = {
   target: resolve(targetArg),
   output: (opts['output'] as Config['output']) ?? 'markdown',

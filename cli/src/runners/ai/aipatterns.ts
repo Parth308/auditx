@@ -2,7 +2,8 @@ import { execFile } from 'child_process';
 import { join } from 'path';
 import { promisify } from 'util';
 import { randomUUID } from 'crypto';
-import { existsSync } from 'fs';
+import { existsSync, writeFileSync } from 'fs';
+import { tmpdir } from 'os';
 import { fileURLToPath } from 'url';
 import type { Finding, ScanResult, Severity, StackInfo } from '../../types.js';
 import { getBinaryPath, getSemgrepEnv } from '../../installer.js';
@@ -61,6 +62,7 @@ export async function runAiPatterns(targetPath: string, stagedFiles: string[] | 
     }
 
     const targets = stagedFiles && stagedFiles.length > 0 ? stagedFiles : [targetPath];
+
     const args = [
       'scan',
       ...configArgs,

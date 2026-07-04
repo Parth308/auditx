@@ -187,6 +187,10 @@ export async function runAll(
     return true;
   });
 
+  // LPT (Longest-Processing-Time-First) Scheduling: 
+  // Sort tasks by cost descending so the heaviest tasks start first.
+  selected.sort((a, b) => b.cost - a.cost);
+
   const orchestrator = new Orchestrator<ScanResult>();
 
   const runAndReport = async (runner: RunnerDef): Promise<ScanResult> => {
