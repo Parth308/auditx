@@ -4,6 +4,7 @@ import ProblemSection from '@/components/ProblemSection';
 import HowItWorks from '@/components/HowItWorks';
 import ScannerGrid from '@/components/ScannerGrid';
 import ReportPreview from '@/components/ReportPreview';
+import InteractiveDemo from '@/components/InteractiveDemo';
 import AgentLoopSection from '@/components/AgentLoopSection';
 import CISection from '@/components/CISection';
 import ComparisonTable from '@/components/ComparisonTable';
@@ -18,6 +19,7 @@ export default function Home() {
         <ProblemSection />
         <HowItWorks />
         <ScannerGrid />
+        <InteractiveDemo />
         <ReportPreview />
         <AgentLoopSection />
         <CISection />

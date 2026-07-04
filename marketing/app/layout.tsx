@@ -1,17 +1,19 @@
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { Rajdhani, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 
-const inter = Inter({
+const rajdhani = Rajdhani({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-inter',
+  variable: '--font-display',
+  weight: ['400', '500', '600', '700'],
 });
 
-const jbMono = JetBrains_Mono({
+const ibmMono = IBM_Plex_Mono({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-mono',
+  weight: ['400', '500', '600', '700'],
 });
 
 export const metadata: Metadata = {
@@ -78,8 +80,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${jbMono.variable}`}>
-      <body className="font-sans antialiased bg-canvas text-ink overflow-x-hidden">
+    <html lang="en" className={`${rajdhani.variable} ${ibmMono.variable}`}>
+      <body className="antialiased overflow-x-hidden">
         {children}
         <Analytics />
       </body>

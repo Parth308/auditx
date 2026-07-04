@@ -1,11 +1,7 @@
 'use client';
 import CopyButton from './CopyButton';
 
-const HR   = '1px solid rgba(0,0,0,0.09)';
-const INK  = '#1a1a1a';
-const MUTE = '#737373';
-const ASH  = '#a3a3a3';
-
+const HR  = '1px solid var(--color-hairline)';
 const LINKS = [
   { label: 'GitHub',          href: 'https://github.com/parth308/auditx' },
   { label: 'npm',             href: 'https://www.npmjs.com/package/auditx' },
@@ -17,16 +13,16 @@ const LINKS = [
 
 export default function Footer() {
   return (
-    <footer style={{ marginTop: 80 }}>
+    <footer style={{ marginTop: 96 }}>
       {/* CTA strip */}
       <div style={{
-        borderTop: '2px solid #1a1a1a',
-        backgroundColor: '#f5f4f2',
+        borderTop: '1px solid var(--color-hairline)',
+        backgroundColor: 'var(--color-surface)',
       }}>
         <div style={{
-          maxWidth: 1440,
+          maxWidth: 1400,
           margin: '0 auto',
-          padding: '40px 24px',
+          padding: '48px 28px',
           display: 'flex',
           flexWrap: 'wrap',
           alignItems: 'center',
@@ -35,90 +31,85 @@ export default function Footer() {
         }}>
           <div>
             <div style={{
-              fontFamily: 'inherit',
-              fontWeight: 700,
-              fontSize: 'clamp(20px, 2.5vw, 26px)',
-              letterSpacing: '-0.3px',
-              color: INK,
-              marginBottom: 6,
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 800,
+              fontSize: 'clamp(22px, 2.8vw, 30px)',
+              letterSpacing: '-0.5px',
+              color: 'var(--color-ink)',
+              marginBottom: 8,
+              lineHeight: 1.15,
             }}>
               Start auditing in 30 seconds.
             </div>
-            <div style={{ fontFamily: 'inherit', fontSize: 15, color: MUTE }}>
-              Zero config. 13 scanners. MIT — free forever.
+            <div style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: 15,
+              color: 'var(--color-mute)',
+            }}>
+              Zero config. 15 scanners. MIT — free forever.
             </div>
           </div>
 
+          {/* Command block */}
           <div style={{
             display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: '12px 18px',
-            backgroundColor: '#1a1a1a',
+            alignItems: 'stretch',
+            border: '1px solid var(--color-hairline)',
+            backgroundColor: 'var(--color-surface-2)',
             flexShrink: 0,
           }}>
-            <code style={{ fontFamily: 'inherit', fontSize: 14, color: '#fafaf9' }}>
+            <code style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 14,
+              color: 'var(--color-accent)',
+              padding: '12px 18px',
+              borderRight: '1px solid var(--color-hairline)',
+              display: 'flex',
+              alignItems: 'center',
+            }}>
               npx auditx@latest .
             </code>
-            <CopyButton code="npx auditx@latest ." />
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <CopyButton code="npx auditx@latest ." />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Link row */}
-      <div style={{ borderTop: HR, borderBottom: HR }}>
-        <div style={{
-          maxWidth: 1440,
-          margin: '0 auto',
-          padding: '0 24px',
-          display: 'flex',
-          flexWrap: 'wrap',
-        }}>
-          {LINKS.map((link, i) => (
-            <a
-              key={link.label}
-              href={link.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                fontFamily: 'inherit',
-                fontSize: 13,
-                fontWeight: link.label === 'parthmongia.dev' ? 600 : 400,
-                padding: '14px 20px',
-                color: link.label === 'parthmongia.dev' ? INK : MUTE,
-                borderRight: i < LINKS.length - 1 ? HR : 'none',
-                transition: 'color 0.15s',
-                whiteSpace: 'nowrap',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = INK)}
-              onMouseLeave={e => (e.currentTarget.style.color = link.label === 'parthmongia.dev' ? INK : MUTE)}
-            >
-              {link.label}
-            </a>
-          ))}
-        </div>
+      <div className="footer-links">
+        {LINKS.map((link, i) => (
+          <a
+            key={link.label}
+            href={link.href}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {link.label}
+          </a>
+        ))}
       </div>
 
       {/* Copyright */}
-      <div style={{ maxWidth: 1440, margin: '0 auto', padding: '16px 24px 48px' }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '16px 28px 52px' }}>
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
           gap: 8,
         }}>
-          <span style={{ fontFamily: 'inherit', fontSize: 12, color: ASH }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-ash)' }}>
             © 2026 auditx · MIT License · by{' '}
             <a
               href="https://parthmongia.dev"
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: MUTE, textDecoration: 'underline', textUnderlineOffset: 2 }}
+              style={{ color: 'var(--color-mute)', textDecoration: 'underline', textUnderlineOffset: 3 }}
             >
               Parth Mongia
             </a>
           </span>
-          <span style={{ fontFamily: 'inherit', fontSize: 12, color: ASH }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-ash)' }}>
             built with auditx · zero critical findings
           </span>
         </div>

@@ -1,11 +1,7 @@
 'use client';
 import { useState } from 'react';
 
-interface CopyButtonProps {
-  code: string;
-}
-
-export default function CopyButton({ code }: CopyButtonProps) {
+export default function CopyButton({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -19,24 +15,25 @@ export default function CopyButton({ code }: CopyButtonProps) {
       onClick={handleCopy}
       aria-label={copied ? 'Copied!' : 'Copy to clipboard'}
       style={{
-        fontFamily: 'inherit',
-        fontSize: 12,
+        fontFamily: 'var(--font-mono)',
+        fontSize: 11,
         padding: '8px 12px',
-        minHeight: 44,
-        minWidth: 44,
+        minHeight: 36,
+        minWidth: 60,
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: 4,
-        border: '1px solid rgba(15,0,0,0.2)',
-        backgroundColor: copied ? '#201d1d' : 'transparent',
-        color: copied ? '#fdfcfc' : '#646262',
+        border: '1px solid var(--color-hairline)',
+        backgroundColor: copied ? 'var(--color-accent)' : 'transparent',
+        color: copied ? 'var(--color-canvas)' : 'var(--color-mute)',
         cursor: 'pointer',
         transition: 'all 0.15s ease',
         whiteSpace: 'nowrap',
+        fontWeight: 600,
+        letterSpacing: '0.04em',
       }}
     >
-      {copied ? '[copied]' : '[copy]'}
+      {copied ? 'copied' : 'copy'}
     </button>
   );
 }

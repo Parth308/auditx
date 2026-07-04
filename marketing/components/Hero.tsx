@@ -1,11 +1,8 @@
 import CopyButton from './CopyButton';
 import TerminalDemo from './TerminalDemo';
 
-const HR  = '1px solid rgba(0,0,0,0.09)';
-const INK = '#1a1a1a';
-
 const STATS = [
-  { val: '18',   label: 'parallel scanners' },
+  { val: '15',   label: 'parallel scanners' },
   { val: '44',   label: 'AI-pattern rules' },
   { val: '0',    label: 'config required' },
   { val: '100%', label: 'local — no cloud' },
@@ -13,37 +10,27 @@ const STATS = [
 
 export default function Hero() {
   return (
-    <section className="page-section">
+    <section className="page-section" style={{ paddingTop: 72, paddingBottom: 0 }}>
       <div className="hero-container">
-        <div className="hero-content">
-          {/* Badge */}
-          <div style={{
-            display: 'inline-block',
-            fontFamily: 'inherit',
-            fontSize: 12,
-            fontWeight: 600,
-            lineHeight: 1.6,
-            letterSpacing: '0.04em',
-            padding: '4px 10px',
-            backgroundColor: INK,
-            color: '#fafaf9',
-            marginBottom: 28,
-          }}>
-            [new] AI-code anti-patterns — 44 custom Semgrep rules
-          </div>
 
-          {/* Headline */}
+        {/* ── Left: Content ── */}
+        <div className="hero-content">
+
+
+
           <h1 style={{
             fontFamily: 'var(--font-sans)',
-            fontWeight: 700,
-            fontSize: 'clamp(32px, 4.5vw, 52px)',
-            lineHeight: 1.2,
-            letterSpacing: '-1px',
-            color: INK,
-            marginBottom: 20,
-            maxWidth: 680,
+            fontWeight: 800,
+            fontSize: 'clamp(36px, 5vw, 62px)',
+            lineHeight: 1.08,
+            letterSpacing: '-2px',
+            color: 'var(--color-ink)',
+            marginBottom: 22,
+            maxWidth: 640,
           }}>
-            One command. Every vulnerability.<br />
+            One command.<br />
+            <span style={{ color: 'var(--color-accent)' }}>Every</span>{' '}
+            vulnerability.<br />
             AI-ready report.
           </h1>
 
@@ -51,41 +38,41 @@ export default function Hero() {
           <p style={{
             fontFamily: 'var(--font-sans)',
             fontSize: 17,
-            lineHeight: 1.7,
-            color: '#404040',
-            maxWidth: 580,
-            marginBottom: 36,
+            lineHeight: 1.75,
+            color: 'var(--color-ink-light)',
+            maxWidth: 520,
+            marginBottom: 40,
+            fontWeight: 400,
           }}>
-            auditx auto-detects your stack, then orchestrates 18 scanners
-            in parallel across your CPU cores — secrets, deps, SAST, dead code,
-            complexity, IaC, and AI-pattern anti-patterns. One command.
-            One normalized report. No config.
+            auditx auto-detects your stack, orchestrates{' '}
+            <strong style={{ color: 'var(--color-ink)', fontWeight: 700 }}>15 scanners</strong>{' '}
+            in parallel — secrets, deps, SAST, dead code, complexity,
+            IaC, and AI-pattern anti-patterns. One command. One normalized report.
           </p>
 
           {/* CTA row */}
-          <div style={{ 
-            display: 'flex', 
+          <div style={{
+            display: 'flex',
             flexWrap: 'wrap',
             alignItems: 'stretch',
-            gap: 16, 
-            marginBottom: 64 
+            gap: 12,
+            marginBottom: 56,
           }}>
-            {/* The Command Block */}
+            {/* Command block */}
             <div style={{
               display: 'flex',
               alignItems: 'stretch',
               border: '1px solid var(--color-hairline)',
-              backgroundColor: '#fff',
-              boxShadow: '0 8px 30px rgba(0,0,0,0.04)'
+              backgroundColor: 'var(--color-surface)',
             }}>
-              <div style={{ 
-                padding: '14px 20px', 
-                fontFamily: 'var(--font-mono)', 
-                fontSize: 15, 
-                color: INK, 
+              <div style={{
+                padding: '12px 20px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: 14,
+                color: 'var(--color-ink)',
                 borderRight: '1px solid var(--color-hairline)',
                 display: 'flex',
-                alignItems: 'center'
+                alignItems: 'center',
               }}>
                 npx auditx@latest .
               </div>
@@ -94,55 +81,62 @@ export default function Hero() {
               </div>
             </div>
 
-            {/* GitHub Button */}
+            {/* GitHub link */}
             <a
               href="https://github.com/parth308/auditx"
-              className="github-btn"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: 'var(--font-sans)',
-                fontWeight: 600,
-                fontSize: 15,
-                padding: '0 24px',
-                border: '1px solid var(--color-hairline)',
-                transition: 'all 0.2s ease',
-              }}
+              className="btn-ghost"
+              style={{ padding: '12px 24px' }}
             >
               [→] GitHub
             </a>
           </div>
-
         </div>
-        
-        <div className="hero-visual">
-          <TerminalDemo />
+
+        {/* ── Right: Terminal ── */}
+        <div className="hero-visual" style={{ position: 'relative' }}>
+          {/* Glow behind terminal */}
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%,-50%)',
+            width: '80%',
+            height: '60%',
+            background: 'radial-gradient(ellipse at center, rgba(34,211,238,0.08) 0%, transparent 70%)',
+            pointerEvents: 'none',
+            zIndex: 0,
+          }} />
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <TerminalDemo />
+          </div>
         </div>
       </div>
 
-      {/* Stats Marquee (Full Width) */}
-      <div style={{ width: '100%', maxWidth: 1440, margin: '96px auto 0' }}>
-        <div className="marquee-container" style={{ margin: 0, padding: '48px 0', borderTop: '1px solid var(--color-hairline)', borderBottom: '1px solid var(--color-hairline)' }}>
+      {/* Stats Marquee */}
+      <div style={{ marginTop: 80 }}>
+        <div className="marquee-container" style={{
+          borderTop: '1px solid var(--color-hairline)',
+          borderBottom: '1px solid var(--color-hairline)',
+        }}>
           <div className="animate-marquee">
             {[0, 1, 2, 3].map((setIndex) => (
               <div key={setIndex} aria-hidden={setIndex > 0} style={{ display: 'flex', gap: 80, paddingRight: 80 }}>
                 {STATS.map(({ val, label }) => (
                   <div key={`${setIndex}-${label}`} style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
                     <div style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontWeight: 700,
-                      fontSize: 32,
+                      fontFamily: 'var(--font-sans)',
+                      fontWeight: 800,
+                      fontSize: 30,
                       letterSpacing: '-1px',
-                      color: INK,
+                      color: 'var(--color-ink)',
                     }}>{val}</div>
                     <div style={{
-                      fontFamily: 'var(--font-sans)',
-                      fontSize: 13,
-                      fontWeight: 600,
-                      letterSpacing: '0.05em',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 12,
+                      fontWeight: 500,
+                      letterSpacing: '0.06em',
                       textTransform: 'uppercase',
-                      color: '#737373',
+                      color: 'var(--color-mute)',
                     }}>{label}</div>
                   </div>
                 ))}

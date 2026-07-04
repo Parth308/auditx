@@ -3,71 +3,68 @@ import { useState } from 'react';
 import ScrollReveal from './ScrollReveal';
 import CopyButton from './CopyButton';
 
-const HR = '1px solid rgba(15,0,0,0.12)';
-const FONT = 'inherit';
-
 const SEV_BAR: Record<string, string> = {
-  critical: '#ff3b30',
-  high:     '#ff9f0a',
-  medium:   '#007aff',
+  critical: 'var(--color-danger)',
+  high:     'var(--color-warn)',
+  medium:   'var(--color-accent)',
 };
 
 const FINDINGS = [
   {
     sev: 'critical',
-    title: '### [SECRETS] Hardcoded API key detected',
+    title: '[SECRETS] Hardcoded API key detected',
     file: 'src/config/db.ts:14',
     rule: 'gitleaks/generic-api-key',
     fix: 'Move to .env · Rotate the key · Add .env to .gitignore',
   },
   {
     sev: 'high',
-    title: '### [TYPE_SAFETY] Type error in async handler',
+    title: '[TYPE_SAFETY] Type error in async handler',
     file: 'src/api/routes.ts:52',
     rule: 'tsc/ts2304',
     fix: 'Add return type annotation to async function',
   },
   {
     sev: 'medium',
-    title: '### [AI_CODE] Floating promise — ai-floating-promise',
+    title: '[AI_CODE] Floating promise — ai-floating-promise',
     file: 'src/api/client.ts:82',
     rule: 'ai-floating-promise',
     fix: 'await the call or attach .catch()',
   },
   {
     sev: 'medium',
-    title: '### [AI_CODE] TypeScript any cast — ai-ts-any-cast',
+    title: '[AI_CODE] TypeScript any cast — ai-ts-any-cast',
     file: 'src/utils/parser.ts:31',
     rule: 'ai-ts-any-cast',
     fix: 'Type the value properly instead of casting to any',
   },
 ];
 
-const MD_CONTENT = `# 🛡️ auditx Security Report
+const MD_CONTENT = `# auditx Security Report
 
 **Target**: \`/projects/my-app\`
-**Scanned**: 2026-07-02 00:01 IST · **Duration**: 9.4s
+**Scanned**: 2026-07-04 · **Duration**: 9.4s
 **Stack**: Node.js · TypeScript · Docker
-**Scanners**: semgrep · trivy · gitleaks · knip · tsc · jscpd · lizard · aipatterns
+**Scanners**: semgrep · trivy · gitleaks · tsc · aipatterns
 
 ---
 
 ## Summary
 
-| Category    | 🔴 Critical | 🟠 High | 🟡 Medium | 🔵 Low |
-|-------------|-------------|---------|-----------|--------|
-| SECRETS     |      1      |    —    |     —     |    —   |
-| DEPS        |      —      |    3    |     5     |    2   |
-| AI_CODE     |      —      |    —    |     3     |    4   |
-| TYPE_SAFETY |      —      |    1    |     2     |    —   |
-| **Total**   |    **1**    |  **4**  |   **10**  |  **6** |
+| Category    | Critical | High | Medium | Low |
+|-------------|----------|------|--------|-----|
+| SECRETS     |    1     |  —   |   —    |  —  |
+| DEPS        |    —     |  3   |   5    |  2  |
+| AI_CODE     |    —     |  —   |   3    |  4  |
+| TYPE_SAFETY |    —     |  1   |   2    |  —  |
+| **Total**   |  **1**   |**4** | **10** |**6**|
 
-> ⚠️ 5 critical/high findings require immediate attention.`;
+> 5 critical/high findings require immediate attention.`;
 
 const JSON_CONTENT = `{
   "meta": {
     "target": "/projects/my-app",
-    "scannedAt": "2026-07-02T00:01:00Z",
+    "scannedAt": "2026-07-04T00:01:00Z",
     "durationMs": 9400,
     "stack": ["nodejs", "typescript", "docker"]
   },
@@ -87,44 +84,31 @@ const JSON_CONTENT = `{
       "file": "src/config/db.ts",
       "line": 14,
       "rule": "gitleaks/generic-api-key",
-      "scanner": "gitleaks",
       "fix": "Move to .env · Rotate the key"
-    },
-    {
-      "id": "aipatterns-003",
-      "fp": "b8c22de94f3a",
-      "category": "AI_CODE",
-      "severity": "medium",
-      "title": "Floating promise — no await or .catch",
-      "file": "src/api/client.ts",
-      "line": 82,
-      "rule": "ai-floating-promise",
-      "scanner": "aipatterns",
-      "fix": "await the call or attach .catch()"
     }
   ]
 }`;
 
 const TERMINAL_LINES = [
-  { text: '  ┌──────────────┬──────────┬────────┬────────┬──────┐', color: '#646262' },
-  { text: '  │ Category     │ Critical │  High  │ Medium │  Low │', color: '#424245' },
-  { text: '  ├──────────────┼──────────┼────────┼────────┼──────┤', color: '#646262' },
-  { text: '  │ Secrets      │    1     │   —    │   —    │   —  │', color: '#ff3b30' },
-  { text: '  │ Deps         │    —     │   3    │   5    │   2  │', color: '#ff9f0a' },
-  { text: '  │ AI_Code      │    —     │   —    │   3    │   4  │', color: '#007aff' },
-  { text: '  │ Type Safety  │    —     │   1    │   2    │   —  │', color: '#ff9f0a' },
-  { text: '  └──────────────┴──────────┴────────┴────────┴──────┘', color: '#646262' },
+  { text: '  ┌──────────────┬──────────┬────────┬────────┬──────┐', color: 'var(--color-ash)' },
+  { text: '  │ Category     │ Critical │  High  │ Medium │  Low │', color: 'var(--color-mute)' },
+  { text: '  ├──────────────┼──────────┼────────┼────────┼──────┤', color: 'var(--color-ash)' },
+  { text: '  │ Secrets      │    1     │   —    │   —    │   —  │', color: 'var(--color-danger)' },
+  { text: '  │ Deps         │    —     │   3    │   5    │   2  │', color: 'var(--color-warn)' },
+  { text: '  │ AI_Code      │    —     │   —    │   3    │   4  │', color: 'var(--color-accent)' },
+  { text: '  │ Type Safety  │    —     │   1    │   2    │   —  │', color: 'var(--color-warn)' },
+  { text: '  └──────────────┴──────────┴────────┴────────┴──────┘', color: 'var(--color-ash)' },
   { text: '', color: '' },
-  { text: '  🔴 [SECRETS] Hardcoded API key — src/config/db.ts:14', color: '#ff3b30' },
-  { text: '     Rule: gitleaks/generic-api-key', color: '#9a9898' },
-  { text: '     Fix:  Move to .env · Rotate the key', color: '#30d158' },
+  { text: '  [CRITICAL] Hardcoded API key — src/config/db.ts:14', color: 'var(--color-danger)' },
+  { text: '             Rule: gitleaks/generic-api-key', color: 'var(--color-mute)' },
+  { text: '             Fix:  Move to .env · Rotate the key', color: 'var(--color-ok)' },
   { text: '', color: '' },
-  { text: '  🟡 [AI_CODE] ai-floating-promise — src/api/client.ts:82', color: '#007aff' },
-  { text: '     Rule: ai-floating-promise', color: '#9a9898' },
-  { text: '     Fix:  await the call or attach .catch()', color: '#30d158' },
+  { text: '  [MEDIUM]   ai-floating-promise — src/api/client.ts:82', color: 'var(--color-accent)' },
+  { text: '             Rule: ai-floating-promise', color: 'var(--color-mute)' },
+  { text: '             Fix:  await the call or attach .catch()', color: 'var(--color-ok)' },
   { text: '', color: '' },
-  { text: '  ⚠  1 critical · 4 high findings need immediate attention.', color: '#ff9f0a' },
-  { text: '  ✅ Report written → audit-report.md', color: '#30d158' },
+  { text: '  1 critical · 4 high findings need immediate attention.', color: 'var(--color-warn)' },
+  { text: '  Report written to: audit-report.md', color: 'var(--color-ok)' },
 ];
 
 const TABS = ['audit-report.md', 'audit-report.json', 'terminal'] as const;
@@ -133,7 +117,7 @@ type Tab = typeof TABS[number];
 const COPY_CONTENT: Record<Tab, string> = {
   'audit-report.md':   MD_CONTENT,
   'audit-report.json': JSON_CONTENT,
-  'terminal':          TERMINAL_LINES.map((l) => l.text).join('\n'),
+  'terminal':          TERMINAL_LINES.map(l => l.text).join('\n'),
 };
 
 export default function ReportPreview() {
@@ -142,85 +126,123 @@ export default function ReportPreview() {
   return (
     <section id="report" className="page-section">
       <ScrollReveal>
-        <div style={{ borderBottom: HR, paddingBottom: 12, marginBottom: 32 }}>
-          <div style={{ fontFamily: FONT, fontSize: 16, fontWeight: 700, color: '#201d1d' }}>
-            [+] Live report preview
-          </div>
-          <div style={{ fontFamily: FONT, fontSize: 14, marginTop: 6, color: '#646262' }}>
+        <div style={{ marginBottom: 36 }}>
+          <div className="section-label">Live Report Preview</div>
+          <h2 style={{
+            fontFamily: 'var(--font-sans)',
+            fontSize: 'clamp(24px, 3vw, 36px)',
+            fontWeight: 800,
+            letterSpacing: '-0.8px',
+            color: 'var(--color-ink)',
+            lineHeight: 1.2,
+          }}>
             Real findings, real format. Click the tabs.
-          </div>
+          </h2>
         </div>
       </ScrollReveal>
 
       <ScrollReveal delay={80}>
-        <div style={{ border: HR }}>
-          {/* ── Tab strip ── */}
+        <div style={{ border: '1px solid var(--color-hairline)', overflow: 'hidden' }}>
+
+          {/* Tab strip */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            backgroundColor: '#f8f7f7',
-            borderBottom: HR,
+            backgroundColor: 'var(--color-surface-2)',
+            borderBottom: '1px solid var(--color-hairline)',
             overflowX: 'auto',
           }}>
-            {TABS.map((tab) => (
+            {/* Window dots */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '0 14px',
+              borderRight: '1px solid var(--color-hairline)',
+              height: '100%',
+              flexShrink: 0,
+            }}>
+              {['#f43f5e', '#fb923c', '#34d399'].map(c => (
+                <span key={c} style={{
+                  display: 'inline-block',
+                  width: 9,
+                  height: 9,
+                  borderRadius: '50%',
+                  backgroundColor: c,
+                  opacity: 0.65,
+                }} />
+              ))}
+            </div>
+
+            {TABS.map(tab => (
               <button
                 key={tab}
                 onClick={() => setActive(tab)}
                 style={{
-                  fontFamily: FONT,
+                  fontFamily: 'var(--font-mono)',
                   fontSize: 12,
-                  padding: '9px 16px',
-                  color: active === tab ? '#201d1d' : '#646262',
+                  padding: '11px 18px',
+                  color: active === tab ? 'var(--color-ink)' : 'var(--color-mute)',
                   backgroundColor: 'transparent',
                   border: 'none',
-                  borderRight: HR,
-                  borderBottom: active === tab ? '2px solid #201d1d' : '2px solid transparent',
+                  borderRight: '1px solid var(--color-hairline)',
+                  borderBottom: active === tab ? '2px solid var(--color-accent)' : '2px solid transparent',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
-                  transition: 'color 0.15s ease',
-                  fontWeight: active === tab ? 500 : 400,
+                  transition: 'color 0.15s',
+                  fontWeight: active === tab ? 600 : 400,
                 }}
               >
                 {tab}
               </button>
             ))}
-            <div style={{ marginLeft: 'auto', paddingRight: 10, flexShrink: 0 }}>
+            <div style={{ marginLeft: 'auto', paddingRight: 12, flexShrink: 0 }}>
               <CopyButton code={COPY_CONTENT[active]} />
             </div>
           </div>
 
-          {/* ── Tab content ── */}
-          <div style={{ backgroundColor: '#fdfcfc' }}>
+          {/* Content area */}
+          <div style={{ backgroundColor: 'var(--color-surface)' }}>
 
             {/* Markdown tab */}
             {active === 'audit-report.md' && (
               <div style={{ padding: '24px 28px' }}>
                 <pre style={{
-                  fontFamily: FONT, fontSize: 13, lineHeight: 1.9,
-                  color: '#201d1d', whiteSpace: 'pre-wrap', marginBottom: 24,
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 13,
+                  lineHeight: 1.9,
+                  color: 'var(--color-ink-light)',
+                  whiteSpace: 'pre-wrap',
+                  marginBottom: 24,
                 }}>
                   {MD_CONTENT}
                 </pre>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {FINDINGS.map((f) => (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {FINDINGS.map(f => (
                     <div
                       key={f.title}
                       style={{
-                        paddingLeft: 12, paddingTop: 10, paddingBottom: 10,
-                        borderLeft: `3px solid ${SEV_BAR[f.sev]}`,
-                        backgroundColor: '#f8f7f7',
+                        padding: '12px 16px',
+                        borderTop: `1px solid ${SEV_BAR[f.sev]}`,
+                        backgroundColor: 'var(--color-surface-2)',
                       }}
                     >
-                      <div style={{ fontFamily: FONT, fontWeight: 700, fontSize: 13, color: '#201d1d', marginBottom: 4 }}>
+                      <div style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontWeight: 700,
+                        fontSize: 13,
+                        color: 'var(--color-ink)',
+                        marginBottom: 4,
+                      }}>
                         {f.title}
                       </div>
-                      <div style={{ fontFamily: FONT, fontSize: 12, color: '#646262' }}>
-                        <span style={{ color: '#424245' }}>{f.file}</span>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-mute)' }}>
+                        <span style={{ color: 'var(--color-ink-light)' }}>{f.file}</span>
                         {' · '}
                         <code>{f.rule}</code>
                       </div>
-                      <div style={{ fontFamily: FONT, fontSize: 12, color: '#646262', marginTop: 2 }}>
-                        Fix: <span style={{ color: '#201d1d' }}>{f.fix}</span>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-ok)', marginTop: 4 }}>
+                        fix: {f.fix}
                       </div>
                     </div>
                   ))}
@@ -231,19 +253,15 @@ export default function ReportPreview() {
             {/* JSON tab */}
             {active === 'audit-report.json' && (
               <div className="scroll-x" style={{ padding: '24px 28px' }}>
-                <pre style={{
-                  fontFamily: FONT, fontSize: 12, lineHeight: 1.85,
-                  color: '#201d1d', whiteSpace: 'pre', margin: 0,
-                }}>
+                <pre style={{ fontFamily: 'var(--font-mono)', fontSize: 13, lineHeight: 1.85, color: 'var(--color-ink-light)', whiteSpace: 'pre', margin: 0 }}>
                   {JSON_CONTENT
-                    .replace(/"([^"]+)":/g, '<k>"$1":</k>')
                     .split('\n')
                     .map((line, i) => (
                       <div key={i} dangerouslySetInnerHTML={{ __html:
                         line
-                          .replace(/"([^"]+)":/g, `<span style="color:#007aff">"$1"</span>:`)
-                          .replace(/: "([^"]+)"/g, `: <span style="color:#30d158">"$1"</span>`)
-                          .replace(/: (\d+)/g, `: <span style="color:#ff9f0a">$1</span>`)
+                          .replace(/"([^"]+)":/g, `<span style="color:var(--color-accent)">"$1"</span>:`)
+                          .replace(/: "([^"]+)"/g, `: <span style="color:var(--color-ok)">"$1"</span>`)
+                          .replace(/: (\d+)/g, `: <span style="color:var(--color-warn)">$1</span>`)
                       }} />
                     ))
                   }
@@ -253,8 +271,8 @@ export default function ReportPreview() {
 
             {/* Terminal tab */}
             {active === 'terminal' && (
-              <div className="scroll-x" style={{ backgroundColor: '#201d1d', padding: '24px 28px', overflowX: 'auto' }}>
-                <div style={{ fontFamily: FONT, fontSize: 13, lineHeight: 1.85, minWidth: 'max-content' }}>
+              <div className="scroll-x" style={{ backgroundColor: '#090910', padding: '24px 28px' }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, lineHeight: 1.85, minWidth: 'max-content' }}>
                   {TERMINAL_LINES.map((line, i) => (
                     <div key={i} style={{ color: line.color || 'transparent', whiteSpace: 'pre', minHeight: '1.85em' }}>
                       {line.text || '\u00A0'}

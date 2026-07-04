@@ -1,43 +1,65 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const NAV_LINKS = [
-  { label: 'Scanners', href: '#scanners' },
+  { label: 'Scanners',    href: '#scanners' },
   { label: 'How it works', href: '#how-it-works' },
-  { label: 'CI', href: '#ci' },
-  { label: 'GitHub', href: 'https://github.com/parth308/auditx' },
+  { label: 'CI',          href: '#ci' },
+  { label: 'GitHub',      href: 'https://github.com/parth308/auditx' },
 ];
 
 export default function Nav() {
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen]   = useState(false);
+  const [scrolled, setScrolled]   = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
     <header style={{
       position: 'sticky',
       top: 0,
       zIndex: 50,
-      backgroundColor: 'rgba(250,250,249,0.96)',
-      backdropFilter: 'blur(14px)',
-      borderBottom: '1px solid rgba(0,0,0,0.09)',
+      backgroundColor: scrolled ? 'rgba(10,10,15,0.88)' : 'rgba(10,10,15,0.6)',
+      backdropFilter: 'blur(18px)',
+      WebkitBackdropFilter: 'blur(18px)',
+      borderBottom: `1px solid ${scrolled ? 'rgba(255,255,255,0.07)' : 'transparent'}`,
+      transition: 'background-color 0.3s ease, border-color 0.3s ease',
     }}>
       <div style={{
-        maxWidth: 1440,
+        maxWidth: 1400,
         margin: '0 auto',
-        padding: '0 24px',
-        height: 64,
+        padding: '0 28px',
+        height: 60,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
       }}>
+
         {/* Wordmark */}
         <a href="/" style={{
-          fontFamily: 'inherit',
+          fontFamily: 'var(--font-mono)',
           fontWeight: 700,
-          fontSize: 'clamp(16px, 2vw, 18px)',
-          letterSpacing: '-0.4px',
-          color: '#1a1a1a',
+          fontSize: 17,
+          letterSpacing: '-0.3px',
+          color: 'var(--color-ink)',
           flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
         }}>
+          <span style={{
+            display: 'inline-block',
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            backgroundColor: 'var(--color-accent)',
+            animation: 'pulse-glow 2.4s ease-in-out infinite',
+            flexShrink: 0,
+          }} />
           auditx
         </a>
 
@@ -47,15 +69,7 @@ export default function Nav() {
             <a
               key={link.label}
               href={link.href}
-              style={{
-                fontFamily: 'inherit',
-                fontSize: 'clamp(13px, 1.4vw, 15px)',
-                fontWeight: 500,
-                color: '#737373',
-                transition: 'color 0.15s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#1a1a1a')}
-              onMouseLeave={e => (e.currentTarget.style.color = '#737373')}
+              className="nav-link-item"
             >
               {link.label}
             </a>
@@ -68,16 +82,18 @@ export default function Nav() {
             href="https://www.npmjs.com/package/auditx"
             className="nav-cta"
             style={{
-              fontFamily: 'inherit',
-              fontSize: 'clamp(12px, 1.2vw, 14px)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 12,
               fontWeight: 600,
-              letterSpacing: '0.02em',
+              letterSpacing: '0.04em',
               padding: '7px 16px',
-              backgroundColor: '#1a1a1a',
-              color: '#fafaf9',
+              backgroundColor: 'var(--color-accent)',
+              color: 'var(--color-canvas)',
               whiteSpace: 'nowrap',
               transition: 'opacity 0.15s',
             }}
+            onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
+            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
           >
             npm install -g auditx
           </a>
@@ -90,12 +106,12 @@ export default function Nav() {
             style={{
               display: 'none',
               background: 'transparent',
-              border: 'none',
-              fontFamily: 'inherit',
-              fontSize: 20,
-              color: '#1a1a1a',
+              border: '1px solid var(--color-hairline)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 14,
+              color: 'var(--color-ink)',
               cursor: 'pointer',
-              padding: '8px',
+              padding: '6px 10px',
             }}
           >
             {menuOpen ? '[x]' : '[=]'}
@@ -106,9 +122,9 @@ export default function Nav() {
       {/* Mobile dropdown */}
       {menuOpen && (
         <div style={{
-          padding: '8px 24px 16px',
-          borderTop: '1px solid rgba(0,0,0,0.09)',
-          backgroundColor: '#fafaf9',
+          padding: '12px 28px 20px',
+          borderTop: '1px solid var(--color-hairline)',
+          backgroundColor: 'rgba(10,10,15,0.98)',
         }}>
           {NAV_LINKS.map((link) => (
             <a
@@ -117,12 +133,12 @@ export default function Nav() {
               onClick={() => setMenuOpen(false)}
               style={{
                 display: 'block',
-                fontFamily: 'inherit',
-                fontSize: 15,
+                fontFamily: 'var(--font-mono)',
+                fontSize: 14,
                 fontWeight: 500,
-                padding: '10px 0',
-                color: '#1a1a1a',
-                borderBottom: '1px solid rgba(0,0,0,0.07)',
+                padding: '11px 0',
+                color: 'var(--color-ink-light)',
+                borderBottom: '1px solid var(--color-hairline)',
               }}
             >
               {link.label}
@@ -132,14 +148,14 @@ export default function Nav() {
             href="https://www.npmjs.com/package/auditx"
             style={{
               display: 'block',
-              fontFamily: 'inherit',
-              fontSize: 14,
+              fontFamily: 'var(--font-mono)',
+              fontSize: 13,
               fontWeight: 600,
-              padding: '10px 0 0',
-              color: '#1a1a1a',
+              padding: '12px 0 0',
+              color: 'var(--color-accent)',
             }}
           >
-            [+] npm install -g auditx
+            npm install -g auditx
           </a>
         </div>
       )}

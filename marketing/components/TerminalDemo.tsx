@@ -8,7 +8,7 @@ const LINES = [
   { text: '  Scanning: /projects/my-app', color: '#9a9898', delay: 800 },
   { text: '', color: '', delay: 1000 },
   { text: '  Stack detected: Node.js · TypeScript · Docker', color: '#9a9898', delay: 1100 },
-  { text: '  Running 13 scanners in parallel…', color: '#9a9898', delay: 1400 },
+  { text: '  Running 15 scanners in parallel…', color: '#9a9898', delay: 1400 },
   { text: '', color: '', delay: 1600 },
   { text: '  ✓ gitleaks (secrets)              clean  1.2s', color: '#16a34a', delay: 1800 },
   { text: '  ✓ trivy (deps/CVEs)               clean  2.1s', color: '#16a34a', delay: 2100 },
@@ -25,7 +25,6 @@ const LINES = [
 ];
 
 export default function TerminalDemo() {
-  // Track which lines are visible (by index)
   const [visible, setVisible] = useState<Set<number>>(new Set());
   const [showCursor, setShowCursor] = useState(false);
 
@@ -56,7 +55,7 @@ export default function TerminalDemo() {
         <span style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: '#dc2626', display: 'inline-block', opacity: 0.8 }} />
         <span style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: '#d97706', display: 'inline-block', opacity: 0.8 }} />
         <span style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: '#16a34a', display: 'inline-block', opacity: 0.8 }} />
-        <span style={{ marginLeft: 12, fontSize: 12, color: '#737373', fontFamily: 'inherit' }}>terminal</span>
+        <span style={{ marginLeft: 12, fontSize: 12, color: 'var(--color-mute)', fontFamily: 'inherit' }}>terminal</span>
       </div>
 
       {/* Body — fixed height, all lines pre-rendered, opacity animates in */}
@@ -77,12 +76,12 @@ export default function TerminalDemo() {
               {line.text || '\u00A0'}
             </div>
           ))}
-          {showCursor && (
+          <div style={{ minHeight: '1.85em', opacity: showCursor ? 1 : 0 }}>
             <span
               className="cursor-blink"
-              style={{ display: 'inline-block', width: 8, height: 14, backgroundColor: '#fdfcfc', verticalAlign: 'middle' }}
+              style={{ display: 'inline-block', width: 8, height: 14, backgroundColor: 'var(--color-ink)', verticalAlign: 'middle' }}
             />
-          )}
+          </div>
         </div>
       </div>
 
@@ -92,7 +91,7 @@ export default function TerminalDemo() {
         gap: 24,
         padding: '10px 24px',
         fontSize: 11,
-        color: '#737373',
+        color: 'var(--color-mute)',
         borderTop: '1px solid rgba(255,255,255,0.05)',
         fontFamily: 'inherit',
         overflowX: 'auto',
