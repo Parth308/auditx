@@ -318,6 +318,7 @@ rules:
 | `SECRETS` | [Gitleaks](https://github.com/gitleaks/gitleaks) + [Trufflehog](https://github.com/trufflesecurity/trufflehog) | Hardcoded API keys, tokens, passwords — includes Active API validation! |
 | `DEPS` | [Trivy](https://github.com/aquasecurity/trivy) + [OSV-Scanner](https://github.com/google/osv-scanner) + npm | CVEs in npm/pip/cargo packages with deep dependency traversal |
 | `SAST` | [Semgrep](https://github.com/semgrep/semgrep) + [Shellcheck](https://github.com/koalaman/shellcheck) | SQL injection, XSS, eval usage, and unquoted variable bugs in `.sh` bash scripts |
+| `AI_CODE` | `aipatterns` (100+ AST rules) | AI-generated anti-patterns & flaws (silent catches, React state mutation, NextJS/Express/Django/Go/Python bugs) |
 | `DEAD_CODE` | [Knip](https://github.com/webpro-nl/knip) | Unused exports, unused imports, unused dependencies |
 | `IaC` | [Trivy](https://github.com/aquasecurity/trivy) config | Dockerfile misconfig, k8s insecure defaults, Terraform issues |
 | `PATTERNS` | ESLint + [CSpell](https://cspell.org/) | Prototype pollution, unsafe regex, and misspelled codebase variables/strings |
@@ -470,6 +471,7 @@ auditx .
   │   ├─ gitleaks --no-git --source . -f json
   │   ├─ trivy fs . --format json
   │   ├─ semgrep --config p/security-audit --json
+  │   ├─ aipatterns (built-in framework rules for AI flaws)
   │   ├─ knip --reporter json
   │   └─ npm audit --json
   │
