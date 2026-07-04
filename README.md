@@ -378,8 +378,18 @@ auditx .
   ├─ deduplicate overlapping findings
   ├─ sort by severity
   │
-  └─ format → markdown | json | terminal
+  ├─ format → markdown | json | terminal
 ```
+
+---
+
+## Performance & Scaling (v0.1.23+)
+
+`auditx` is optimized to run on massive enterprise monorepos (10,000+ files) with extreme speed:
+
+- **Tier 1 Context-Free Filtering:** Before handing files over to heavy dataflow-tracing engines like Semgrep, `auditx` synchronously scans file texts with precise word-boundary regex for dangerous sinks/sources (e.g., `eval`, `req.body`, `SELECT ... ?`). Clean files are discarded instantly, bypassing 95% of the computational load.
+- **File Batching (Chunking):** Node-based runners automatically chunk massive arrays of files into blocks of 500, preventing OS `E2BIG` (Argument list too long) crashes on Windows command lines.
+- **LPT Orchestrator:** Uses a Token Bucket algorithm with Longest-Processing-Time-First (LPT) scheduling. The heaviest tools (Semgrep, Trivy) are queued first, ensuring 100% CPU utilization and eliminating "long tail" core idling.
 
 ---
 
