@@ -88,3 +88,43 @@ rules:
       - pattern: open($PATH, $MODE)
       - pattern-not: open($PATH, $MODE, encoding=...)
       - pattern-not: open($PATH, encoding=...)
+
+  - id: ai-python-requests-no-timeout
+    message: >
+      requests.get/post without a timeout will hang indefinitely if the server
+      stalls, exhausting worker threads. Always add timeout=5.
+    severity: ERROR
+    languages: [python]
+    patterns:
+      - pattern-either:
+          - pattern: requests.get(...)
+          - pattern: requests.post(...)
+      - pattern-not: requests.get(..., timeout=$T, ...)
+      - pattern-not: requests.post(..., timeout=$T, ...)
+
+  - id: ai-python-subprocess-shell-true
+    message: >
+      subprocess.run with shell=True allows arbitrary command injection if
+      any part of the command string is user-controlled.
+    severity: ERROR
+    languages: [python]
+    patterns:
+      - pattern: subprocess.run(..., shell=True, ...)
+
+  - id: ai-python-jinja2-no-autoescape
+    message: >
+      Jinja2 Environment initialized without autoescape=True.
+      This allows Cross-Site Scripting (XSS) if rendering HTML templates.
+    severity: ERROR
+    languages: [python]
+    pattern: Environment(...)
+    pattern-not: Environment(..., autoescape=True, ...)
+
+  - id: ai-python-fstring-sql
+    message: >
+      f-string used directly in cursor.execute(). This is SQL injection even
+      if it's just a table name. Validate table names against an allowlist.
+    severity: ERROR
+    languages: [python]
+    patterns:
+      - pattern: $CURSOR.execute(f"...")

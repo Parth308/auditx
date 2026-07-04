@@ -67,3 +67,26 @@ rules:
             await $DB.$QUERY(...)
             ...
           }
+
+  - id: ai-sql-missing-fk-index
+    message: >
+      Foreign key constraints require an index to prevent full table scans
+      and locking issues during DELETE/UPDATE on the parent table.
+    severity: WARNING
+    languages: [sql]
+    patterns:
+      - pattern: ADD FOREIGN KEY ($COL) REFERENCES $TABLE($TCOL)
+      - pattern-not-inside: |
+          ADD FOREIGN KEY ($COL) REFERENCES $TABLE($TCOL);
+          CREATE INDEX ... ON ...($COL);
+
+  - id: ai-sql-uuid-v4-primary-key
+    message: >
+      Using UUIDv4 (gen_random_uuid()) as a PRIMARY KEY fragments the
+      B-tree index on clustered databases (like InnoDB/Postgres), killing
+      insert performance. Consider UUIDv7 or sequential UUIDs.
+    severity: INFO
+    languages: [sql]
+    pattern-either:
+      - pattern: id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+      - pattern: id UUID PRIMARY KEY DEFAULT uuid_generate_v4()

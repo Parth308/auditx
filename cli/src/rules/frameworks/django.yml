@@ -36,3 +36,30 @@ rules:
         ...
         fields = '__all__'
         ...
+
+  - id: ai-django-allowed-hosts-star
+    message: >
+      ALLOWED_HOSTS = ['*'] disables HTTP Host header protection, exposing the app
+      to Host header injection attacks. Specify exact domains.
+    severity: ERROR
+    languages: [python]
+    pattern: ALLOWED_HOSTS = ['*']
+
+  - id: ai-django-cursor-execute-fstring
+    message: >
+      Using f-strings in connection.cursor().execute() allows SQL injection.
+      LLMs often write this when bypassing the ORM for complex queries.
+      Use parameterized queries: cursor.execute("SELECT ... WHERE id = %s", [id]).
+    severity: ERROR
+    languages: [python]
+    patterns:
+      - pattern: $CURSOR.execute(f"...")
+
+  - id: ai-django-csrf-exempt-class
+    message: >
+      @method_decorator(csrf_exempt) used on a class-based view. LLMs often use this
+      to make APIs accessible without setting up CSRF tokens for frontend clients.
+      Use proper authentication or CORS configurations instead.
+    severity: WARNING
+    languages: [python]
+    pattern: "@method_decorator(csrf_exempt, ...)"

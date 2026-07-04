@@ -136,3 +136,71 @@ rules:
     severity: INFO
     languages: [javascript, typescript]
     pattern: "$ELEM $PROP={($ARGS) => { $STMT1; $STMT2; ... }}"
+
+  - id: ai-react-missing-suspense
+    message: >
+      React.lazy() components must be wrapped in a <Suspense> boundary.
+      LLMs often suggest lazy() but forget the wrapper, crashing the app on load.
+    severity: ERROR
+    languages: [javascript, typescript]
+    patterns:
+      - pattern: const $COMP = React.lazy(...)
+      - pattern-not-inside: |
+          <Suspense fallback={...}>
+            ...
+          </Suspense>
+
+  - id: ai-react-usememo-overuse
+    message: >
+      useMemo used on a simple arithmetic or boolean expression. Hook overhead
+      exceeds calculation cost. Remove useMemo and calculate directly.
+    severity: INFO
+    languages: [javascript, typescript]
+    pattern-either:
+      - pattern: useMemo(() => $A + $B, ...)
+      - pattern: useMemo(() => $A || $B, ...)
+      - pattern: useMemo(() => $A === $B, ...)
+
+  - id: ai-react-useref-mutation-render
+    message: >
+      Mutating a ref (ref.current = ...) during the render phase can cause
+      inconsistent UI and breaks Concurrent Mode. Move mutation to useEffect
+      or an event handler.
+    severity: WARNING
+    languages: [javascript, typescript]
+    patterns:
+      - pattern: $REF.current = $VAL
+      - pattern-inside: |
+          function $F(...) {
+            ...
+            return <$TAG ...>...</$TAG>;
+          }
+      - pattern-not-inside: |
+          useEffect(...)
+      - pattern-not-inside: |
+          useLayoutEffect(...)
+      - pattern-not-inside: |
+          function $EVENTHANDLER(...) { ... }
+
+  - id: ai-react-setstate-loop
+    message: >
+      Calling a state setter directly in the render body of a function component
+      causes an infinite render loop. Wrap it in a useEffect or an event handler.
+    severity: ERROR
+    languages: [javascript, typescript]
+    patterns:
+      - pattern-inside: |
+          const [$STATE, $SET] = useState(...);
+          ...
+      - pattern: $SET(...)
+      - pattern-inside: |
+          function $COMP(...) {
+            ...
+            return <$TAG ...>...</$TAG>;
+          }
+      - pattern-not-inside: |
+          useEffect(...)
+      - pattern-not-inside: |
+          useLayoutEffect(...)
+      - pattern-not-inside: |
+          function $EVENTHANDLER(...) { ... }

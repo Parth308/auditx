@@ -99,3 +99,38 @@ rules:
     severity: ERROR
     languages: [go]
     pattern: sha1.New()
+
+  - id: ai-golang-missing-rows-close
+    message: >
+      db.Query() called without a subsequent defer rows.Close().
+      This leaks database connections, eventually exhausting the connection pool.
+    severity: ERROR
+    languages: [go]
+    patterns:
+      - pattern: $ROWS, $ERR := $DB.Query(...)
+      - pattern-not-inside: |
+          $ROWS, $ERR := $DB.Query(...)
+          ...
+          defer $ROWS.Close()
+          ...
+
+  - id: ai-golang-math-rand-crypto
+    message: >
+      math/rand is not cryptographically secure. For tokens, passwords, or
+      security keys, use crypto/rand instead.
+    severity: ERROR
+    languages: [go]
+    patterns:
+      - pattern: rand.$FUNC(...)
+      - pattern-not-inside: |
+          import "crypto/rand"
+          ...
+
+  - id: ai-golang-unsafe-slice-bounds
+    message: >
+      Accessing a slice immediately after split (e.g., strings.Split) without
+      checking the length first. If the split fails, this will panic the server.
+    severity: WARNING
+    languages: [go]
+    patterns:
+      - pattern: strings.Split($S, $SEP)[$IDX]

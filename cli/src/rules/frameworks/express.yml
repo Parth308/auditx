@@ -113,3 +113,35 @@ rules:
             $G(...).catch(...)
             ...
           }
+
+  - id: ai-express-multer-no-limits
+    message: >
+      multer() initialized without file size limits allows infinite file uploads,
+      causing disk exhaustion / DoS. Set limits: { fileSize: 5 * 1024 * 1024 }.
+    severity: ERROR
+    languages: [javascript, typescript]
+    pattern: multer({ dest: ... })
+    pattern-not: multer({ dest: ..., limits: ... })
+
+  - id: ai-express-body-parser-no-limit
+    message: >
+      express.json() or express.urlencoded() without a limit allows large
+      payloads. Ensure you set a reasonable limit, e.g. { limit: '1mb' }.
+    severity: WARNING
+    languages: [javascript, typescript]
+    pattern-either:
+      - pattern: express.json()
+      - pattern: express.urlencoded({ extended: true })
+
+  - id: ai-bcrypt-low-salt
+    message: >
+      bcrypt salt rounds set below 10 is insecure against modern hardware.
+      Use at least 12 rounds for password hashing.
+    severity: ERROR
+    languages: [javascript, typescript]
+    pattern-either:
+      - pattern: bcrypt.hash($PW, 1)
+      - pattern: bcrypt.hash($PW, 2)
+      - pattern: bcrypt.hash($PW, 3)
+      - pattern: bcrypt.hash($PW, 4)
+      - pattern: bcrypt.hash($PW, 5)

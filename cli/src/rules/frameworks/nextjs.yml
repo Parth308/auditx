@@ -38,3 +38,36 @@ rules:
         - "*.jsx"
         - "*.tsx"
     pattern: <title>...</title>
+
+  - id: ai-nextjs-server-action-no-auth
+    message: >
+      Next.js Server Action ('use server') lacks explicit authorization checks.
+      Hiding UI buttons is not security — attackers can call the endpoint directly.
+    severity: ERROR
+    languages: [javascript, typescript]
+    paths:
+      include:
+        - "*.ts"
+        - "*.tsx"
+        - "*.js"
+        - "*.jsx"
+    patterns:
+      - pattern-inside: |
+          'use server';
+          ...
+      - pattern: |
+          export async function $F(...) {
+            ...
+          }
+      - pattern-not: |
+          export async function $F(...) {
+            ...
+            await auth()
+            ...
+          }
+      - pattern-not: |
+          export async function $F(...) {
+            ...
+            await getSession()
+            ...
+          }

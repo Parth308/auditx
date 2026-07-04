@@ -31,3 +31,38 @@ rules:
     severity: INFO
     languages: [typescript]
     pattern: "@Controller('api/v1/...')"
+
+  - id: ai-nestjs-missing-guards
+    message: >
+      Controller lacks a @UseGuards() decorator. LLMs often create endpoints but
+      forget to protect them with authentication. Ensure this is intentionally public.
+    severity: WARNING
+    languages: [typescript]
+    pattern: |
+      @Controller(...)
+      export class $CLASS {
+        ...
+      }
+    pattern-not-inside: |
+      @UseGuards(...)
+      @Controller(...)
+      export class $CLASS {
+        ...
+      }
+
+  - id: ai-nestjs-scope-request
+    message: >
+      Scope.REQUEST creates a new instance of the provider for every single request,
+      killing performance and garbage collector efficiency. LLMs use this blindly
+      to fix DI issues. Only use if absolutely necessary.
+    severity: WARNING
+    languages: [typescript]
+    pattern: "@Injectable({ scope: Scope.REQUEST })"
+
+  - id: ai-nestjs-empty-catch
+    message: >
+      @Catch() without arguments catches ALL exceptions globally, hiding crucial
+      Internal Server Errors. Specify the exact exception (e.g., @Catch(HttpException)).
+    severity: ERROR
+    languages: [typescript]
+    pattern: "@Catch()"
