@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     template: '%s | auditx',
   },
   description:
-    'auditx is a zero-config security CLI that runs 13 scanner categories in parallel (Secrets, Deps, SAST, AI-patterns) and outputs structured data for both developers and AI agents.',
+    'auditx is a zero-config security CLI running 15 scanners in parallel. Detect secrets, vulnerable deps, SAST issues, and AI code anti-patterns instantly.',
   applicationName: 'auditx',
   authors: [{ name: 'Parth Mongia', url: 'https://parthmongia.dev' }],
   creator: 'Parth Mongia',
@@ -79,8 +79,36 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'auditx',
+    applicationCategory: 'DeveloperApplication',
+    operatingSystem: 'Windows, macOS, Linux',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD',
+    },
+    description:
+      'auditx is a zero-config security CLI running 15 scanners in parallel. Detect secrets, vulnerable deps, SAST issues, and AI code anti-patterns instantly.',
+    author: {
+      '@type': 'Person',
+      name: 'Parth Mongia',
+      url: 'https://parthmongia.dev',
+    },
+    url: 'https://auditx-cli.vercel.app',
+    applicationSubCategory: 'SecurityScanner',
+  };
+
   return (
     <html lang="en" className={`${rajdhani.variable} ${ibmMono.variable}`}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="antialiased overflow-x-hidden">
         {children}
         <Analytics />

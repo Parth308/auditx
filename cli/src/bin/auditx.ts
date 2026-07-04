@@ -8,7 +8,7 @@ import ora from 'ora';
 import chalk from 'chalk';
 import { writeFileSync, existsSync, readFileSync } from 'fs';
 import { resolve, join } from 'path';
-import { execSync } from 'child_process';
+import { execSync, execFileSync } from 'child_process';
 
 import type { Config, Severity } from '../types.js';
 import { detectStack, stackLabels } from '../detect.js';
@@ -524,7 +524,7 @@ async function generateSbom(targetDir: string, isInteractive: boolean): Promise<
   if (isInteractive) console.log(chalk.cyan('\n  [sbom] Generating CycloneDX SBOM...'));
   try {
     const bin = await getBinaryPath('trivy');
-    execSync(`"${bin}" fs --format cyclonedx --output "${dest}" .`, { cwd: targetDir, stdio: 'ignore' });
+    execFileSync(bin, ['fs', '--format', 'cyclonedx', '--output', dest, '.'], { cwd: targetDir, stdio: 'ignore' });
     if (isInteractive) console.log(chalk.green(`  [+] SBOM successfully written to: ${chalk.bold('sbom.json')}`));
   } catch (err: any) {
     if (isInteractive) console.log(chalk.red(`  [-] Failed to generate SBOM: ${err.message}`));
