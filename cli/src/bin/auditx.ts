@@ -128,6 +128,23 @@ if (targetArg === 'init-agent') {
   const { initAgent } = await import('../agent-init.js');
   initAgent(process.cwd());
   process.exit(0);
+} else if (targetArg === 'init-rule') {
+  const targetFile = resolve(process.cwd(), 'auditx.yml');
+  if (existsSync(targetFile)) {
+    console.log(chalk.yellow(`\n  [-] auditx.yml already exists at ${targetFile}\n`));
+  } else {
+    const template = `rules:
+  - id: custom-rule-example
+    patterns:
+      - pattern: console.log($X)
+    message: "Do not use console.log in production."
+    languages: [javascript, typescript]
+    severity: WARNING
+`;
+    writeFileSync(targetFile, template, 'utf8');
+    console.log(chalk.green(`\n  [+] Created custom rule template at: ${targetFile}\n`));
+  }
+  process.exit(0);
 } else if (targetArg === 'hook') {
   const { installHook, uninstallHook, installAll } = await import('../hook.js');
   const action = program.args[1];
@@ -284,6 +301,12 @@ async function runScan(): Promise<void> {
 
   const applicableRunners = getApplicableRunnerLabels(stack, config);
   if (isInteractive) {
+    if (existsSync(join(config.target, 'auditx.yml'))) {
+      console.log(chalk.cyan(`  Custom rules: `) + chalk.dim(join(config.target, 'auditx.yml')));
+    }
+    if (config.baseline && existsSync(join(config.target, config.baseline))) {
+      console.log(chalk.cyan(`  Baseline loaded: `) + chalk.dim(join(config.target, config.baseline)));
+    }
     console.log(chalk.dim(`  Running ${applicableRunners.length} scanners in parallel…`));
     console.log('');
   }
@@ -344,7 +367,14 @@ async function runScan(): Promise<void> {
     process.exit(0);
   } else if (config.baseline) {
     const baselineFile = join(config.target, config.baseline);
-    findings = filterBaselines(findings, baselineFile);
+    if (existsSync(baselineFile)) {
+      const beforeCount = findings.length;
+      findings = filterBaselines(findings, baselineFile);
+      const suppressedCount = beforeCount - findings.length;
+      if (isInteractive && suppressedCount > 0) {
+        console.log(chalk.dim(`\n  [i] Suppressed ${suppressedCount} findings using baseline.`));
+      }
+    }
   }
 
   // 4. Apply severity filter

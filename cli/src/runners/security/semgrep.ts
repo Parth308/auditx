@@ -1,6 +1,7 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { readFileSync, statSync } from 'fs';
+import { readFileSync, statSync, existsSync } from 'fs';
+import { join } from 'path';
 import type { Finding, ScanResult, Severity, StackInfo } from '../../types.js';
 import { getBinaryPath, getSemgrepEnv } from '../../installer.js';
 
@@ -70,6 +71,11 @@ export async function runSemgrep(targetDir: string, stagedFiles: string[] | unde
     if (stack.hasDjango) configArgs.push('--config', 'p/django');
     if (stack.hasGo) configArgs.push('--config', 'p/golang');
     if (stack.hasSql) configArgs.push('--config', 'p/sql');
+
+    // ─── Custom Rule Injection ───
+    if (existsSync(join(targetDir, 'auditx.yml'))) {
+      configArgs.push('--config', join(targetDir, 'auditx.yml'));
+    }
 
     const args = [
       'scan',

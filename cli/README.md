@@ -212,6 +212,45 @@ You can also manually edit `.auditxignore` to create custom rules. Because `audi
 
 ---
 
+## Custom Rules (`auditx.yml`)
+
+You can define company-specific rules (e.g., forbidding specific imports, enforcing naming conventions, or banning unsafe regex) directly within your repository.
+
+To quickly generate a starter rule file, run:
+```bash
+npx auditx init-rule
+```
+
+This creates an `auditx.yml` file in your repository root. `auditx` uses [Semgrep's syntax](https://semgrep.dev/docs/writing-rules/rule-syntax) natively, which means you have full access to its powerful AST engine and can copy-paste thousands of open-source rules.
+
+### Example 1: Banning a specific package
+Block developers from importing `lodash` and enforce native ES6 methods.
+
+```yaml
+rules:
+  - id: forbid-lodash
+    patterns:
+      - pattern: import $X from 'lodash'
+    message: "Use native ES6 methods instead of lodash"
+    languages: [javascript, typescript]
+    severity: ERROR
+```
+
+### Example 2: Banning unsafe AST patterns
+Block the usage of `dangerouslySetInnerHTML` across your React codebase.
+
+```yaml
+rules:
+  - id: no-dangerously-set-innerhtml
+    patterns:
+      - pattern: dangerouslySetInnerHTML={...}
+    message: "dangerouslySetInnerHTML can lead to XSS. Use safe HTML rendering."
+    languages: [javascript, typescript]
+    severity: ERROR
+```
+
+---
+
 ## What Gets Scanned
 
 | Category | Scanner | What It Finds |
