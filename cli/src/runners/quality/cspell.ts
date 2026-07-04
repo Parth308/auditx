@@ -8,18 +8,20 @@ export async function runCspell(targetDir: string, stagedFiles?: string[]): Prom
   const start = Date.now();
   const scanner = 'cspell';
 
-  let command = `npx --yes cspell "**/*" --no-progress --no-summary --show-context=false --dot`;
-  if (stagedFiles && stagedFiles.length > 0) {
-    command = `npx --yes cspell ${stagedFiles.map(f => `"${f}"`).join(' ')} --no-progress --no-summary --show-context=false --dot`;
-  }
-
+  let stdout = '';
   try {
-    let stdout = '';
-    try {
-      const res = await execAsync(command, { cwd: targetDir, maxBuffer: 50 * 1024 * 1024 });
+    if (stagedFiles && stagedFiles.length > 0) {
+      const CHUNK_SIZE = 500;
+      for (let i = 0; i < stagedFiles.length; i += CHUNK_SIZE) {
+        const chunk = stagedFiles.slice(i, i + CHUNK_SIZE);
+        const command = `npx --yes cspell ${chunk.map(f => `"${f}"`).join(' ')} --no-progress --no-summary --show-context=false --dot`;
+        const res = await execAsync(command, { cwd: targetDir, maxBuffer: 50 * 1024 * 1024 }).catch(err => ({ stdout: err.stdout || '' }));
+        stdout += res.stdout + '\n';
+      }
+    } else {
+      const command = `npx --yes cspell "**/*" --no-progress --no-summary --show-context=false --dot`;
+      const res = await execAsync(command, { cwd: targetDir, maxBuffer: 50 * 1024 * 1024 }).catch(err => ({ stdout: err.stdout || '' }));
       stdout = res.stdout;
-    } catch (err: any) {
-      if (err.stdout) stdout = err.stdout;
     }
 
     // Example cspell output:

@@ -11,19 +11,27 @@ export async function runLizard(targetPath: string, stagedFiles?: string[]): Pro
 
   try {
     let stdout = '';
-    try {
-      // Run lizard cyclomatic complexity check, threshold 15, warnings only
-      const targets = stagedFiles && stagedFiles.length > 0 ? stagedFiles.map(f => `"${f}"`).join(' ') : `"${targetPath}"`;
-      const result = await execAsync(`lizard ${targets} -C 15 -w`, { maxBuffer: 10 * 1024 * 1024 });
-      stdout = result.stdout;
-    } catch (e: any) {
-      // lizard exits with 1 if it finds complexity warnings
-      if (e.stdout) {
-        stdout = e.stdout;
-      } else {
-        // If it failed because python/lizard isn't installed
-        throw e;
+    const processLizardRun = async (targets: string) => {
+      try {
+        const result = await execAsync(`lizard ${targets} -C 15 -w`, { maxBuffer: 10 * 1024 * 1024 });
+        stdout += result.stdout + '\n';
+      } catch (e: any) {
+        if (e.stdout) {
+          stdout += e.stdout + '\n';
+        } else {
+          throw e;
+        }
       }
+    };
+
+    if (stagedFiles && stagedFiles.length > 0) {
+      const CHUNK_SIZE = 500;
+      for (let i = 0; i < stagedFiles.length; i += CHUNK_SIZE) {
+        const chunk = stagedFiles.slice(i, i + CHUNK_SIZE);
+        await processLizardRun(chunk.map(f => `"${f}"`).join(' '));
+      }
+    } else {
+      await processLizardRun(`"${targetPath}"`);
     }
 
     if (!stdout.trim()) {

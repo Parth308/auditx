@@ -57,6 +57,24 @@ export async function runEslint(targetDir: string, stagedFiles?: string[]): Prom
   const start = Date.now();
   const scanner = 'eslint';
 
+  const handleEslintError = (err: any) => {
+    if (err.stdout) return { stdout: err.stdout as string };
+    if (err.message && err.message.includes('eslint.config.js')) {
+      return {
+        stdout: JSON.stringify([{
+          messages: [{
+            ruleId: 'auditx/eslint-flat-config',
+            severity: 1,
+            message: 'ESLint 9 Flat Config detected. auditx security plugin injection is currently unsupported for this repo.',
+            line: 1
+          }],
+          filePath: 'eslint.config.js'
+        }])
+      };
+    }
+    throw err;
+  };
+
   try {
     const args = [
       '--package', 'eslint@8',
@@ -72,37 +90,23 @@ export async function runEslint(targetDir: string, stagedFiles?: string[]): Prom
       '--rule', JSON.stringify(buildSecurityRules()),
       '--ext', '.js,.ts,.jsx,.tsx,.mjs,.cjs',
     ];
-    if (stagedFiles && stagedFiles.length > 0) {
-      args.push(...stagedFiles);
-    } else {
-      args.push('.');
-    }
-
     const npxBin = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-    const result = await execFileAsync(
-      npxBin,
-      ['--yes', ...args],
-      { cwd: targetDir, maxBuffer: 20 * 1024 * 1024, shell: process.platform === 'win32' },
-    ).catch((err) => {
-      if (err.stdout) return { stdout: err.stdout as string };
-      // Handle ESLint 9 flat config deprecations gracefully
-      if (err.message && err.message.includes('eslint.config.js')) {
-        return {
-          stdout: JSON.stringify([{
-            messages: [{
-              ruleId: 'auditx/eslint-flat-config',
-              severity: 1,
-              message: 'ESLint 9 Flat Config detected. auditx security plugin injection is currently unsupported for this repo.',
-              line: 1
-            }],
-            filePath: 'eslint.config.js'
-          }])
-        };
-      }
-      throw err;
-    });
+    const report: EslintFileResult[] = [];
 
-    const report: EslintFileResult[] = JSON.parse(result.stdout || '[]');
+    // Batching to prevent E2BIG on massive repos
+    if (stagedFiles && stagedFiles.length > 0) {
+      const CHUNK_SIZE = 500;
+      for (let i = 0; i < stagedFiles.length; i += CHUNK_SIZE) {
+        const chunk = stagedFiles.slice(i, i + CHUNK_SIZE);
+        const chunkArgs = [...args, ...chunk];
+        const result = await execFileAsync(npxBin, ['--yes', ...chunkArgs], { cwd: targetDir, maxBuffer: 20 * 1024 * 1024, shell: process.platform === 'win32' }).catch(handleEslintError);
+        report.push(...JSON.parse(result.stdout || '[]'));
+      }
+    } else {
+      const chunkArgs = [...args, '.'];
+      const result = await execFileAsync(npxBin, ['--yes', ...chunkArgs], { cwd: targetDir, maxBuffer: 20 * 1024 * 1024, shell: process.platform === 'win32' }).catch(handleEslintError);
+      report.push(...JSON.parse(result.stdout || '[]'));
+    }
     const findings: Finding[] = [];
 
     for (const fileResult of report) {

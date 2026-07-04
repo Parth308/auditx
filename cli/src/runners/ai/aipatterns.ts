@@ -2,7 +2,7 @@ import { execFile } from 'child_process';
 import { join } from 'path';
 import { promisify } from 'util';
 import { randomUUID } from 'crypto';
-import { existsSync, writeFileSync } from 'fs';
+import { existsSync, writeFileSync, readFileSync, statSync } from 'fs';
 import { tmpdir } from 'os';
 import { fileURLToPath } from 'url';
 import type { Finding, ScanResult, Severity, StackInfo } from '../../types.js';
@@ -61,7 +61,34 @@ export async function runAiPatterns(targetPath: string, stagedFiles: string[] | 
       configArgs.push('--config', join(baseRulesDir, 'languages', 'golang.yml'));
     }
 
-    const targets = stagedFiles && stagedFiles.length > 0 ? stagedFiles : [targetPath];
+    // ─── TIER 1: Context-Free Fast Regex Pre-Filter ───
+    // Use precise, word-boundary anchored patterns to avoid matching common words
+    // like 'key', 'req', 'res' which appear in nearly every TypeScript file.
+    const DANGEROUS_SINKS = /\beval\s*\(|\bexec\s*\(|\bspawn\s*\(|dangerouslySetInnerHTML|innerHTML\s*=|child_process|\bpickle\.loads?\b|\bos\.system\b|\bsubprocess\.|\bunserialize\b/;
+    const DANGEROUS_SOURCES = /\breq\.body\b|\breq\.query\b|\breq\.params\b|\brequest\.form\b|\bparams\[|\bgetParameter\(|process\.env\[|process\.argv\[/;
+    const TAINT_FLOW = /\bpassword\s*=\s*(?!null|undefined|''|"")|\bsecret\s*=\s*(?!null|undefined|''|"")|\b(?:SELECT|INSERT|UPDATE|DELETE)\b.*\?/i;
+    const MAX_FILE_SIZE = 512 * 1024;
+
+    let filteredFiles: string[] = [];
+    if (stagedFiles && stagedFiles.length > 0) {
+      filteredFiles = stagedFiles.filter(file => {
+        try {
+          const stat = statSync(file);
+          if (stat.size > MAX_FILE_SIZE) return false;
+          const content = readFileSync(file, 'utf8');
+          return DANGEROUS_SINKS.test(content) || DANGEROUS_SOURCES.test(content) || TAINT_FLOW.test(content);
+        } catch {
+          return true;
+        }
+      });
+
+      // All staged files are clean — skip Semgrep entirely, no need to scan.
+      if (filteredFiles.length === 0) {
+        return { scanner: 'aipatterns', ok: true, findings: [], durationMs: Date.now() - start };
+      }
+    }
+
+    const targets = filteredFiles.length > 0 ? filteredFiles : [targetPath];
 
     const args = [
       'scan',

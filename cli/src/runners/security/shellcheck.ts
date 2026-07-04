@@ -44,23 +44,28 @@ export async function runShellcheck(targetDir: string, stagedFiles?: string[]): 
     const bin = await getBinaryPath('shellcheck');
     let stdout = '';
 
-    try {
-      const res = await execFileAsync(
-        bin,
-        ['-f', 'json', ...filesToScan],
-        { maxBuffer: 50 * 1024 * 1024 }
-      );
-      stdout = res.stdout;
-    } catch (err: any) {
-      if (err.stdout) stdout = err.stdout;
-    }
-
     let raw: any[] = [];
-    if (stdout) {
+    const CHUNK_SIZE = 500;
+    for (let i = 0; i < filesToScan.length; i += CHUNK_SIZE) {
+      const chunk = filesToScan.slice(i, i + CHUNK_SIZE);
+      let chunkStdout = '';
       try {
-        raw = JSON.parse(stdout);
-      } catch {
-        // Ignored
+        const res = await execFileAsync(
+          bin,
+          ['-f', 'json', ...chunk],
+          { maxBuffer: 50 * 1024 * 1024 }
+        );
+        chunkStdout = res.stdout;
+      } catch (err: any) {
+        if (err.stdout) chunkStdout = err.stdout;
+      }
+
+      if (chunkStdout) {
+        try {
+          raw.push(...JSON.parse(chunkStdout));
+        } catch {
+          // Ignored
+        }
       }
     }
 

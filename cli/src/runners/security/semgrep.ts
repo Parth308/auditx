@@ -1,5 +1,6 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
+import { readFileSync, statSync } from 'fs';
 import type { Finding, ScanResult, Severity, StackInfo } from '../../types.js';
 import { getBinaryPath, getSemgrepEnv } from '../../installer.js';
 
@@ -83,8 +84,40 @@ export async function runSemgrep(targetDir: string, stagedFiles: string[] | unde
       '--exclude', 'build',
       '--exclude', '.git',
     ];
+    // ─── TIER 1: Context-Free Fast Regex Pre-Filter ───
+    // Before handing files to Semgrep's heavy OCaml taint engine, do a synchronous
+    // text scan to discard files with absolutely no dangerous sinks/sources.
+    // IMPORTANT: keywords must be precise — over-broad terms (e.g. 'key', 'req')
+    // would match nearly every file and nullify the filter.
+    const DANGEROUS_SINKS = /\beval\s*\(|\bexec\s*\(|\bspawn\s*\(|dangerouslySetInnerHTML|innerHTML\s*=|child_process|\bpickle\.loads?\b|\bos\.system\b|\bsubprocess\.|\bunserialize\b/;
+    const DANGEROUS_SOURCES = /\breq\.body\b|\breq\.query\b|\breq\.params\b|\brequest\.form\b|\bparams\[|\bgetParameter\(|process\.env\[|process\.argv\[/;
+    const TAINT_FLOW = /\bpassword\s*=\s*(?!null|undefined|''|"")|\bsecret\s*=\s*(?!null|undefined|''|"")|\b(?:SELECT|INSERT|UPDATE|DELETE)\b.*\?/i;
+    const MAX_FILE_SIZE = 512 * 1024; // Skip files larger than 512KB (likely minified/generated)
+
+    let filteredFiles: string[] = stagedFiles || [];
     if (stagedFiles && stagedFiles.length > 0) {
-      args.push(...stagedFiles);
+      filteredFiles = stagedFiles.filter(file => {
+        try {
+          // Skip files that are too large (minified bundles, generated code)
+          const stat = statSync(file);
+          if (stat.size > MAX_FILE_SIZE) return false;
+
+          const content = readFileSync(file, 'utf8');
+          return DANGEROUS_SINKS.test(content) || DANGEROUS_SOURCES.test(content) || TAINT_FLOW.test(content);
+        } catch {
+          return true; // If we can't stat/read it, let semgrep decide
+        }
+      });
+    }
+
+    if (filteredFiles.length === 0 && stagedFiles && stagedFiles.length > 0) {
+      // All files passed Tier 1 as clean — no dangerous patterns found anywhere.
+      // Skip Semgrep entirely.
+      return { scanner, ok: true, findings: [], durationMs: Date.now() - start };
+    }
+
+    if (filteredFiles.length > 0) {
+      args.push(...filteredFiles);
     } else {
       args.push(targetDir);
     }
