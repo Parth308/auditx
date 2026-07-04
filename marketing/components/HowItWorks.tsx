@@ -24,62 +24,40 @@ const FLAGS = [
 function DetectAnimation() {
   return (
     <div className="relative h-full w-full flex items-center justify-center p-6 bg-[var(--color-surface-2)] overflow-hidden" style={{ minHeight: '240px' }}>
-      <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(circle_at_center,_var(--color-accent)_0%,_transparent_70%)]"></div>
-      
-      <div className="flex flex-col items-center gap-4 w-full max-w-sm">
-        {/* Source Files */}
-        <div className="flex gap-2 w-full justify-center">
-          {['package.json', 'Dockerfile', '.git', 'src/'].map((file, i) => (
-            <motion.div
-              key={file}
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: i * 0.15, duration: 0.5 }}
-              className="text-[10px] px-2 py-1 border border-[var(--color-hairline)] bg-[var(--color-surface)] text-[var(--color-mute)]"
-            >
-              {file}
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Funnel */}
-        <motion.div 
-          initial={{ scaleY: 0 }} 
-          animate={{ scaleY: 1 }} 
-          className="h-8 w-px bg-[var(--color-accent)] origin-top opacity-50"
-        />
-
-        {/* Auditx Engine */}
-        <motion.div
-          animate={{ 
-            boxShadow: ['0 0 0 0 rgba(74, 222, 128, 0)', '0 0 20px 2px rgba(74, 222, 128, 0.2)', '0 0 0 0 rgba(74, 222, 128, 0)']
-          }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-          className="px-6 py-2 border border-[var(--color-accent)] bg-[#09090b] text-[var(--color-accent)] font-bold text-sm tracking-widest uppercase z-10"
+      <svg width="120" height="120" viewBox="0 0 120 120" className="overflow-visible">
+        {/* Radar grid */}
+        <circle cx="60" cy="60" r="50" fill="none" stroke="var(--color-hairline)" strokeWidth="1" />
+        <circle cx="60" cy="60" r="30" fill="none" stroke="var(--color-hairline)" strokeWidth="1" strokeDasharray="2 4" />
+        <line x1="10" y1="60" x2="110" y2="60" stroke="var(--color-hairline)" strokeWidth="1" />
+        <line x1="60" y1="10" x2="60" y2="110" stroke="var(--color-hairline)" strokeWidth="1" />
+        
+        {/* Sweeping arm */}
+        <motion.g
+          animate={{ rotate: 360 }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+          style={{ transformOrigin: 'center' }}
         >
-          auditx detect
-        </motion.div>
+          {/* Invisible bounding box circle to fix SVG transform-origin */}
+          <circle cx="60" cy="60" r="60" fill="transparent" />
+          <path d="M60 60 L60 10 A50 50 0 0 1 110 60 Z" fill="var(--color-accent-dim)" />
+          <line x1="60" y1="60" x2="60" y2="10" stroke="var(--color-accent)" strokeWidth="2" />
+        </motion.g>
 
-        <motion.div 
-          initial={{ scaleY: 0 }} 
-          animate={{ scaleY: 1 }} 
-          className="h-8 w-px bg-[var(--color-accent)] origin-top opacity-50"
-        />
-
-        {/* Scanners Activated */}
-        <div className="flex flex-wrap justify-center gap-2 w-full">
-          {['npm audit', 'trivy', 'gitleaks', 'semgrep'].map((scanner, i) => (
-            <motion.div
-              key={scanner}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 1 + (i * 0.1), duration: 0.3 }}
-              className="text-[11px] px-3 py-1 border border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-ink)]"
-            >
-              {scanner}
-            </motion.div>
-          ))}
-        </div>
+        {/* Nodes (Found targets) */}
+        {[
+          { cx: 30, cy: 30, delay: 0 },
+          { cx: 80, cy: 40, delay: 0.5 },
+          { cx: 40, cy: 80, delay: 1.2 },
+          { cx: 90, cy: 75, delay: 2.1 }
+        ].map((node, i) => (
+          <motion.g key={i} animate={{ opacity: [0, 1, 0] }} transition={{ duration: 3, repeat: Infinity, delay: node.delay }}>
+             <circle cx={node.cx} cy={node.cy} r="4" fill="var(--color-accent)" />
+             <circle cx={node.cx} cy={node.cy} r="10" fill="none" stroke="var(--color-accent)" strokeWidth="1" />
+          </motion.g>
+        ))}
+      </svg>
+      <div className="absolute bottom-6 font-mono text-[10px] text-[var(--color-accent)] uppercase tracking-widest border border-[var(--color-accent)] px-2 py-1 bg-[var(--color-accent-dim)]">
+        SCAN_ENGINE_INIT
       </div>
     </div>
   );
@@ -91,52 +69,69 @@ function OrchestratorAnimation() {
   useEffect(() => {
     const i = setInterval(() => {
       setActive(p => (p + 1) % 4);
-    }, 2000);
+    }, 2500);
     return () => clearInterval(i);
   }, []);
 
+  const QUEUE_ITEMS = [
+    { id: 'q1', w: 3 }, { id: 'q2', w: 3 }, { id: 'q3', w: 2 }, 
+    { id: 'q4', w: 1 }, { id: 'q5', w: 1 }, { id: 'q6', w: 1 }, { id: 'q7', w: 1 }, { id: 'q8', w: 1 }
+  ];
+  
+  let visibleQueue = QUEUE_ITEMS;
+  if (active === 1) visibleQueue = QUEUE_ITEMS.slice(1);
+  if (active === 2) visibleQueue = QUEUE_ITEMS.slice(2);
+  if (active === 3) visibleQueue = QUEUE_ITEMS.slice(3);
+
   return (
     <div className="relative h-full w-full flex flex-col items-center justify-center p-6 bg-[var(--color-surface-2)] overflow-hidden" style={{ minHeight: '240px' }}>
-      <div className="text-[10px] text-[var(--color-mute)] mb-4 uppercase tracking-widest w-full text-left">CPU Cores (4)</div>
+      <div className="flex justify-between w-full mb-4">
+        <div className="text-[10px] text-[var(--color-mute)] uppercase tracking-widest font-mono">CPU_CORES [4]</div>
+        <div className="text-[10px] text-[var(--color-accent)] uppercase tracking-widest font-mono animate-pulse">ALLOCATING</div>
+      </div>
       
-      {/* CPU Cores */}
+      {/* CPU Cores (Vertical Servers) */}
       <div className="flex gap-2 w-full mb-6">
         {[0, 1, 2, 3].map(core => (
-          <div key={core} className="flex-1 h-12 border border-[var(--color-hairline)] bg-[var(--color-surface)] relative flex items-center justify-center overflow-hidden">
-            <span className="text-[9px] text-[var(--color-mute)] opacity-50 absolute top-1 left-1">C{core}</span>
+          <div key={core} className="flex-1 h-16 border border-[var(--color-hairline)] bg-[var(--color-canvas)] relative flex items-end justify-center overflow-hidden p-1">
+            <span className="text-[9px] text-[var(--color-mute)] opacity-50 absolute top-1 left-1 font-mono">C{core}</span>
             {/* LPT Heavy Blocks */}
             <AnimatePresence mode="popLayout">
               {(active === 0 && core < 3) && (
                 <motion.div
                   key={`heavy-${active}-${core}`}
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -20, opacity: 0 }}
-                  className="absolute inset-x-1 bottom-1 top-4 bg-[var(--color-warn)]/20 border border-[var(--color-warn)] flex items-center justify-center text-[10px] text-[var(--color-warn)] font-bold"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: '80%', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="w-full bg-[var(--color-accent)]/20 border-t-2 border-[var(--color-accent)] flex items-center justify-center"
                 >
-                  {core === 1 ? 'SEMGREP (3)' : ''}
+                  <span className="text-[9px] text-[var(--color-accent)] font-bold font-mono rotate-[-90deg] whitespace-nowrap">
+                    {core === 1 ? 'SEMGREP_3X' : '...'}
+                  </span>
                 </motion.div>
               )}
               {(active === 1 && (core === 0 || core === 1)) && (
                 <motion.div
                   key={`med-${active}-${core}`}
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -20, opacity: 0 }}
-                  className="absolute inset-x-1 bottom-1 top-4 bg-[var(--color-accent)]/20 border border-[var(--color-accent)] flex items-center justify-center text-[10px] text-[var(--color-accent)] font-bold"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: '60%', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="w-full bg-[var(--color-accent)]/10 border-t-2 border-[var(--color-accent)] flex items-center justify-center"
                 >
-                  {core === 0 ? 'TRIVY (2)' : ''}
+                  <span className="text-[9px] text-[var(--color-accent)] font-bold font-mono rotate-[-90deg] whitespace-nowrap">
+                    {core === 0 ? 'TRIVY_2X' : '...'}
+                  </span>
                 </motion.div>
               )}
               {(active > 1 || (active === 1 && core > 1) || (active === 0 && core === 3)) && (
                 <motion.div
                   key={`light-${active}-${core}`}
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -20, opacity: 0 }}
-                  className="absolute inset-x-1 bottom-1 top-4 bg-[var(--color-ink)]/10 border border-[var(--color-hairline)] flex items-center justify-center text-[10px] text-[var(--color-ink)]"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: '30%', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="w-full bg-[var(--color-surface-3)] border-t border-[var(--color-hairline)] flex items-center justify-center"
                 >
-                  L
+                  <span className="text-[9px] text-[var(--color-mute)] font-bold font-mono">1X</span>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -144,20 +139,26 @@ function OrchestratorAnimation() {
         ))}
       </div>
       
-      <div className="text-[10px] text-[var(--color-mute)] mb-2 uppercase tracking-widest w-full text-left">Queue (LPT Sorted)</div>
-      <div className="flex gap-1 w-full opacity-60">
-        {[3, 3, 2, 1, 1, 1, 1].map((weight, i) => (
-          <motion.div
-            key={`q-${i}`}
-            animate={{ x: active > 0 ? -10 : 0, opacity: active > 0 && i === 0 ? 0 : 1 }}
-            className={`h-4 border flex items-center justify-center text-[8px]
-              ${weight === 3 ? 'w-12 bg-[var(--color-warn)]/20 border-[var(--color-warn)] text-[var(--color-warn)]' : 
-                weight === 2 ? 'w-8 bg-[var(--color-accent)]/20 border-[var(--color-accent)] text-[var(--color-accent)]' : 
-                'w-4 bg-[var(--color-ink)]/10 border-[var(--color-hairline)] text-[var(--color-ink)]'}`}
-          >
-            {weight}
-          </motion.div>
-        ))}
+      <div className="text-[10px] text-[var(--color-mute)] mb-2 uppercase tracking-widest w-full text-left font-mono">LPT_QUEUE</div>
+      <div className="flex gap-1 w-full overflow-hidden items-center h-6">
+        <AnimatePresence mode="popLayout">
+          {visibleQueue.map((item) => (
+            <motion.div
+              layout
+              key={item.id}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0, width: 0, padding: 0, margin: 0, border: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              className={`h-full border flex items-center justify-center text-[9px] font-mono shrink-0
+                ${item.w === 3 ? 'w-10 bg-[var(--color-accent)]/20 border-[var(--color-accent)] text-[var(--color-accent)]' : 
+                  item.w === 2 ? 'w-8 bg-[var(--color-accent)]/10 border-[var(--color-accent)]/50 text-[var(--color-accent)]' : 
+                  'w-5 bg-[var(--color-surface-3)] border-[var(--color-hairline)] text-[var(--color-mute)]'}`}
+            >
+              {item.w}X
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -165,63 +166,64 @@ function OrchestratorAnimation() {
 
 function NormalizeAnimation() {
   return (
-    <div className="relative h-full w-full flex flex-col items-center justify-center p-6 bg-[var(--color-surface-2)] overflow-hidden gap-6" style={{ minHeight: '240px' }}>
-      <div className="flex gap-4 w-full justify-center">
-        {['{sast}', '[deps]', '<iac>', '"lint"'].map((shape, i) => (
-          <motion.div
-            key={shape}
-            animate={{ y: [0, 15, 0], opacity: [1, 0, 1] }}
-            transition={{ duration: 2, repeat: Infinity, delay: i * 0.2 }}
-            className="text-xs text-[var(--color-mute)] font-mono"
-          >
-            {shape}
-          </motion.div>
+    <div className="relative h-full w-full flex items-center justify-center p-6 bg-[var(--color-surface-2)] overflow-hidden" style={{ minHeight: '240px' }}>
+      <svg width="180" height="100" viewBox="0 0 180 100">
+        {/* Filter core */}
+        <polygon points="90,20 120,50 90,80 60,50" fill="var(--color-accent-dim)" stroke="var(--color-accent)" strokeWidth="2" />
+        <line x1="90" y1="20" x2="90" y2="80" stroke="var(--color-accent)" strokeWidth="1" strokeDasharray="4 2" />
+        <line x1="60" y1="50" x2="120" y2="50" stroke="var(--color-accent)" strokeWidth="1" strokeDasharray="4 2" />
+
+        {/* Input streams (raw data) */}
+        {[0, 1, 2].map(i => (
+          <motion.g key={`in-${i}`} animate={{ x: [0, 40], opacity: [0, 1, 0] }} transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.5 }}>
+            <rect x="10" y={35 + i * 10} width="15" height="4" fill="var(--color-mute)" />
+          </motion.g>
         ))}
-      </div>
-      
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
-        className="w-12 h-12 border border-dashed border-[var(--color-accent)] rounded-full flex items-center justify-center"
-      >
-        <div className="w-8 h-8 border border-[var(--color-accent)] rounded-sm flex items-center justify-center bg-[var(--color-accent)]/10">
-          <span className="text-[10px] text-[var(--color-accent)]">A</span>
-        </div>
-      </motion.div>
-      
-      <div className="w-full max-w-[200px] border border-[var(--color-accent)]/30 bg-[var(--color-surface)] p-2 text-[10px] font-mono text-[var(--color-ink)]">
-        <span className="text-[var(--color-accent)]">"id":</span> "0x1A",<br/>
-        <span className="text-[var(--color-accent)]">"sev":</span> "high",<br/>
-        <span className="text-[var(--color-accent)]">"msg":</span> "Normalized"
+
+        {/* Output stream (normalized) */}
+        <motion.g animate={{ x: [0, 40], opacity: [0, 1, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>
+          <rect x="130" y="48" width="30" height="4" fill="var(--color-accent)" />
+        </motion.g>
+      </svg>
+      <div className="absolute bottom-6 font-mono text-[10px] text-[var(--color-ink)] uppercase tracking-widest border-t border-[var(--color-hairline)] pt-2 w-full text-center">
+        DATA_SYNTHESIS
       </div>
     </div>
   );
 }
 
 function OutputAnimation() {
-  const modes = [
-    { name: '--output terminal', icon: '💻', desc: 'Human' },
-    { name: '--output markdown', icon: '📝', desc: 'PR' },
-    { name: '--output json', icon: '📊', desc: 'CI' },
-    { name: '--output agent', icon: '🤖', desc: 'AI' },
+  const nodes = [
+    { label: 'HUMAN', x: 20, y: 20 },
+    { label: 'PR_AGENT', x: 120, y: 20 },
+    { label: 'CI_GATE', x: 20, y: 80 },
+    { label: 'AI_MODEL', x: 120, y: 80 },
   ];
-  
   return (
     <div className="relative h-full w-full flex items-center justify-center p-6 bg-[var(--color-surface-2)] overflow-hidden" style={{ minHeight: '240px' }}>
-      <div className="grid grid-cols-2 gap-3 w-full">
-        {modes.map((mode, i) => (
-          <motion.div
-            key={mode.name}
-            whileHover={{ scale: 1.05, backgroundColor: 'var(--color-surface)' }}
-            className="border border-[var(--color-hairline)] p-3 flex flex-col gap-2 cursor-pointer transition-colors bg-[var(--color-surface)]"
-          >
-            <div className="flex justify-between items-center">
-              <span className="text-xl">{mode.icon}</span>
-              <span className="text-[9px] uppercase tracking-widest text-[var(--color-mute)]">{mode.desc}</span>
-            </div>
-            <div className="text-[10px] text-[var(--color-accent)] font-mono">{mode.name}</div>
-          </motion.div>
+      <svg width="200" height="120" viewBox="0 0 200 120">
+        {/* Central Dispatch Hub */}
+        <circle cx="100" cy="60" r="10" fill="var(--color-accent)" />
+        <circle cx="100" cy="60" r="20" fill="none" stroke="var(--color-accent)" strokeWidth="1" strokeDasharray="2 2" />
+        
+        {/* Connecting lines */}
+        {nodes.map((n, i) => (
+          <g key={i}>
+            <line x1="100" y1="60" x2={n.x + 30} y2={n.y + 10} stroke="var(--color-hairline)" strokeWidth="2" />
+            {/* Signal pulse */}
+            <motion.circle 
+              cx="100" cy="60" r="3" fill="var(--color-accent)"
+              animate={{ cx: [100, n.x + 30], cy: [60, n.y + 10], opacity: [1, 0] }}
+              transition={{ duration: 1, repeat: Infinity, delay: i * 0.25 }}
+            />
+            {/* Node Box */}
+            <rect x={n.x} y={n.y} width="60" height="20" fill="var(--color-surface)" stroke="var(--color-hairline)" />
+            <text x={n.x + 30} y={n.y + 14} fontSize="8" fontFamily="var(--font-mono)" fill="var(--color-mute)" textAnchor="middle">{n.label}</text>
+          </g>
         ))}
+      </svg>
+      <div className="absolute bottom-6 font-mono text-[10px] text-[var(--color-ink)] uppercase tracking-widest w-full text-center">
+        SIGNAL_DISPATCH
       </div>
     </div>
   );

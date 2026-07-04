@@ -30,7 +30,7 @@ const LOOP_STEPS = [
     id: 'run',
     num: '01',
     label: 'RUN',
-    color: '#22d3ee',
+    color: 'var(--color-accent)',
     code: '$ auditx . --output agent',
     detail: 'Pure JSON stdout — no spinners, no ANSI. Agent parses directly.',
   },
@@ -38,7 +38,7 @@ const LOOP_STEPS = [
     id: 'parse',
     num: '02',
     label: 'PARSE',
-    color: '#f43f5e',
+    color: 'var(--color-warn)',
     code: '"ok": false → branch to fix',
     detail: 'Boolean ok gate. No string parsing. Agent branches immediately.',
   },
@@ -46,7 +46,7 @@ const LOOP_STEPS = [
     id: 'fix',
     num: '03',
     label: 'FIX',
-    color: '#fb923c',
+    color: 'var(--color-ink-light)',
     code: 'apply_llm_patch(file, findings)',
     detail: 'Agent gets file→findings map. LLM patches each file with context.',
   },
@@ -54,7 +54,7 @@ const LOOP_STEPS = [
     id: 'verify',
     num: '04',
     label: 'VERIFY',
-    color: '#34d399',
+    color: 'var(--color-ok)',
     code: '"ok": true → loop exits',
     detail: 'Re-run auditx. Loop until ok: true. Stable fingerprints prevent churn.',
   },
@@ -63,11 +63,11 @@ const LOOP_STEPS = [
 /* ── JsonLine (syntax highlight) ──────────────────────────────── */
 function JsonLine({ line }: { line: string }) {
   const html = line
-    .replace(/"([^"]+)":/g, `<span style="color:#22d3ee">"$1"</span>:`)
-    .replace(/: "([^"]+)"/g, `: <span style="color:#34d399">"$1"</span>`)
-    .replace(/: (false)\b/g, `: <span style="color:#f43f5e;font-weight:700">$1</span>`)
-    .replace(/: (true)\b/g,  `: <span style="color:#34d399;font-weight:700">$1</span>`)
-    .replace(/: (\d+)\b/g,   `: <span style="color:#fb923c">$1</span>`);
+    .replace(/"([^"]+)":/g, `<span style="color:var(--color-accent)">"$1"</span>:`)
+    .replace(/: "([^"]+)"/g, `: <span style="color:var(--color-ok)">"$1"</span>`)
+    .replace(/: (false)\b/g, `: <span style="color:var(--color-danger);font-weight:700">$1</span>`)
+    .replace(/: (true)\b/g,  `: <span style="color:var(--color-ok);font-weight:700">$1</span>`)
+    .replace(/: (\d+)\b/g,   `: <span style="color:var(--color-warn)">$1</span>`);
   return <div dangerouslySetInnerHTML={{ __html: html || '\u00A0' }} />;
 }
 
@@ -137,7 +137,7 @@ function AgentLoopGraphic() {
         <circle
           cx="50" cy="50" r="34"
           fill="none"
-          stroke="rgba(34,211,238,0.15)"
+          stroke="var(--color-accent-dim)"
           strokeWidth="0.4"
           strokeDasharray="10 5"
         >
@@ -159,7 +159,7 @@ function AgentLoopGraphic() {
             y1={[20, 50, 80, 50][i]}
             x2={[80, 50, 20, 50][i]}
             y2={[50, 80, 50, 20][i]}
-            stroke={activeStep === i ? 'rgba(34,211,238,0.5)' : 'rgba(255,255,255,0.06)'}
+            stroke={activeStep === i ? 'rgba(234, 88, 12, 0.5)' : 'rgba(255,255,255,0.06)'}
             strokeWidth={activeStep === i ? '0.6' : '0.3'}
             strokeDasharray={activeStep === i ? 'none' : '1.5 2'}
             style={{ transition: 'stroke 0.3s' }}
@@ -169,7 +169,7 @@ function AgentLoopGraphic() {
         {/* Arrow heads */}
         <defs>
           <marker id="arrowCyan" markerWidth="4" markerHeight="4" refX="2" refY="2" orient="auto">
-            <polygon points="0 0, 4 2, 0 4" fill="rgba(34,211,238,0.7)" />
+            <polygon points="0 0, 4 2, 0 4" fill="rgba(234, 88, 12, 0.7)" />
           </marker>
           <marker id="arrowDim" markerWidth="4" markerHeight="4" refX="2" refY="2" orient="auto">
             <polygon points="0 0, 4 2, 0 4" fill="rgba(255,255,255,0.12)" />
@@ -253,7 +253,7 @@ function AgentLoopGraphic() {
           <polygon
             points="50,41 56,44.5 56,51.5 50,55 44,51.5 44,44.5"
             fill="#111117"
-            stroke="rgba(34,211,238,0.3)"
+            stroke="rgba(234, 88, 12, 0.3)"
             strokeWidth="0.5"
           />
           <text
@@ -262,7 +262,7 @@ function AgentLoopGraphic() {
             fontSize="2.8"
             fontFamily="JetBrains Mono, monospace"
             fontWeight="700"
-            fill="#22d3ee"
+            fill="var(--color-accent)"
             letterSpacing="0.3"
           >
             AGENT
@@ -413,7 +413,7 @@ export default function AgentLoopSection() {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'radial-gradient(ellipse at 50% 40%, rgba(34,211,238,0.04) 0%, transparent 70%)',
+            background: 'radial-gradient(ellipse at 50% 40%, rgba(234, 88, 12, 0.04) 0%, transparent 70%)',
             minHeight: 480,
           }}>
             <ScrollReveal style={{ width: '100%' }}>
