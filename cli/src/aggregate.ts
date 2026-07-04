@@ -1,5 +1,6 @@
 import { createHash } from 'crypto';
-import type { Finding, ScanResult, Severity, SEVERITY_ORDER } from './types.js';
+import { existsSync, readFileSync } from 'fs';
+import type { Finding, ScanResult, Severity, SEVERITY_ORDER, BaselineFile } from './types.js';
 import { SEVERITY_ORDER as ORDER } from './types.js';
 
 /**
@@ -161,6 +162,46 @@ function correlateFindings(findings: Finding[]): Finding[] {
 
   const remaining = findings.filter(f => !handled.has(f.id));
   return [...correlated, ...remaining];
+}
+
+/**
+ * Reads a baseline file (.auditxignore) and removes any findings that match its suppression signatures.
+ */
+export function filterBaselines(findings: Finding[], baselinePath: string): Finding[] {
+  if (!existsSync(baselinePath)) return findings;
+
+  try {
+    const raw = readFileSync(baselinePath, 'utf8');
+    const baseline = JSON.parse(raw) as BaselineFile;
+    if (!baseline || !baseline.suppressions || !Array.isArray(baseline.suppressions)) {
+      return findings;
+    }
+
+    const signatures = baseline.suppressions;
+    
+    return findings.filter(f => {
+      const isSuppressed = signatures.some(sig => {
+        // A signature must define at least one constraint to be valid
+        if (!sig.rule && !sig.file && !sig.title) return false;
+
+        const matchRule = sig.rule ? sig.rule === f.rule : true;
+        
+        // Use endsWith to ensure it matches regardless of whether f.file is absolute or relative
+        const matchFile = sig.file 
+          ? (f.file ? f.file.replace(/\\/g, '/').endsWith(sig.file) : false) 
+          : true;
+          
+        const matchTitle = sig.title ? sig.title === f.title : true;
+        
+        return matchRule && matchFile && matchTitle;
+      });
+
+      return !isSuppressed;
+    });
+  } catch (err) {
+    // Fail open: if we can't parse the baseline, return all findings
+    return findings;
+  }
 }
 
 /** Filter findings to only those at or above the given minimum severity. */

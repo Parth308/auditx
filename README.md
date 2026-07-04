@@ -208,6 +208,66 @@ auditx . --ai-model gpt-4o         # override model
 # Info
 auditx --version
 auditx --check-deps
+
+# Baselines
+auditx . --generate-baseline       # write current findings to .auditxignore
+auditx . --baseline custom.json    # use custom file instead of .auditxignore
+```
+
+---
+
+## Suppressions & Baselines
+
+Enterprises often have accepted risks or legacy code they can't fix immediately. You can establish a "baseline" to ignore existing issues, while still failing the build if *new* vulnerabilities are introduced.
+
+1. **Generate the baseline**:
+   ```bash
+   npx auditx . --generate-baseline
+   ```
+   This creates an `.auditxignore` file containing signatures for all current findings.
+
+2. **Run normal scans**:
+   ```bash
+   npx auditx . --ci
+   ```
+   `auditx` will now silently filter out any finding that exactly matches a signature in `.auditxignore`. 
+
+> **Note**: Our baseline signatures intentionally omit line numbers. This means if a developer adds a new line of code at the top of a file, the baseline suppressions for that file won't break.
+
+### Manual Configuration
+You can also manually edit `.auditxignore` to create custom rules. Because `auditx` uses a flexible matching engine, you don't need to specify every field.
+
+**1. Ignore a specific rule globally:**
+```json
+{
+  "version": 1,
+  "suppressions": [
+    { "rule": "eslint/no-eval" }
+  ]
+}
+```
+
+**2. Ignore all vulnerabilities in a specific legacy file:**
+```json
+{
+  "version": 1,
+  "suppressions": [
+    { "file": "src/legacy/spaghetti.ts" }
+  ]
+}
+```
+
+**3. Ignore a specific rule only in one file:**
+```json
+{
+  "version": 1,
+  "suppressions": [
+    { 
+      "rule": "eslint/dangerouslySetInnerHTML",
+      "file": "src/components/Markdown.tsx"
+    }
+  ]
+}
 ```
 
 ---

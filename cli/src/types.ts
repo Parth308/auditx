@@ -137,6 +137,10 @@ export interface Config {
   checkDeps: boolean;
   /** Generate SBOM using Trivy */
   sbom: boolean;
+  /** Generate baseline file instead of reporting */
+  generateBaseline?: boolean;
+  /** Custom path to the baseline file */
+  baseline?: string;
 }
 
 /** The fully aggregated scan report. */
@@ -166,3 +170,27 @@ export const SEVERITY_ORDER: Record<Severity, number> = {
   low: 3,
   info: 4,
 };
+
+export interface GlobalConfig {
+  aiProvider?: AiProvider;
+  openaiKey?: string;
+  anthropicKey?: string;
+  geminiKey?: string;
+  aiModel?: string;
+}
+
+/** 
+ * A signature used to suppress a finding. 
+ * 'line' is intentionally omitted so suppressions survive code churn (e.g. adding new lines above a finding). 
+ */
+export interface SuppressionSignature {
+  rule?: string;
+  file?: string;
+  title?: string;
+}
+
+/** Format of the .auditxignore file */
+export interface BaselineFile {
+  version: number;
+  suppressions: SuppressionSignature[];
+}

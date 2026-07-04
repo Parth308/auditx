@@ -7,13 +7,13 @@ import { program } from 'commander';
 import ora from 'ora';
 import chalk from 'chalk';
 import { writeFileSync, existsSync, readFileSync } from 'fs';
-import { resolve } from 'path';
+import { resolve, join } from 'path';
 import { execSync } from 'child_process';
 
 import type { Config, Severity } from '../types.js';
 import { detectStack, stackLabels } from '../detect.js';
 import { runAll, getApplicableRunnerLabels } from '../runners/index.js';
-import { aggregate, filterBySeverity, buildSummary } from '../aggregate.js';
+import { aggregate, filterBaselines, filterBySeverity, buildSummary } from '../aggregate.js';
 import { formatMarkdown } from '../formatters/markdown.js';
 import { formatJson } from '../formatters/json.js';
 import { formatAgent } from '../formatters/agent.js';
@@ -26,7 +26,7 @@ import type { AiProvider } from '../types.js';
 // ─── Package version ──────────────────────────────────────────────────────────
 // Injected by tsup at build time via --define
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -69,6 +69,8 @@ program
   .option('--ai-model <model>', 'Specific model override (optional)')
   .option('--staged-list <file>', 'Path to a file containing a list of files to scan (used by git hooks)')
   .option('--fix', 'Auto-apply fixable issues (eslint --fix, knip --fix)')
+  .option('--generate-baseline', 'create .auditxignore with current findings')
+  .option('--baseline <path>', 'path to baseline file', '.auditxignore')
   .option('--sbom', 'Generate a CycloneDX SBOM file (sbom.json)')
   .option('--watch', 'Re-run on file changes (dev mode)')
   .option('--check-deps', 'Verify all required external scanner tools are installed')
@@ -202,6 +204,8 @@ async function runDefaultScan() {
   sbom: Boolean(opts['sbom']),
   watch: Boolean(opts['watch']),
   checkDeps: Boolean(opts['checkDeps']),
+  generateBaseline: Boolean(opts['generateBaseline']),
+  baseline: opts['baseline'] as string,
 };
 
 // ─── --check-deps ─────────────────────────────────────────────────────────────
@@ -309,6 +313,39 @@ async function runScan(): Promise<void> {
 
   // 3. Aggregate findings
   let findings = aggregate(results);
+
+  // 3.5. Baseline logic
+  if (config.generateBaseline) {
+    const { relative, isAbsolute } = await import('path');
+    const baselineFile = join(config.target, config.baseline ?? '.auditxignore');
+    const suppressions = findings.map(f => {
+      let relFile = f.file;
+      if (relFile && isAbsolute(relFile)) {
+        relFile = relative(config.target, relFile).replace(/\\/g, '/');
+      } else if (relFile) {
+        relFile = relFile.replace(/\\/g, '/');
+      }
+      return {
+        rule: f.rule,
+        file: relFile,
+        title: f.title
+      };
+    });
+    const baselineObj = {
+      version: 1,
+      suppressions
+    };
+    writeFileSync(baselineFile, JSON.stringify(baselineObj, null, 2), 'utf8');
+    
+    if (isInteractive) {
+      console.log(chalk.green(`\n  [+] Baseline generated with ${findings.length} findings: ${baselineFile}`));
+      console.log(chalk.dim(`      Future runs will ignore these existing findings unless they change.`));
+    }
+    process.exit(0);
+  } else if (config.baseline) {
+    const baselineFile = join(config.target, config.baseline);
+    findings = filterBaselines(findings, baselineFile);
+  }
 
   // 4. Apply severity filter
   findings = filterBySeverity(findings, config.severity);
