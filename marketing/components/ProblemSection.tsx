@@ -27,7 +27,7 @@ const PROBLEMS = [
     marker: 'SOLUTION',
     markerColor: 'var(--color-accent)',
     label: 'auditx is the trust layer',
-    detail: '44 custom Semgrep rules built from real AI codegen failure modes. One command, parallel execution, structured output that AI agents can parse and self-fix.',
+    detail: '100+ custom rules built from real AI codegen failure modes. One command, parallel execution, structured output that AI agents can parse and self-fix.',
   },
 ];
 

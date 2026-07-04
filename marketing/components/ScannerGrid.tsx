@@ -39,7 +39,7 @@ const CATEGORIES = [
     accentColor: 'var(--color-accent)',
     count: 1,
     scanners: [
-      { id: 'AI',       tool: 'aipatterns',      desc: '44 custom rules: floating promises, ts-any-cast, silent catch, state mutation, and more', tag: 'AI_CODE', unique: true },
+      { id: 'AI',       tool: 'aipatterns',      desc: '100+ custom rules: floating promises, ts-any-cast, silent catch, state mutation, and more', tag: 'AI_CODE', unique: true },
     ],
   },
   {

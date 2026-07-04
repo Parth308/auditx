@@ -47,7 +47,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'auditx — One command. Every vulnerability. AI-ready.',
     description:
-      'Zero-config security CLI. 13 scanners running in parallel. 44 custom rules for AI code anti-patterns. Built for the agentic-coding era.',
+      'Zero-config security CLI. 13 scanners running in parallel. 100+ custom rules for AI code anti-patterns. Built for the agentic-coding era.',
     url: 'https://auditx-cli.vercel.app',
     siteName: 'auditx',
     type: 'website',
