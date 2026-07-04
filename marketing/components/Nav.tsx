@@ -11,6 +11,13 @@ const NAV_LINKS = [
 export default function Nav() {
   const [menuOpen, setMenuOpen]   = useState(false);
   const [scrolled, setScrolled]   = useState(false);
+  const [copied, setCopied]       = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText('npx auditx@latest .');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -78,8 +85,8 @@ export default function Nav() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           {/* Desktop CTA */}
-          <a
-            href="https://www.npmjs.com/package/auditx"
+          <button
+            onClick={handleCopy}
             className="nav-cta"
             style={{
               fontFamily: 'var(--font-mono)',
@@ -87,16 +94,26 @@ export default function Nav() {
               fontWeight: 600,
               letterSpacing: '0.04em',
               padding: '7px 16px',
-              backgroundColor: 'var(--color-accent)',
-              color: 'var(--color-canvas)',
+              backgroundColor: 'transparent',
+              color: 'var(--color-accent)',
+              border: '1px solid var(--color-accent)',
               whiteSpace: 'nowrap',
-              transition: 'opacity 0.15s',
+              transition: 'all 0.15s',
+              cursor: 'pointer',
+              minWidth: '200px',
+              textAlign: 'center',
             }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+            onMouseEnter={e => {
+              e.currentTarget.style.backgroundColor = 'var(--color-accent)';
+              e.currentTarget.style.color = 'var(--color-canvas)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = 'var(--color-accent)';
+            }}
           >
-            npm install -g auditx
-          </a>
+            <span>{copied ? '[COPIED]' : '> npx auditx@latest .'}</span>
+          </button>
 
           {/* Mobile hamburger */}
           <button
@@ -144,19 +161,34 @@ export default function Nav() {
               {link.label}
             </a>
           ))}
-          <a
-            href="https://www.npmjs.com/package/auditx"
+          <button
+            onClick={handleCopy}
             style={{
               display: 'block',
+              width: '100%',
+              textAlign: 'center',
               fontFamily: 'var(--font-mono)',
               fontSize: 13,
               fontWeight: 600,
-              padding: '12px 0 0',
-              color: 'var(--color-accent)',
+              padding: '12px 16px',
+              marginTop: '12px',
+              backgroundColor: 'var(--color-accent)',
+              color: 'var(--color-canvas)',
+              border: '1px solid var(--color-accent)',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.backgroundColor = 'var(--color-canvas)';
+              e.currentTarget.style.color = 'var(--color-accent)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.backgroundColor = 'var(--color-accent)';
+              e.currentTarget.style.color = 'var(--color-canvas)';
             }}
           >
-            npm install -g auditx
-          </a>
+            <span>{copied ? '[COPIED]' : '> npx auditx@latest .'}</span>
+          </button>
         </div>
       )}
     </header>

@@ -493,7 +493,7 @@ export async function run(targetPath: string): Promise<Finding[]> {
 - [x] `--ai` flag with multi-provider support
 - [x] `--ci` mode with exit codes
 - [x] Auto-download scanner binaries
-- [ ] `--fix` auto-remediation
+- [x] `--fix` auto-remediation
 - [x] `--watch` dev mode
 - [x] AI agent output mode (`--output agent`)
 - [x] Git Hook integration (`--staged-list`, `auditx hook install`)
