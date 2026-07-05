@@ -62,7 +62,7 @@ async function getBinaryPathInternal(tool: ToolName): Promise<string> {
     return expectedBin;
   }
 
-  if (tool === 'semgrep' && platform() === 'win32') {
+  if (tool === 'semgrep') {
     try {
       execFileSync('semgrep', ['--version'], { stdio: 'ignore' });
       return 'semgrep';
@@ -76,11 +76,16 @@ async function getBinaryPathInternal(tool: ToolName): Promise<string> {
   const spinner = ora(`Downloading ${tool}...`).start();
 
   try {
-    if (tool === 'semgrep' && platform() === 'win32') {
-      // Semgrep doesn't have a standalone Windows binary. Install via pip.
+    if (tool === 'semgrep') {
+      // Install via pip.
       spinner.text = 'Installing semgrep via pip...';
-      execFileSync('pip', ['install', 'semgrep'], { stdio: 'pipe' });
-      spinner.succeed(`semgrep installed via pip`);
+      try {
+        execFileSync('pip', ['install', 'semgrep'], { stdio: 'pipe' });
+        spinner.succeed(`semgrep installed via pip`);
+      } catch (err: any) {
+        spinner.fail(`Python/pip is missing or failed to install semgrep.`);
+        throw new Error(`Python (3.9+) and 'pip' are required to install Semgrep. Please install Python and run 'pip install semgrep' manually.`);
+      }
 
       // Pre-warm settings file in isolated location to avoid first-run permission crash
       getSemgrepEnv();
@@ -159,15 +164,6 @@ function getDownloadUrl(tool: ToolName): { url: string; isZip: boolean; isRaw?: 
     const ext = os === 'win32' ? 'zip' : 'tar.gz';
     return {
       url: `https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_${osStr}-${archStr}.${ext}`,
-      isZip: ext === 'zip',
-    };
-  }
-
-  if (tool === 'semgrep') {
-    let osStr = os === 'darwin' ? 'osx' : 'ubuntu-16.04';
-    const ext = os === 'darwin' ? 'zip' : 'tgz';
-    return {
-      url: `https://github.com/semgrep/semgrep/releases/download/v${SEMGREP_VERSION}/semgrep-v${SEMGREP_VERSION}-${osStr}.${ext}`,
       isZip: ext === 'zip',
     };
   }

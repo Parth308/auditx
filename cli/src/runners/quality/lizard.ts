@@ -68,11 +68,12 @@ export async function runLizard(targetPath: string, stagedFiles?: string[]): Pro
       durationMs: Date.now() - start,
     };
   } catch (error: any) {
+    const isNotFound = error.code === 127 || error.message.includes('not found') || error.message.includes('is not recognized');
     return {
       scanner: 'lizard',
       ok: false,
       findings: [],
-      error: error.message,
+      error: isNotFound ? 'lizard not found. Please install python and run: pip install lizard' : error.message,
       durationMs: Date.now() - start,
     };
   }
