@@ -27,7 +27,7 @@ export function readGlobalConfig(): GlobalConfig {
   }
 }
 
-export function writeGlobalConfig(config: GlobalConfig): void {
+function writeGlobalConfig(config: GlobalConfig): void {
   if (!existsSync(CONFIG_DIR)) {
     mkdirSync(CONFIG_DIR, { recursive: true });
   }

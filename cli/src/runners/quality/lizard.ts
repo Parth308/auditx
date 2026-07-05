@@ -49,7 +49,7 @@ export async function runLizard(targetPath: string, stagedFiles?: string[]): Pro
         findings.push({
           id: `lizard-${randomUUID()}`,
           category: 'COMPLEXITY',
-          severity: 'high',
+          severity: 'medium',
           title: 'High Cyclomatic Complexity',
           file: file.trim(),
           line: parseInt(lineNum, 10),
