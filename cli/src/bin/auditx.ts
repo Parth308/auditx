@@ -8,7 +8,9 @@ import ora from 'ora';
 import chalk from 'chalk';
 import { writeFileSync, existsSync, readFileSync } from 'fs';
 import { resolve, join } from 'path';
-import { execSync, execFileSync } from 'child_process';
+import { execSync, execFileSync, exec } from 'child_process';
+import { promisify } from 'util';
+const execAsync = promisify(exec);
 
 import type { Config, Severity } from '../types.js';
 import { detectStack, stackLabels } from '../detect.js';
@@ -437,7 +439,7 @@ async function runScan(): Promise<void> {
 
   // 8. --fix
   if (config.fix) {
-    applyFixes(config.target);
+    await applyFixes(config.target);
   }
 
   // 8.5 --sbom
@@ -498,23 +500,27 @@ async function checkDependencies(): Promise<void> {
 
 // ─── --fix ────────────────────────────────────────────────────────────────────
 
-function applyFixes(targetDir: string): void {
-  console.log(chalk.cyan('\n  [fix] Applying auto-fixes...\n'));
+async function applyFixes(targetDir: string): Promise<void> {
+  console.log(chalk.cyan('\n  [fix] Applying auto-fixes in parallel...\n'));
 
-  try {
-    execSync('npx eslint --fix .', { cwd: targetDir, stdio: 'inherit' });
-    console.log(chalk.green('  [+] eslint --fix applied'));
-  } catch {
-    console.log(chalk.yellow('  [!] eslint --fix had issues (see above)'));
-  }
+  const runCommand = async (cmd: string, successMsg: string, failMsg: string, isKnip = false) => {
+    try {
+      await execAsync(cmd, { cwd: targetDir });
+      console.log(chalk.green(`  [+] ${successMsg}`));
+    } catch {
+      if (isKnip) {
+        console.log(chalk.dim(`  [.] ${failMsg}`));
+      } else {
+        console.log(chalk.yellow(`  [!] ${failMsg}`));
+      }
+    }
+  };
 
-  try {
-    execSync('npx knip --fix --allow-remove-files', { cwd: targetDir, stdio: 'inherit' });
-    console.log(chalk.green('  [+] knip --fix applied'));
-  } catch {
-    // knip exits non-zero if it removed files — that's expected, not a failure
-    console.log(chalk.dim('  [.] knip --fix complete'));
-  }
+  await Promise.all([
+    runCommand('npm audit fix', 'npm audit fix applied', 'npm audit fix had issues'),
+    runCommand('npx eslint --fix .', 'eslint --fix applied', 'eslint --fix had issues'),
+    runCommand('npx knip --fix --allow-remove-files', 'knip --fix applied', 'knip --fix complete', true)
+  ]);
 }
 
 // ─── --sbom ───────────────────────────────────────────────────────────────────

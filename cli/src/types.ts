@@ -171,7 +171,7 @@ export const SEVERITY_ORDER: Record<Severity, number> = {
   info: 4,
 };
 
-export interface GlobalConfig {
+interface GlobalConfig {
   aiProvider?: AiProvider;
   openaiKey?: string;
   anthropicKey?: string;
@@ -183,7 +183,7 @@ export interface GlobalConfig {
  * A signature used to suppress a finding. 
  * 'line' is intentionally omitted so suppressions survive code churn (e.g. adding new lines above a finding). 
  */
-export interface SuppressionSignature {
+interface SuppressionSignature {
   rule?: string;
   file?: string;
   title?: string;

@@ -19,7 +19,7 @@ import { runAiPatterns } from './ai/aipatterns.js';
 import { runIaC } from './security/iac.js';
 import { Orchestrator, type TaskCost } from './orchestrator.js';
 
-export type RunnerName = 'secrets' | 'deps' | 'sast' | 'deadcode' | 'iac' | 'patterns' | 'duplication' | 'complexity' | 'dephealth' | 'license' | 'aicode' | 'githealth' | 'typesafety';
+type RunnerName = 'secrets' | 'deps' | 'sast' | 'deadcode' | 'iac' | 'patterns' | 'duplication' | 'complexity' | 'dephealth' | 'license' | 'aicode' | 'githealth' | 'typesafety';
 
 interface RunnerDef {
   name: RunnerName;
