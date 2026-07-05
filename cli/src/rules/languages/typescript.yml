@@ -69,7 +69,7 @@ rules:
     languages: [typescript]
     pattern-either:
       - pattern: "Record<string, any>"
-      - pattern-regex: "\{\\s*\\[\\s*[a-zA-Z]+\\s*:\\s*string\\s*\\]\\s*:\\s*any\\s*\\}"
+      - pattern-regex: '\{\s*\[\s*[a-zA-Z]+\s*:\s*string\s*\]\s*:\s*any\s*\}'
 
   - id: ai-ts-global-any-override
     message: >

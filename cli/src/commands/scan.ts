@@ -10,6 +10,7 @@ import { aggregate, filterBaselines, filterBySeverity, buildSummary } from '../a
 import { formatMarkdown } from '../formatters/markdown.js';
 import { formatJson } from '../formatters/json.js';
 import { formatAgent } from '../formatters/agent.js';
+import { formatSarif } from '../formatters/sarif.js';
 import { printTerminalReport, printCiSummary, printScannerResult } from '../formatters/terminal.js';
 import { generateAiSummary } from '../ai.js';
 import { promptForAiConfig, readGlobalConfig } from '../config.js';
@@ -186,6 +187,18 @@ async function doCoreScan(config: Config, VERSION: string): Promise<void> {
     case 'agent': {
       const agentJson = formatAgent(report);
       console.log(agentJson);
+      break;
+    }
+
+    case 'sarif': {
+      const sarif = formatSarif(report);
+      const outFile = config.outputFile.replace('.md', '.sarif');
+      writeFileSync(outFile, sarif, 'utf8');
+      if (isInteractive) {
+        console.log(chalk.green(`  [+] SARIF report written to: ${chalk.bold(outFile)}`));
+      } else {
+        console.log(sarif);
+      }
       break;
     }
   }

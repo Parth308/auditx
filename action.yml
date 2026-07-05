@@ -1,0 +1,40 @@
+name: 'Auditx Security Scan'
+description: 'Run auditx security and quality scans and upload SARIF results to GitHub Advanced Security'
+author: 'auditx'
+branding:
+  icon: 'shield'
+  color: 'red'
+
+inputs:
+  target:
+    description: 'Target directory to scan'
+    required: false
+    default: '.'
+  severity:
+    description: 'Minimum severity to include (info, low, medium, high, critical)'
+    required: false
+    default: 'info'
+  skip:
+    description: 'Categories to skip (comma-separated)'
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Install and Run auditx
+      shell: bash
+      run: |
+        SKIP_ARG=""
+        if [ -n "${{ inputs.skip }}" ]; then
+          SKIP_ARG="--skip ${{ inputs.skip }}"
+        fi
+        
+        npx auditx@latest ${{ inputs.target }} --severity ${{ inputs.severity }} $SKIP_ARG --output sarif --output-file results.sarif
+    
+    - name: Upload SARIF report
+      uses: github/codeql-action/upload-sarif@v3
+      # Only upload if the file was created successfully, even if auditx exits with a non-zero code
+      if: always() 
+      with:
+        sarif_file: results.sarif

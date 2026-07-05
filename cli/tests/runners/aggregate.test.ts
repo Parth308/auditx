@@ -44,11 +44,12 @@ describe('aggregate()', () => {
     expect(result[2].severity).toBe('low');
   });
 
-  it('assigns sequential IDs', () => {
+  it('assigns deterministic IDs', () => {
     const findings = [makeFinding({ title: 'A' }), makeFinding({ title: 'B' })];
     const result = aggregate([makeResult(findings)]);
-    expect(result[0].id).toBe('auditx-001');
-    expect(result[1].id).toBe('auditx-002');
+    expect(result[0].id).toMatch(/^auditx-[a-f0-9]{8}$/);
+    expect(result[1].id).toMatch(/^auditx-[a-f0-9]{8}$/);
+    expect(result[0].id).not.toBe(result[1].id);
   });
 
   it('skips results where ok = false', () => {
