@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 const LINES = [
   { text: '$ npx auditx@latest .', color: '#fdfcfc', delay: 0 },
   { text: '', color: '', delay: 500 },
-  { text: '  [+] auditx v0.1.18', color: '#fdfcfc', delay: 600 },
+  { text: '  [+] auditx v0.1.33', color: '#fdfcfc', delay: 600 },
   { text: '  Scanning: /projects/my-app', color: '#9a9898', delay: 800 },
   { text: '', color: '', delay: 1000 },
   { text: '  Stack detected: Node.js · TypeScript · Docker', color: '#9a9898', delay: 1100 },
