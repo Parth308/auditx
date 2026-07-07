@@ -80,13 +80,16 @@ export async function runEslint(targetDir: string, stagedFiles?: string[]): Prom
 
   try {
     const eslintCacheDir = join(homedir(), '.auditx', 'eslint-deps');
-    if (!existsSync(eslintCacheDir)) {
-      mkdirSync(eslintCacheDir, { recursive: true });
+    const eslintJs = join(eslintCacheDir, 'node_modules', 'eslint', 'bin', 'eslint.js');
+
+    if (!existsSync(eslintJs)) {
+      if (!existsSync(eslintCacheDir)) {
+        mkdirSync(eslintCacheDir, { recursive: true });
+      }
       writeFileSync(join(eslintCacheDir, 'package.json'), JSON.stringify({ name: "auditx-eslint-deps", version: "1.0.0" }));
       const npmBin = process.platform === 'win32' ? 'npm.cmd' : 'npm';
       execFileSync(npmBin, ['install', 'eslint@8', 'eslint-plugin-security'], { cwd: eslintCacheDir, stdio: 'ignore' });
     }
-    const eslintBin = join(eslintCacheDir, 'node_modules', '.bin', process.platform === 'win32' ? 'eslint.cmd' : 'eslint');
 
     const args = [
       '--format', 'json',
@@ -106,13 +109,13 @@ export async function runEslint(targetDir: string, stagedFiles?: string[]): Prom
       const CHUNK_SIZE = 500;
       for (let i = 0; i < stagedFiles.length; i += CHUNK_SIZE) {
         const chunk = stagedFiles.slice(i, i + CHUNK_SIZE);
-        const chunkArgs = [...args, ...chunk];
-        const result = await execFileAsync(eslintBin, chunkArgs, { cwd: targetDir, maxBuffer: 20 * 1024 * 1024, shell: process.platform === 'win32' }).catch(handleEslintError);
+        const chunkArgs = [eslintJs, ...args, ...chunk];
+        const result = await execFileAsync(process.execPath, chunkArgs, { cwd: targetDir, maxBuffer: 20 * 1024 * 1024 }).catch(handleEslintError);
         report.push(...JSON.parse(result.stdout || '[]'));
       }
     } else {
-      const chunkArgs = [...args, '.'];
-      const result = await execFileAsync(eslintBin, chunkArgs, { cwd: targetDir, maxBuffer: 20 * 1024 * 1024, shell: process.platform === 'win32' }).catch(handleEslintError);
+      const chunkArgs = [eslintJs, ...args, '.'];
+      const result = await execFileAsync(process.execPath, chunkArgs, { cwd: targetDir, maxBuffer: 20 * 1024 * 1024 }).catch(handleEslintError);
       report.push(...JSON.parse(result.stdout || '[]'));
     }
     const findings: Finding[] = [];

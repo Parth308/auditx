@@ -312,7 +312,7 @@ rules:
     patterns:
       - pattern: JSON.parse($X)
       - pattern-not-inside: |
-          try { ... } catch { ... }
+          try { ... } catch ($E) { ... }
 
   - id: ai-object-assign-to-empty
     message: >

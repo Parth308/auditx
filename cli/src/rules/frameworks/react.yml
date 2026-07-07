@@ -139,7 +139,7 @@ rules:
       on every render, preventing memoization. Extract it or wrap with useCallback.
     severity: INFO
     languages: [javascript, typescript]
-    pattern: "$ELEM $PROP={($ARGS) => { $STMT1; $STMT2; ... }}"
+    pattern: "<$ELEM ... $PROP={($ARGS) => { $STMT1; $STMT2; ... }} ... />"
 
   - id: ai-react-missing-suspense
     message: >
