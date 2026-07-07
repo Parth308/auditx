@@ -61,44 +61,17 @@ function scanWorkspace(dir: string, maxDepth: number, currentDepth = 0, result: 
 
 export function detectStack(targetDir: string): StackInfo {
   const scan = scanWorkspace(targetDir, MAX_DEPTH);
-  const has = (name: string) => scan.foundNames.has(name);
-  const hasExt = (ext: string) => Array.from(scan.foundNames).some(n => n.endsWith(ext));
+  const allDeps = extractNodeDeps(scan.packageJsons);
+  const allReqs = extractPythonReqs(scan.requirementsTxts);
+  const hasGit = scan.foundNames.has('.git');
+  const hasGitHistory = checkGitHistory(hasGit, targetDir);
 
-  // Merge all dependencies from all package.json files
-  const allDeps = new Set<string>();
-  for (const pkgPath of scan.packageJsons) {
-    try {
-      const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
-      if (pkg.dependencies) Object.keys(pkg.dependencies).forEach(d => allDeps.add(d));
-      if (pkg.devDependencies) Object.keys(pkg.devDependencies).forEach(d => allDeps.add(d));
-    } catch {
-      // Ignore invalid JSON
-    }
-  }
+  return buildStackInfo(scan.foundNames, allDeps, allReqs, hasGit, hasGitHistory);
+}
 
-  // Merge all requirements from all requirements.txt files
-  let allReqs = '';
-  for (const reqPath of scan.requirementsTxts) {
-    try {
-      allReqs += readFileSync(reqPath, 'utf-8').toLowerCase() + '\n';
-    } catch {
-      // Ignore read errors
-    }
-  }
-
-  const hasGit = has('.git');
-
-  // Distinguish between an initialised repo and one that actually has commits.
-  // git-history scanners (githealth, trufflehog) are useless on empty repos.
-  let hasGitHistory = false;
-  if (hasGit) {
-    try {
-      const out = execSync('git log --oneline -1', { cwd: targetDir, encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] });
-      hasGitHistory = out.trim().length > 0;
-    } catch {
-      hasGitHistory = false;
-    }
-  }
+function buildStackInfo(foundNames: Set<string>, deps: Set<string>, reqs: string, hasGit: boolean, hasGitHistory: boolean): StackInfo {
+  const has = (name: string) => foundNames.has(name);
+  const hasExt = (ext: string) => Array.from(foundNames).some(n => n.endsWith(ext));
 
   return {
     hasNodeJs: has('package.json') || has('package-lock.json') || has('yarn.lock') || has('pnpm-lock.yaml') || has('bun.lockb') || has('bun.lock'),
@@ -107,17 +80,14 @@ export function detectStack(targetDir: string): StackInfo {
     hasGo: has('go.mod'),
     hasDocker: has('Dockerfile') || has('docker-compose.yml') || has('docker-compose.yaml'),
     hasGit,
-    hasGitHistory: hasGit,
+    hasGitHistory,
     hasTerraform: has('main.tf') || has('terraform.tf') || has('infra') || has('terraform') || hasExt('.tf'),
     hasTypeScript: has('tsconfig.json'),
-    
-    hasReact: allDeps.has('react'),
-    hasNextJs: allDeps.has('next'),
-    hasNestJs: allDeps.has('@nestjs/core'),
-    hasExpress: allDeps.has('express'),
-    
-    hasDjango: allReqs.includes('django'),
-    
+    hasReact: deps.has('react'),
+    hasNextJs: deps.has('next'),
+    hasNestJs: deps.has('@nestjs/core'),
+    hasExpress: deps.has('express'),
+    hasDjango: reqs.includes('django'),
     hasSql: has('schema.sql') || has('schema.prisma') || has('drizzle.config.ts') || has('prisma') || has('migrations') || has('db') || hasExt('.sql'),
   };
 }
@@ -139,3 +109,36 @@ export function stackLabels(info: StackInfo): string[] {
   if (info.hasTerraform) labels.push('Terraform');
   return labels;
 }
+
+function extractNodeDeps(packageJsons: string[]): Set<string> {
+  const allDeps = new Set<string>();
+  for (const pkgPath of packageJsons) {
+    try {
+      const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+      if (pkg.dependencies) Object.keys(pkg.dependencies).forEach(d => allDeps.add(d));
+      if (pkg.devDependencies) Object.keys(pkg.devDependencies).forEach(d => allDeps.add(d));
+    } catch {}
+  }
+  return allDeps;
+}
+
+function extractPythonReqs(requirementsTxts: string[]): string {
+  let allReqs = '';
+  for (const reqPath of requirementsTxts) {
+    try {
+      allReqs += readFileSync(reqPath, 'utf-8').toLowerCase() + '\n';
+    } catch {}
+  }
+  return allReqs;
+}
+
+function checkGitHistory(hasGit: boolean, targetDir: string): boolean {
+  if (!hasGit) return false;
+  try {
+    const out = execSync('git log --oneline -1', { cwd: targetDir, encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] });
+    return out.trim().length > 0;
+  } catch {
+    return false;
+  }
+}
+

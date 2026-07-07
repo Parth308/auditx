@@ -61,64 +61,16 @@ export async function runSemgrep(targetDir: string, stagedFiles: string[] | unde
   try {
     const bin = await getBinaryPath('semgrep');
     
-    const configArgs = ['--config', 'p/security-audit'];
-    if (stack.hasReact) configArgs.push('--config', 'p/react');
-    if (stack.hasNextJs) configArgs.push('--config', 'p/nextjs');
-    if (stack.hasNestJs) configArgs.push('--config', 'p/nestjs');
-    if (stack.hasExpress) configArgs.push('--config', 'p/expressjs');
-    if (stack.hasTypeScript) configArgs.push('--config', 'p/typescript');
-    if (stack.hasPython) configArgs.push('--config', 'p/python');
-    if (stack.hasDjango) configArgs.push('--config', 'p/django');
-    if (stack.hasGo) configArgs.push('--config', 'p/golang');
-    if (stack.hasSql) configArgs.push('--config', 'p/sql');
-
-    // ─── Custom Rule Injection ───
-    if (existsSync(join(targetDir, 'auditx.yml'))) {
-      configArgs.push('--config', join(targetDir, 'auditx.yml'));
-    }
-
+    const configArgs = buildSemgrepConfigArgs(stack, targetDir);
     const args = [
       'scan',
       ...configArgs,
-      '--json',
-      '--quiet',
-      '--timeout', '30',
-      '--no-rewrite-rule-ids',
-      '--exclude', 'node_modules',
-      '--exclude', '.next',
-      '--exclude', 'dist',
-      '--exclude', 'build',
-      '--exclude', '.git',
+      '--json', '--quiet', '--timeout', '30', '--no-rewrite-rule-ids',
+      '--exclude', 'node_modules', '--exclude', '.next', '--exclude', 'dist', '--exclude', 'build', '--exclude', '.git',
     ];
-    // ─── TIER 1: Context-Free Fast Regex Pre-Filter ───
-    // Before handing files to Semgrep's heavy OCaml taint engine, do a synchronous
-    // text scan to discard files with absolutely no dangerous sinks/sources.
-    // IMPORTANT: keywords must be precise — over-broad terms (e.g. 'key', 'req')
-    // would match nearly every file and nullify the filter.
-    const DANGEROUS_SINKS = /\beval\s*\(|\bexec\s*\(|\bspawn\s*\(|dangerouslySetInnerHTML|innerHTML\s*=|child_process|\bpickle\.loads?\b|\bos\.system\b|\bsubprocess\.|\bunserialize\b/;
-    const DANGEROUS_SOURCES = /\breq\.body\b|\breq\.query\b|\breq\.params\b|\brequest\.form\b|\bparams\[|\bgetParameter\(|process\.env\[|process\.argv\[/;
-    const TAINT_FLOW = /\bpassword\s*=\s*(?!null|undefined|''|"")|\bsecret\s*=\s*(?!null|undefined|''|"")|\b(?:SELECT|INSERT|UPDATE|DELETE)\b.*\?/i;
-    const MAX_FILE_SIZE = 512 * 1024; // Skip files larger than 512KB (likely minified/generated)
 
-    let filteredFiles: string[] = stagedFiles || [];
-    if (stagedFiles && stagedFiles.length > 0) {
-      filteredFiles = stagedFiles.filter(file => {
-        try {
-          // Skip files that are too large (minified bundles, generated code)
-          const stat = statSync(file);
-          if (stat.size > MAX_FILE_SIZE) return false;
-
-          const content = readFileSync(file, 'utf8');
-          return DANGEROUS_SINKS.test(content) || DANGEROUS_SOURCES.test(content) || TAINT_FLOW.test(content);
-        } catch {
-          return true; // If we can't stat/read it, let semgrep decide
-        }
-      });
-    }
-
+    const filteredFiles = filterSemgrepFiles(stagedFiles);
     if (filteredFiles.length === 0 && stagedFiles && stagedFiles.length > 0) {
-      // All files passed Tier 1 as clean — no dangerous patterns found anywhere.
-      // Skip Semgrep entirely.
       return { scanner, ok: true, findings: [], durationMs: Date.now() - start };
     }
 
@@ -174,3 +126,42 @@ export async function runSemgrep(targetDir: string, stagedFiles: string[] | unde
     };
   }
 }
+
+function buildSemgrepConfigArgs(stack: StackInfo, targetDir: string): string[] {
+  const configArgs = ['--config', 'p/security-audit'];
+  if (stack.hasReact) configArgs.push('--config', 'p/react');
+  if (stack.hasNextJs) configArgs.push('--config', 'p/nextjs');
+  if (stack.hasNestJs) configArgs.push('--config', 'p/nestjs');
+  if (stack.hasExpress) configArgs.push('--config', 'p/expressjs');
+  if (stack.hasTypeScript) configArgs.push('--config', 'p/typescript');
+  if (stack.hasPython) configArgs.push('--config', 'p/python');
+  if (stack.hasDjango) configArgs.push('--config', 'p/django');
+  if (stack.hasGo) configArgs.push('--config', 'p/golang');
+  if (stack.hasSql) configArgs.push('--config', 'p/sql');
+
+  if (existsSync(join(targetDir, 'auditx.yml'))) {
+    configArgs.push('--config', join(targetDir, 'auditx.yml'));
+  }
+  return configArgs;
+}
+
+function filterSemgrepFiles(stagedFiles: string[] | undefined): string[] {
+  if (!stagedFiles || stagedFiles.length === 0) return [];
+  
+  const DANGEROUS_SINKS = /\beval\s*\(|\bexec\s*\(|\bspawn\s*\(|dangerouslySetInnerHTML|innerHTML\s*=|child_process|\bpickle\.loads?\b|\bos\.system\b|\bsubprocess\.|\bunserialize\b/;
+  const DANGEROUS_SOURCES = /\breq\.body\b|\breq\.query\b|\breq\.params\b|\brequest\.form\b|\bparams\[|\bgetParameter\(|process\.env\[|process\.argv\[/;
+  const TAINT_FLOW = /\bpassword\s*=\s*(?!null|undefined|''|"")|\bsecret\s*=\s*(?!null|undefined|''|"")|\b(?:SELECT|INSERT|UPDATE|DELETE)\b.*\?/i;
+  const MAX_FILE_SIZE = 512 * 1024;
+
+  return stagedFiles.filter(file => {
+    try {
+      const stat = statSync(file);
+      if (stat.size > MAX_FILE_SIZE) return false;
+      const content = readFileSync(file, 'utf8');
+      return DANGEROUS_SINKS.test(content) || DANGEROUS_SOURCES.test(content) || TAINT_FLOW.test(content);
+    } catch {
+      return true;
+    }
+  });
+}
+

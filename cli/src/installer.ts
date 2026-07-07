@@ -143,71 +143,72 @@ function getDownloadUrl(tool: ToolName): { url: string; isZip: boolean; isRaw?: 
   const os = platform();
   const a = arch();
 
-  if (tool === 'gitleaks') {
-    let osStr = os === 'win32' ? 'windows' : os === 'darwin' ? 'darwin' : 'linux';
-    let archStr = a === 'x64' ? 'x64' : a === 'arm64' ? 'arm64' : 'x86';
-    const isZip = os === 'win32' || os === 'darwin'; // usually gitleaks uses zip for win/mac? Wait, they use tar.gz mostly, but zip is fine. Actually, let's use tar.gz for all except windows?
-    // Let's be precise with Gitleaks:
-    // gitleaks_8.21.2_windows_x64.zip
-    // gitleaks_8.21.2_linux_x64.tar.gz
-    // gitleaks_8.21.2_darwin_arm64.tar.gz
-    const ext = os === 'win32' ? 'zip' : 'tar.gz';
-    return {
-      url: `https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_${osStr}_${archStr}.${ext}`,
-      isZip: ext === 'zip',
-    };
+  switch (tool) {
+    case 'gitleaks': return getGitleaksUrl(os, a);
+    case 'trivy': return getTrivyUrl(os, a);
+    case 'trufflehog': return getTrufflehogUrl(os, a);
+    case 'osv-scanner': return getOsvScannerUrl(os, a);
+    case 'shellcheck': return getShellcheckUrl(os, a);
+    default:
+      throw new Error(`Unknown tool: ${tool}`);
   }
+}
 
-  if (tool === 'trivy') {
-    let osStr = os === 'win32' ? 'windows' : os === 'darwin' ? 'macOS' : 'Linux';
-    let archStr = a === 'x64' ? '64bit' : a === 'arm64' ? 'ARM64' : '32bit';
-    const ext = os === 'win32' ? 'zip' : 'tar.gz';
-    return {
-      url: `https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_${osStr}-${archStr}.${ext}`,
-      isZip: ext === 'zip',
-    };
+function getGitleaksUrl(os: string, a: string) {
+  let osStr = os === 'win32' ? 'windows' : os === 'darwin' ? 'darwin' : 'linux';
+  let archStr = a === 'x64' ? 'x64' : a === 'arm64' ? 'arm64' : 'x86';
+  const ext = os === 'win32' ? 'zip' : 'tar.gz';
+  return {
+    url: `https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_${osStr}_${archStr}.${ext}`,
+    isZip: ext === 'zip',
+  };
+}
+
+function getTrivyUrl(os: string, a: string) {
+  let osStr = os === 'win32' ? 'windows' : os === 'darwin' ? 'macOS' : 'Linux';
+  let archStr = a === 'x64' ? '64bit' : a === 'arm64' ? 'ARM64' : '32bit';
+  const ext = os === 'win32' ? 'zip' : 'tar.gz';
+  return {
+    url: `https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_${osStr}-${archStr}.${ext}`,
+    isZip: ext === 'zip',
+  };
+}
+
+function getTrufflehogUrl(os: string, a: string) {
+  let osStr = os === 'win32' ? 'windows' : os === 'darwin' ? 'darwin' : 'linux';
+  let archStr = a === 'x64' ? 'amd64' : a === 'arm64' ? 'arm64' : '386';
+  const ext = 'tar.gz';
+  return {
+    url: `https://github.com/trufflesecurity/trufflehog/releases/download/v${TRUFFLEHOG_VERSION}/trufflehog_${TRUFFLEHOG_VERSION}_${osStr}_${archStr}.${ext}`,
+    isZip: false,
+  };
+}
+
+function getOsvScannerUrl(os: string, a: string) {
+  let osStr = os === 'win32' ? 'windows' : os === 'darwin' ? 'darwin' : 'linux';
+  let archStr = a === 'x64' ? 'amd64' : a === 'arm64' ? 'arm64' : 'amd64';
+  const ext = os === 'win32' ? '.exe' : '';
+  return {
+    url: `https://github.com/google/osv-scanner/releases/download/v${OSV_SCANNER_VERSION}/osv-scanner_${osStr}_${archStr}${ext}`,
+    isZip: false,
+    isRaw: true,
+  };
+}
+
+function getShellcheckUrl(os: string, a: string) {
+  let osStr = os === 'win32' ? 'windows' : os === 'darwin' ? 'darwin' : 'linux';
+  let archStr = a === 'x64' ? 'x86_64' : a === 'arm64' ? 'aarch64' : 'x86_64';
+  const ext = os === 'win32' ? 'zip' : 'tar.gz';
+  let url = '';
+  if (os === 'win32') {
+     url = `https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.zip`;
+  } else {
+     url = `https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.${osStr}.${archStr}.${ext}`;
   }
-
-  if (tool === 'trufflehog') {
-    let osStr = os === 'win32' ? 'windows' : os === 'darwin' ? 'darwin' : 'linux';
-    let archStr = a === 'x64' ? 'amd64' : a === 'arm64' ? 'arm64' : '386';
-    const ext = 'tar.gz'; // Trufflehog uses tar.gz for all platforms
-    return {
-      url: `https://github.com/trufflesecurity/trufflehog/releases/download/v${TRUFFLEHOG_VERSION}/trufflehog_${TRUFFLEHOG_VERSION}_${osStr}_${archStr}.${ext}`,
-      isZip: false,
-    };
-  }
-
-  if (tool === 'osv-scanner') {
-    let osStr = os === 'win32' ? 'windows' : os === 'darwin' ? 'darwin' : 'linux';
-    let archStr = a === 'x64' ? 'amd64' : a === 'arm64' ? 'arm64' : 'amd64'; // fallback for x86
-    const ext = os === 'win32' ? '.exe' : '';
-    return {
-      url: `https://github.com/google/osv-scanner/releases/download/v${OSV_SCANNER_VERSION}/osv-scanner_${osStr}_${archStr}${ext}`,
-      isZip: false,
-      isRaw: true,
-    };
-  }
-
-  if (tool === 'shellcheck') {
-    let osStr = os === 'win32' ? 'windows' : os === 'darwin' ? 'darwin' : 'linux';
-    let archStr = a === 'x64' ? 'x86_64' : a === 'arm64' ? 'aarch64' : 'x86_64';
-    const ext = os === 'win32' ? 'zip' : 'tar.gz'; // For windows, koalaman hosts a zip
-    let url = '';
-    
-    // shellcheck windows releases are just zip files without arch
-    if (os === 'win32') {
-       url = `https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.zip`;
-    } else {
-       url = `https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.${osStr}.${archStr}.${ext}`;
-    }
-    return {
-      url,
-      isZip: ext === 'zip',
-    };
-  }
-
-  throw new Error(`Unknown tool: ${tool}`);
+  return {
+    url,
+    isZip: ext === 'zip',
+  };
 }
 
 function downloadFile(url: string, dest: string, onProgress?: (percent: number) => void): Promise<void> {

@@ -30,17 +30,7 @@ async function doCoreScan(config: Config, VERSION: string): Promise<void> {
   }
 
   if (config.ai && !config.aiProvider) {
-    const globalConfig = readGlobalConfig();
-    if (!globalConfig.aiProvider) {
-      if (isInteractive) console.log(chalk.cyan('  [ai] First time using --ai. Let\'s set up your provider!'));
-      await promptForAiConfig();
-      const updatedConfig = readGlobalConfig();
-      config.aiProvider = updatedConfig.aiProvider;
-      if (!config.aiModel && updatedConfig.aiModel) config.aiModel = updatedConfig.aiModel;
-    } else {
-      config.aiProvider = globalConfig.aiProvider;
-      if (!config.aiModel && globalConfig.aiModel) config.aiModel = globalConfig.aiModel;
-    }
+    await setupAiConfig(config, isInteractive);
   }
 
   // 1. Detect stack
@@ -95,42 +85,9 @@ async function doCoreScan(config: Config, VERSION: string): Promise<void> {
 
   // 3.5. Baseline logic
   if (config.generateBaseline) {
-    const { relative, isAbsolute } = await import('path');
-    const baselineFile = join(config.target, config.baseline ?? '.auditxignore');
-    const suppressions = findings.map(f => {
-      let relFile = f.file;
-      if (relFile && isAbsolute(relFile)) {
-        relFile = relative(config.target, relFile).replace(/\\/g, '/');
-      } else if (relFile) {
-        relFile = relFile.replace(/\\/g, '/');
-      }
-      return {
-        rule: f.rule,
-        file: relFile,
-        title: f.title
-      };
-    });
-    const baselineObj = {
-      version: 1,
-      suppressions
-    };
-    writeFileSync(baselineFile, JSON.stringify(baselineObj, null, 2), 'utf8');
-    
-    if (isInteractive) {
-      console.log(chalk.green(`\n  [+] Baseline generated with ${findings.length} findings: ${baselineFile}`));
-      console.log(chalk.dim(`      Future runs will ignore these existing findings unless they change.`));
-    }
-    process.exit(0);
+    await handleBaselineGeneration(config, findings, isInteractive);
   } else if (config.baseline) {
-    const baselineFile = join(config.target, config.baseline);
-    if (existsSync(baselineFile)) {
-      const beforeCount = findings.length;
-      findings = filterBaselines(findings, baselineFile);
-      const suppressedCount = beforeCount - findings.length;
-      if (isInteractive && suppressedCount > 0) {
-        console.log(chalk.dim(`\n  [i] Suppressed ${suppressedCount} findings using baseline.`));
-      }
-    }
+    findings = filterWithBaseline(config, findings, isInteractive);
   }
 
   // 4. Apply severity filter
@@ -150,58 +107,10 @@ async function doCoreScan(config: Config, VERSION: string): Promise<void> {
   };
 
   // 6. AI summary (optional)
-  let aiSummary: string | undefined;
-  if (config.ai) {
-    const aiSpinner = ora(`Analyzing findings with ${config.aiProvider || 'AI'}…`).start();
-    try {
-      aiSummary = await generateAiSummary(report, config.aiProvider, config.aiModel);
-      aiSpinner.succeed('AI analysis complete');
-    } catch (err) {
-      aiSpinner.fail(`AI analysis failed: ${String(err)}`);
-    }
-  }
+  const aiSummary = await handleAiSummary(config, report);
 
   // 7. Output
-  switch (config.output) {
-    case 'markdown': {
-      const md = formatMarkdown(report, aiSummary);
-      writeFileSync(config.outputFile, md, 'utf8');
-      console.log('');
-      console.log(chalk.green(`  [+] Report written to: ${chalk.bold(config.outputFile)}`));
-      printCiSummary(report);
-      break;
-    }
-
-    case 'json': {
-      const json = formatJson(report);
-      writeFileSync(config.outputFile.replace('.md', '.json'), json, 'utf8');
-      console.log(json);
-      break;
-    }
-
-    case 'terminal': {
-      printTerminalReport(report);
-      break;
-    }
-
-    case 'agent': {
-      const agentJson = formatAgent(report);
-      console.log(agentJson);
-      break;
-    }
-
-    case 'sarif': {
-      const sarif = formatSarif(report);
-      const outFile = config.outputFile.replace('.md', '.sarif');
-      writeFileSync(outFile, sarif, 'utf8');
-      if (isInteractive) {
-        console.log(chalk.green(`  [+] SARIF report written to: ${chalk.bold(outFile)}`));
-      } else {
-        console.log(sarif);
-      }
-      break;
-    }
-  }
+  handleOutput(config, report, aiSummary, isInteractive);
 
   // 8. --fix
   if (config.fix) {
@@ -314,3 +223,105 @@ export async function runScanCommand(opts: Record<string, any>, targetArg: strin
     await doCoreScan(config, VERSION);
   }
 }
+
+async function setupAiConfig(config: Config, isInteractive: boolean) {
+  const globalConfig = readGlobalConfig();
+  if (!globalConfig.aiProvider) {
+    if (isInteractive) console.log(chalk.cyan('  [ai] First time using --ai. Let\'s set up your provider!'));
+    await promptForAiConfig();
+    const updatedConfig = readGlobalConfig();
+    config.aiProvider = updatedConfig.aiProvider;
+    if (!config.aiModel && updatedConfig.aiModel) config.aiModel = updatedConfig.aiModel;
+  } else {
+    config.aiProvider = globalConfig.aiProvider;
+    if (!config.aiModel && globalConfig.aiModel) config.aiModel = globalConfig.aiModel;
+  }
+}
+
+async function handleBaselineGeneration(config: Config, findings: any[], isInteractive: boolean) {
+  const { relative, isAbsolute } = await import('path');
+  const baselineFile = join(config.target, config.baseline ?? '.auditxignore');
+  const suppressions = findings.map(f => {
+    let relFile = f.file;
+    if (relFile && isAbsolute(relFile)) {
+      relFile = relative(config.target, relFile).replace(/\\/g, '/');
+    } else if (relFile) {
+      relFile = relFile.replace(/\\/g, '/');
+    }
+    return { rule: f.rule, file: relFile, title: f.title };
+  });
+  const baselineObj = { version: 1, suppressions };
+  writeFileSync(baselineFile, JSON.stringify(baselineObj, null, 2), 'utf8');
+  
+  if (isInteractive) {
+    console.log(chalk.green(`\n  [+] Baseline generated with ${findings.length} findings: ${baselineFile}`));
+    console.log(chalk.dim(`      Future runs will ignore these existing findings unless they change.`));
+  }
+  process.exit(0);
+}
+
+function filterWithBaseline(config: Config, findings: any[], isInteractive: boolean) {
+  const baselineFile = join(config.target, config.baseline!);
+  if (existsSync(baselineFile)) {
+    const beforeCount = findings.length;
+    const filtered = filterBaselines(findings, baselineFile);
+    const suppressedCount = beforeCount - filtered.length;
+    if (isInteractive && suppressedCount > 0) {
+      console.log(chalk.dim(`\n  [i] Suppressed ${suppressedCount} findings using baseline.`));
+    }
+    return filtered;
+  }
+  return findings;
+}
+
+async function handleAiSummary(config: Config, report: any): Promise<string | undefined> {
+  if (!config.ai) return undefined;
+  const aiSpinner = ora(`Analyzing findings with ${config.aiProvider || 'AI'}…`).start();
+  try {
+    const summary = await generateAiSummary(report, config.aiProvider, config.aiModel);
+    aiSpinner.succeed('AI analysis complete');
+    return summary;
+  } catch (err) {
+    aiSpinner.fail(`AI analysis failed: ${String(err)}`);
+    return undefined;
+  }
+}
+
+function handleOutput(config: Config, report: any, aiSummary: string | undefined, isInteractive: boolean) {
+  switch (config.output) {
+    case 'markdown': {
+      const md = formatMarkdown(report, aiSummary);
+      writeFileSync(config.outputFile, md, 'utf8');
+      console.log('');
+      console.log(chalk.green(`  [+] Report written to: ${chalk.bold(config.outputFile)}`));
+      printCiSummary(report);
+      break;
+    }
+    case 'json': {
+      const json = formatJson(report);
+      writeFileSync(config.outputFile.replace('.md', '.json'), json, 'utf8');
+      console.log(json);
+      break;
+    }
+    case 'terminal': {
+      printTerminalReport(report);
+      break;
+    }
+    case 'agent': {
+      console.log(formatAgent(report));
+      break;
+    }
+    case 'sarif': {
+      const sarif = formatSarif(report);
+      const outFile = config.outputFile.replace('.md', '.sarif');
+      writeFileSync(outFile, sarif, 'utf8');
+      if (isInteractive) {
+        console.log(chalk.green(`  [+] SARIF report written to: ${chalk.bold(outFile)}`));
+      } else {
+        console.log(sarif);
+      }
+      break;
+    }
+  }
+}
+

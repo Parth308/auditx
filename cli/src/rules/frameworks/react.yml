@@ -99,8 +99,8 @@ rules:
       Sanitize HTML with DOMPurify before setting.
     severity: ERROR
     languages: [javascript, typescript]
-    pattern: "dangerouslySetInnerHTML={{ __html: $VAL }}"
-    pattern-not: "dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(...) }}"
+    pattern: "<$ELEM ... dangerouslySetInnerHTML={{ __html: $VAL }} ... />"
+    pattern-not: "<$ELEM ... dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(...) }} ... />"
 
   - id: ai-react-stale-interval-closure
     message: >
@@ -115,9 +115,13 @@ rules:
           ...
       - pattern: |
           useEffect(() => {
+            ...
             setInterval(() => {
-              ...$SET($STATE ...)...
+              ...
+              $SET(...)
+              ...
             }, ...)
+            ...
           }, ...)
 
   - id: ai-react-props-spreading-all

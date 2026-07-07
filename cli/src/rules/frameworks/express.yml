@@ -120,8 +120,8 @@ rules:
       causing disk exhaustion / DoS. Set limits: { fileSize: 5 * 1024 * 1024 }.
     severity: ERROR
     languages: [javascript, typescript]
-    pattern: multer({ dest: ... })
-    pattern-not: multer({ dest: ..., limits: ... })
+    pattern: "multer({ dest: ... })"
+    pattern-not: "multer({ dest: ..., limits: ... })"
 
   - id: ai-express-body-parser-no-limit
     message: >
@@ -131,7 +131,7 @@ rules:
     languages: [javascript, typescript]
     pattern-either:
       - pattern: express.json()
-      - pattern: express.urlencoded({ extended: true })
+      - pattern: "express.urlencoded({ extended: true })"
 
   - id: ai-bcrypt-low-salt
     message: >
