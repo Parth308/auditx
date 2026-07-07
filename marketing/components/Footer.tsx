@@ -6,7 +6,7 @@ const LINKS = [
   { label: 'GitHub',          href: 'https://github.com/parth308/auditx' },
   { label: 'npm',             href: 'https://www.npmjs.com/package/auditx' },
   { label: 'Issues',          href: 'https://github.com/parth308/auditx/issues' },
-  { label: 'MIT License',     href: 'https://github.com/parth308/auditx/blob/main/LICENSE' },
+  { label: 'MIT License',     href: 'https://github.com/parth308/auditx/blob/master/LICENSE' },
   { label: 'README',          href: 'https://github.com/parth308/auditx#readme' },
   { label: 'parthmongia.dev', href: 'https://parthmongia.dev' },
 ];
