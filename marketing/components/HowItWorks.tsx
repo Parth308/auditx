@@ -272,12 +272,13 @@ export default function HowItWorks() {
       </ScrollReveal>
 
       {/* Step indicator strip */}
-      <div style={{ display: 'flex', borderBottom: HR }}>
+      <div className="hide-scrollbar" style={{ display: 'flex', overflowX: 'auto', borderBottom: HR }}>
         {STEPS.map((s, i) => (
           <div
             key={s.num}
             style={{
               flex: 1,
+              minWidth: 'max-content',
               padding: '10px 16px',
               borderRight: i < STEPS.length - 1 ? HR : 'none',
               display: 'flex',
