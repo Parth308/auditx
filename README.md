@@ -138,10 +138,11 @@ auditx ./src
 
 ```bash
 # Output
-auditx . --output report.md        # write to file (default: audit-report.md)
+auditx . --output-file report.md   # write to file (default: audit-report.md)
 auditx . --output json             # machine-readable JSON
 auditx . --output agent            # minimal single-line JSON for AI agents
 auditx . --output terminal         # pretty print only, no file
+auditx . --sbom                    # generate a CycloneDX SBOM (sbom.json)
 
 # Filtering
 auditx . --severity high           # only show: critical | high | medium | low
@@ -429,7 +430,7 @@ rules:
 
 ## AI Agent Integration
 
-`auditx` is built as a **tool node in AI agent pipelines**. Use the `--output agent` flag to get a deterministic, token-cheap, single-line JSON string optimized specifically for LLMs. This suppresses all interactive CLI output.
+`auditx` is built as a **tool node in AI agent pipelines**. Use the `--output agent` flag to get a deterministic, token-cheap, single-line JSON string optimized specifically for LLMs. This suppresses all interactive CLI output. You can also generate AI assistant prompt files by running `npx auditx init-agent`.
 
 ```
 ┌─────────────────────────────────────────────────────┐
