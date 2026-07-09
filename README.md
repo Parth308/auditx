@@ -434,7 +434,44 @@ rules:
 
 ## AI Agent Integration
 
-`auditx` is built as a **tool node in AI agent pipelines**. Use the `--output agent` flag to get a deterministic, token-cheap, single-line JSON string optimized specifically for LLMs. This suppresses all interactive CLI output. You can also generate AI assistant prompt files by running `npx auditx init-agent`.
+`auditx` is built as a **tool node in AI agent pipelines** and an **AI-native auditing guardrail**. It provides direct integrations for all major AI coding agents.
+
+### 1. Zero-Config Project Rules (`npx auditx init-agent`)
+Instruct any AI agent (Claude Code, Antigravity, Cursor, GitHub Copilot) working in your project to automatically run `auditx` scans on every edit. Run the following command in your repository root:
+```bash
+npx auditx init-agent
+```
+This generates targeted instruction files so the agents will automatically verify security and quality:
+* **`AGENTS.md`**: For general agentic frameworks (Antigravity, Aider, etc.)
+* **`.cursor/rules/auditx.mdc`**: For Cursor's Agent rules (always active)
+* **`.cursorrules`**: For Cursor's legacy rules
+* **`.github/copilot-instructions.md`**: For GitHub Copilot Chat
+* **`.claude/skills/auditx/SKILL.md`**: Claude Code custom skill prompt
+
+### 2. Global MCP Tool for AI Clients
+Run `auditx` as a Model Context Protocol (MCP) server to give your AI agent client global capabilities to audit files.
+
+* **Claude Code CLI:**
+  ```bash
+  claude mcp add auditx npx -y --package auditx auditx-mcp
+  ```
+* **Cursor / Windsurf:** Add a new MCP server in Settings:
+  * Type: `command`
+  * Command: `npx -y --package auditx auditx-mcp`
+* **Claude Desktop:** Add the following configuration block to your MCP config (`claude_desktop_config.json`):
+  ```json
+  {
+    "mcpServers": {
+      "auditx": {
+        "command": "npx",
+        "args": ["-y", "--package", "auditx", "auditx-mcp"]
+      }
+    }
+  }
+  ```
+
+### 3. Agent Pipeline Output Mode (`--output agent`)
+Use the `--output agent` flag to get a deterministic, token-cheap, single-line JSON string optimized specifically for LLMs. This suppresses all interactive CLI output, enabling AI agents to programmatically run, parse, and apply autofixes in an execution loop.
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -477,19 +514,6 @@ if report["exitCode"] != 0:
 The `--ai` flag calls your configured LLM provider and appends a plain-English risk analysis block directly to the `.md` report (for human consumption).
 
 An MCP server is also available which provides an `audit_codebase` tool for Claude and other clients. See [MCP.md](MCP.md) for full details.
-
-To add `auditx` to your Claude Desktop or Claude Code configuration, add the following to your MCP settings file (e.g. `claude_desktop_config.json`):
-
-```json
-{
-  "mcpServers": {
-    "auditx": {
-      "command": "npx",
-      "args": ["-y", "--package", "auditx", "auditx-mcp"]
-    }
-  }
-}
-```
 
 ---
 
