@@ -138,8 +138,9 @@ auditx ./src
 
 ```bash
 # Output
-auditx . --output report.md        # write to file (default: audit-report.md)
+auditx . --output-file report.md   # write to file (default: audit-report.md)
 auditx . --output json             # machine-readable JSON
+auditx . --output html             # interactive obsidian-styled HTML dashboard report (audit-report.html)
 auditx . --output agent            # minimal single-line JSON for AI agents
 auditx . --output terminal         # pretty print only, no file
 
