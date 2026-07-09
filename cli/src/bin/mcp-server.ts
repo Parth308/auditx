@@ -88,7 +88,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       ]) as Awaited<typeof scanPromise>;
       
       const totalDuration = Date.now() - scanStart;
-      let findings = aggregate(results);
+      let findings = aggregate(results, config.target);
       findings = filterBySeverity(findings, config.severity);
 
       const report = {

@@ -31,6 +31,7 @@ const CAT_LABEL: Record<Category, string> = {
   AI_CODE: 'AI Code',
   GIT_HEALTH: 'Git Health',
   TYPE_SAFETY: 'Type Safety',
+  SUPPLY_CHAIN: 'Supply Chain',
   COMPOUND: 'Compound',
 };
 

@@ -45,7 +45,7 @@ program
   )
   .option(
     '--skip <categories>',
-    'Comma-separated list of categories to skip: secrets,deps,sast,deadcode,iac,patterns,duplication,complexity,dephealth,license,aicode,githealth,typesafety',
+    'Comma-separated list of categories to skip: secrets,deps,sast,deadcode,iac,patterns,duplication,complexity,dephealth,license,aicode,githealth,typesafety,supplychain',
     '',
   )
   .option('--ci', 'Exit with code 1 if any findings exist (for CI pipelines)')
