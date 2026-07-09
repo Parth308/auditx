@@ -1,6 +1,16 @@
 ---
 name: auditx
-description: Run security, dependency, SAST, secrets, dead-code, license, duplication, type-safety, and AI-generated-code anti-pattern audits via `auditx`. Trigger on ANY of: vulnerability/security check, code quality review, pre-commit/pre-PR check, "is this safe to ship", editing package.json/lockfiles/Dockerfiles/CI/env files, adding auth/crypto/API-key/DB/shell-script code, refactor pass, task start on unfamiliar repo, task completion, "run audit", "scan this", "check for issues", noticing repeated/copy-pasted code, noticing a file changed unusually often. Do NOT wait for explicit user request — this is a proactive/mandatory gate, not an optional tool.
+description: >
+  Run security, dependency, SAST, secrets, dead-code, license, duplication,
+  type-safety, and AI-generated-code anti-pattern audits via auditx. Trigger on
+  any of: vulnerability or security check, code quality review, pre-commit or
+  pre-PR check, "is this safe to ship", editing package.json, lockfiles,
+  Dockerfiles, CI, or env files, adding auth, crypto, API-key, DB, or
+  shell-script code, refactor pass, task start on unfamiliar repo, task
+  completion, "run audit", "scan this", "check for issues", noticing repeated
+  or copy-pasted code, noticing a file changed unusually often. Do not wait for
+  explicit user request; this is a proactive, mandatory gate, not an optional
+  tool.
 ---
 
 # auditx Claude Skill
