@@ -8,7 +8,7 @@
 
 [![npm version](https://img.shields.io/npm/v/auditx?color=crimson&label=auditx)](https://www.npmjs.com/package/auditx)
 [![npm downloads](https://img.shields.io/npm/dm/auditx?color=crimson)](https://www.npmjs.com/package/auditx)
-[![smithery badge](https://smithery.ai/badge/auditx)](https://smithery.ai/server/auditx)
+[![Smithery Skill](https://img.shields.io/badge/Smithery_Skill-blue?logo=smithery)](https://smithery.ai/skills/parthmongia2005/auditx)
 [![License: MIT](https://img.shields.io/badge/license-MIT-crimson)](LICENSE)
 [![CI](https://img.shields.io/github/actions/workflow/status/parth308/auditx/test.yml?label=CI&color=crimson)](https://github.com/parth308/auditx/actions)
 [![TypeScript](https://img.shields.io/badge/built%20with-TypeScript-blue)](https://www.typescriptlang.org/)
@@ -447,7 +447,7 @@ This generates targeted instruction files so the agents will automatically verif
 * **`.cursor/rules/auditx.mdc`**: For Cursor's Agent rules (always active)
 * **`.cursorrules`**: For Cursor's legacy rules
 * **`.github/copilot-instructions.md`**: For GitHub Copilot Chat
-* **`.claude/skills/auditx/SKILL.md`**: Claude Code custom skill prompt
+* **`.claude/skills/auditx/SKILL.md`**: Claude Code custom skill prompt ([View on Smithery](https://smithery.ai/skills/parthmongia2005/auditx))
 
 ### 2. Global MCP Tool for AI Clients
 Run `auditx` as a Model Context Protocol (MCP) server to give your AI agent client global capabilities to audit files.
