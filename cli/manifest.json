@@ -1,0 +1,27 @@
+{
+  "manifest_version": "0.4",
+  "name": "auditx",
+  "display_name": "auditx",
+  "version": "0.1.35",
+  "description": "One command. Every vulnerability, dead code, and AI-generated code anti-pattern. JSON output built for AI coding agents to parse and self-fix.",
+  "author": {
+    "name": "Parth308",
+    "email": "parthmongia2005@gmail.com",
+    "url": "https://parthmongia.dev"
+  },
+  "homepage": "https://auditx-cli.vercel.app/",
+  "server": {
+    "type": "node",
+    "entry_point": "dist/mcp-server.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/mcp-server.js"]
+    }
+  },
+  "tools": [
+    {
+      "name": "audit_codebase",
+      "description": "Runs a complete security, quality, SAST, dependency, and AI-pattern audit on any codebase folder, returning structured findings that AI agents can parse and immediately use to self-fix code."
+    }
+  ]
+}
