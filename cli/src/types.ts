@@ -101,7 +101,7 @@ export interface Config {
   /** Target directory to scan */
   target: string;
   /** Output mode */
-  output: 'markdown' | 'json' | 'terminal' | 'agent' | 'sarif';
+  output: 'markdown' | 'json' | 'terminal' | 'agent' | 'sarif' | 'html';
   /** Output file path (for markdown mode) */
   outputFile: string;
   /** Minimum severity to include in results */
