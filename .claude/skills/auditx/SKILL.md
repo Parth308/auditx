@@ -1,71 +1,110 @@
 ---
 name: auditx
-description: Run security, dependency, SAST, secrets, dead-code, and AI-generated-code anti-pattern audits via `auditx`. Trigger on ANY of: vulnerability/security check, code quality review, pre-commit/pre-PR check, "is this safe to ship", editing package.json/lockfiles, editing Dockerfiles/CI/env files, adding auth/crypto/API-key/DB code, refactor pass, task start on unfamiliar repo, task completion, "run audit", "scan this", "check for issues". Do NOT wait for explicit user request — this is a proactive/mandatory gate, not an optional tool.
+description: Run security, dependency, SAST, secrets, dead-code, license, duplication, type-safety, and AI-generated-code anti-pattern audits via `auditx`. Trigger on ANY of: vulnerability/security check, code quality review, pre-commit/pre-PR check, "is this safe to ship", editing package.json/lockfiles/Dockerfiles/CI/env files, adding auth/crypto/API-key/DB/shell-script code, refactor pass, task start on unfamiliar repo, task completion, "run audit", "scan this", "check for issues", noticing repeated/copy-pasted code, noticing a file changed unusually often. Do NOT wait for explicit user request — this is a proactive/mandatory gate, not an optional tool.
 ---
 
 # auditx Claude Skill
 
-`auditx` = automated scanner: security vulns, dependency CVEs, SAST, secrets leaks, dead code, AI-generated-code anti-patterns (44-rule custom Semgrep ruleset). 18 parallel scanners (Semgrep, Trivy, Gitleaks, Knip, jscpd, lizard, etc).
+`auditx` = one-command scanner replacing 6+ separate tools: Semgrep, Trivy, Gitleaks+Trufflehog, Knip, jscpd, depcheck, license-checker, tsc, ESLint+CSpell, git-log hotspot analysis. 100% local, nothing leaves the machine. Auto-detects stack, only runs relevant scanners.
 
 ## Trigger Matrix (when to run, no exceptions)
 
 | Trigger | Action | Blocking? |
 |---|---|---|
 | Task start, unfamiliar/inherited code | Baseline scan before touching files | No — informational |
-| After editing any `.ts/.js/.py/.go/...` source | Scan changed files' dir | No — fix loop |
-| After editing `package.json`, lockfile, `requirements.txt`, etc | Scan (DEPS category) | Yes |
-| After adding/editing Dockerfile, `.env*`, CI YAML, secrets-adjacent config | Scan (SECRETS category) | Yes — always |
+| After editing any source file | Scan changed dir | No — fix loop |
+| After editing package.json/lockfile/requirements.txt/Cargo.toml | Scan (DEPS) | Yes |
+| After adding/editing Dockerfile, `.env*`, CI YAML, shell scripts | Scan (SECRETS + IaC + SAST) | Yes — always |
+| Noticing near-identical code blocks across files | Scan (DUPLICATION) | No — flag to user |
 | Before marking task complete | Full scan, must be `ok:true` | **Yes, hard gate** |
 | Before `git commit` / opening PR | Full scan, must be `ok:true` | **Yes, hard gate** |
 | User asks "is this secure/safe/clean" | Full scan + human report | Yes |
 
-Rule: never say "done" / commit / open PR while last scan `ok:false`. No silent skip — if you skip a mandated scan, say so explicitly and why.
+Rule: never say "done" / commit / open PR while last scan `ok:false`. If a mandated scan is skipped, say so and why.
 
-## Commands
+## Commands (verified against actual CLI)
 
-**Agent loop (default — use this 95% of time):**
+**Agent loop — default, 95% of time:**
 ```bash
 npx auditx . --output agent --ci
 ```
-Returns single-line JSON: `{ok, exitCode, counts, files, findings}`.
-- `ok:false` OR `exitCode:1` → critical/high findings exist → task NOT complete.
-- Parse JSON → group `findings[]` by `.file` → fix top-to-bottom by severity (critical > high > medium > low) → re-run same command → repeat until `ok:true`.
-- Never hand-summarize raw scanner output to the user; parse the JSON programmatically.
+Single-line JSON: `{meta, summary, findings, findingsByFile, exitCode}`.
+- `exitCode: 1` → critical/high exist → task NOT complete.
+- Iterate `findingsByFile` (already grouped, don't re-group `findings[]` yourself) → fix critical → high → medium → low → re-run same command → repeat until `exitCode: 0`.
+- Never hand-summarize raw scanner output; parse JSON programmatically.
 
-**Human reports (only when user wants to read/share, not for agent looping):**
+**Auto-remediation (try before manual fix, when finding is `fixable`):**
+```bash
+npx auditx . --fix
+```
+Applies eslint --fix-class fixes automatically. Re-scan after to confirm resolved — auto-fix isn't guaranteed complete for every rule.
+
+**Human reports (only when user wants to read/share):**
 ```bash
 npx auditx .                    # audit-report.md
-npx auditx . --output html      # audit-report.html, interactive dashboard
+npx auditx . --output html      # interactive dashboard, best for sharing w/ non-technical stakeholders
+npx auditx . --ai               # appends LLM-written risk summary + fix priority to .md report
 ```
 
-**Scope narrowing (large repo / speed):**
+**Scope + filtering:**
 ```bash
 npx auditx <path-or-glob> --output agent --ci
+npx auditx . --severity high              # only critical+high — use for fast pre-commit gate
+npx auditx . --skip secrets --skip deps   # narrow to just SAST/AI_CODE/etc when iterating on one category
 ```
-Use on just-touched dir/files when full-repo scan is slow; still run full-repo scan before final completion gate.
+
+**Watch mode** (long-running task, many edits expected):
+```bash
+npx auditx . --watch
+```
+Use instead of manually re-running after every single edit during a big refactor session.
 
 ## Fix Playbook by Category
 
 | Category | Fix | Never |
 |---|---|---|
-| `SECRETS` | Delete hardcoded key → move to `.env` / secret manager → confirm `.gitignore` covers it → **rotate the compromised credential** (not just remove from code — assume it's compromised the moment it was committed) | Comment it out; leave rotation "for later" |
-| `DEPS` | `npm install pkg@latest` or apply `.fix` field from finding exactly | Pin to a version still in CVE range to "make it pass" |
-| `SAST` | Open file:line, read rule message, refactor root cause (await floating promises, drop unsafe `any`, sanitize input, fix injection vector) | Silence via inline `// nosemgrep` without understanding the rule |
-| `DEAD_CODE` | Remove unused export/import; if intentionally public API, confirm before deleting | Auto-delete exported symbols without checking external usage |
-| `AI_PATTERN` | These are the 44-rule custom set targeting AI-generated code smells (over-broad try/catch, phantom config, hallucinated APIs, inconsistent error handling). Read the specific rule message — fix is pattern-specific | Assume it's a false positive by default — AI-pattern rules exist because these bugs are common in AI-written code specifically |
+| `SECRETS` | Delete hardcoded key → `.env`/secret manager → confirm `.gitignore` → **rotate the credential** (check `inGitHistory` field — if `true`, rotation is non-negotiable even after deletion, git history still has it) | Comment out; defer rotation |
+| `DEPS` | `npm install pkg@latest` or exact `.fix` field | Pin inside CVE range to pass check |
+| `SAST` | Read rule message, fix root cause (injection, floating promise, unsafe `any`) | Blind `// nosemgrep` suppress |
+| `AI_CODE` | 100+ AST rules for AI-agent-written flaws: silent catches, React state mutation, framework-specific bugs (Next/Express/Django/Go/Python). Treat as high-signal — these are exactly the bug class agents (including you) tend to introduce | Assume false positive by default |
+| `DUPLICATION` | Extract to shared function/module, cite both locations from finding | Ignore — duplication compounds into divergent-bugfix risk over time |
+| `DEP_HEALTH` | Remove unused packages from package.json | Leave "just in case" |
+| `LICENSE` | Flag GPL/AGPL deps to user before replacing — may be a legal call, not a code call | Silently swap without confirming with user if package is load-bearing |
+| `TYPE_SAFETY` | Fix `tsc` errors at root — add real types | Blanket `// @ts-ignore` |
+| `GIT_HEALTH` | File flagged 50+ modifications = architectural churn signal → mention to user as refactor candidate, don't fix unprompted | Treat as a blocking finding — it's a signal, not a bug |
+| `IaC` | Dockerfile/k8s/Terraform misconfig — fix per Trivy config message | Ignore because "it's infra not app code" |
 
 ## Baseline / False Positives
 
-Only after genuine verification (not to silence noise):
 ```bash
 npx auditx . --generate-baseline
 ```
-Appends finding signature to `.auditxignore`. Before running this, state in your reasoning why the finding is a legacy-accepted risk or verified false positive — never baseline a finding just to unblock a completion gate.
+Writes `.auditxignore`, signature-based (no line numbers — survives unrelated edits above the finding). State the accepted-risk reasoning before running. Never baseline just to unblock a gate.
+
+Manual `.auditxignore` entries also support scoping by rule only, file only, or rule+file — use narrowest scope that fits (rule+file > rule-only, to avoid accidentally suppressing a rule repo-wide).
+
+## Project-Level Setup (one-time, worth doing on new repos)
+
+```bash
+npx auditx init-agent     # generates AGENTS.md / .cursorrules / copilot-instructions.md — makes non-Claude agents follow same gate
+npx auditx init-rule      # scaffolds auditx.yml for repo-specific Semgrep rules (banned imports, naming, custom XSS patterns)
+npx auditx hook install   # installs git pre-commit/pre-push hooks — auditx enforced even outside agent sessions
+```
+If the repo lacks these and you're doing meaningful work in it, suggest running them once — turns the gate from "Claude remembers to do this" into "impossible to skip."
+
+## MCP Mode (if user has Claude Code / Desktop, not this chat)
+
+```bash
+claude mcp add auditx npx -y --package auditx auditx-mcp
+```
+Gives `audit_codebase` as a first-class tool call instead of shelling out — mention if user is working outside this environment and wants tighter integration.
 
 ## Failure Modes to Avoid
 
-- Running `--output html`/markdown mid-loop and eyeballing it → slow, unstructured. Use `--output agent --ci` for all iterative work.
-- Treating `ok:false` as advisory → it's a hard gate on completion/commit/PR.
-- Fixing findings out of severity order → always critical/high first, they're likeliest to block merge/CI anyway.
-- Baselining instead of fixing → baseline is for accepted risk, not laziness.
-- Forgetting DEPS/SECRETS triggers on non-source-file edits (Dockerfile, CI config, lockfiles) — these are audit triggers too, not just `.ts`/`.py` edits.
+- Using `--output html`/markdown mid-loop → slow, unstructured. Agent JSON only for iteration.
+- Treating exit 0 as "no more work" when medium/low findings remain unaddressed and user asked for thorough cleanup — `ok:true`/exit 0 only guarantees no critical/high, not zero findings.
+- Fixing out of severity order.
+- Baselining instead of fixing.
+- Missing DEPS/SECRETS triggers on non-source edits (Dockerfile, CI config, lockfiles).
+- Running `--fix` and assuming it fully resolved a finding without re-scanning to verify.
+- Forgetting `--ai` exists when user wants a plain-English executive summary instead of raw findings.
