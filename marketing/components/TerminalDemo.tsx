@@ -99,7 +99,7 @@ export default function TerminalDemo() {
       }}>
         <span>tab switch panel</span>
         <span>ctrl-c exit</span>
-        <span>--output agent | json | markdown</span>
+        <span>--output agent | json | markdown | html</span>
       </div>
     </div>
   );

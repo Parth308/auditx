@@ -89,6 +89,33 @@ const JSON_CONTENT = `{
   ]
 }`;
 
+const HTML_CONTENT = `<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <title>auditx Security Report</title>
+  <!-- Beautiful, interactive Obsidian-styled Dashboard -->
+  <style>
+    :root {
+      --color-canvas:     #080808; /* Deepest black */
+      --color-surface:    #121110; /* obsidian */
+      --color-accent:     #ea580c; /* Glowing orange */
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>auditx</h1>
+    <p>Automated Security & Code Quality Report</p>
+  </header>
+  <main>
+    <!-- Interactive, responsive dark/light dashboard -->
+    <!-- Text-based live search & category checklist filters -->
+    <!-- Copyable fix suggestions with clipboard integration -->
+  </main>
+</body>
+</html>`;
+
 const TERMINAL_LINES = [
   { text: '  ┌──────────────┬──────────┬────────┬────────┬──────┐', color: 'var(--color-ash)' },
   { text: '  │ Category     │ Critical │  High  │ Medium │  Low │', color: 'var(--color-mute)' },
@@ -111,10 +138,11 @@ const TERMINAL_LINES = [
   { text: '  Report written to: audit-report.md', color: 'var(--color-ok)' },
 ];
 
-const TABS = ['audit-report.md', 'audit-report.json', 'terminal'] as const;
+const TABS = ['audit-report.html', 'audit-report.md', 'audit-report.json', 'terminal'] as const;
 type Tab = typeof TABS[number];
 
 const COPY_CONTENT: Record<Tab, string> = {
+  'audit-report.html': HTML_CONTENT,
   'audit-report.md':   MD_CONTENT,
   'audit-report.json': JSON_CONTENT,
   'terminal':          TERMINAL_LINES.map(l => l.text).join('\n'),
@@ -257,6 +285,15 @@ export default function ReportPreview() {
                       }} />
                     ))
                   }
+                </pre>
+              </div>
+            )}
+
+            {/* HTML tab */}
+            {active === 'audit-report.html' && (
+              <div className="scroll-x" style={{ padding: '24px 28px' }}>
+                <pre style={{ fontFamily: 'var(--font-mono)', fontSize: 13, lineHeight: 1.85, color: 'var(--color-ink-light)', whiteSpace: 'pre', margin: 0 }}>
+                  {HTML_CONTENT}
                 </pre>
               </div>
             )}

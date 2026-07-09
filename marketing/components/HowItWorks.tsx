@@ -254,8 +254,8 @@ const STEPS = [
   {
     num: '04',
     tag: 'OUTPUT',
-    label: 'Four modes, one flag',
-    detail: 'Terminal for humans. Markdown for PR comments. JSON for CI dashboards. Agent mode is a single-line JSON optimized for context-window token efficiency.',
+    label: 'Five modes, one flag',
+    detail: 'Terminal for humans. Markdown for PR comments. HTML for interactive dashboards. JSON for CI dashboards. Agent mode is a single-line JSON optimized for context-window token efficiency.',
     Visual: OutputAnimation,
   },
 ];

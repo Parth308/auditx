@@ -37,7 +37,7 @@ The output is a single-line JSON string with the following schema:
 ```
 
 ### Flags
-- `--output agent`: Returns machine-parseable JSON output.
+- `--output agent | json | markdown | html`: Configures the report format. `html` generates an interactive obsidian-styled local dashboard.
 - `--ci`: Exits with code `1` if there are critical/high vulnerabilities, and code `0` if it's clean.
 - `--severity <level>`: Minimum severity to include (e.g. `critical`, `high`, `medium`, `low`, `info`).
 - `--skip <categories>`: Comma-separated list of categories to skip (e.g. `secrets`, `deps`, `sast`).
