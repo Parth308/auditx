@@ -9,7 +9,7 @@
 [![npm version](https://img.shields.io/npm/v/auditx?color=crimson&label=auditx)](https://www.npmjs.com/package/auditx)
 [![npm downloads](https://img.shields.io/npm/dm/auditx?color=crimson)](https://www.npmjs.com/package/auditx)
 [![Smithery Skill](https://img.shields.io/badge/Smithery_Skill-blue?logo=smithery)](https://smithery.ai/skills/parthmongia2005/auditx)
-[![License: MIT](https://img.shields.io/badge/license-MIT-crimson)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-crimson.svg)](https://opensource.org/licenses/Apache-2.0)
 [![CI](https://img.shields.io/github/actions/workflow/status/parth308/auditx/test.yml?label=CI&color=crimson)](https://github.com/parth308/auditx/actions)
 [![TypeScript](https://img.shields.io/badge/built%20with-TypeScript-blue)](https://www.typescriptlang.org/)
 
@@ -678,7 +678,7 @@ export async function run(targetPath: string): Promise<Finding[]> {
 
 ## License
 
-MIT © [Parth Mongia](https://parthmongia.dev) ([GitHub](https://github.com/parth308))
+Apache 2.0 © [Parth Mongia](https://parthmongia.dev) ([GitHub](https://github.com/parth308))
 
 ---
 
