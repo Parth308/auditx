@@ -30,7 +30,7 @@ program
   .argument('[target]', 'Directory to scan, or "init-agent" to generate AI files', '.')
   .option(
     '-o, --output <mode>',
-    'Output mode: markdown (default), json, terminal, agent, sarif',
+    'Output mode: markdown (default), json, terminal, agent, sarif, html',
     'markdown',
   )
   .option(

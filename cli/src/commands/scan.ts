@@ -11,6 +11,7 @@ import { formatMarkdown } from '../formatters/markdown.js';
 import { formatJson } from '../formatters/json.js';
 import { formatAgent } from '../formatters/agent.js';
 import { formatSarif } from '../formatters/sarif.js';
+import { formatHtml } from '../formatters/html.js';
 import { printTerminalReport, printCiSummary, printScannerResult } from '../formatters/terminal.js';
 import { generateAiSummary } from '../ai.js';
 import { promptForAiConfig, readGlobalConfig } from '../config.js';
@@ -320,6 +321,17 @@ function handleOutput(config: Config, report: any, aiSummary: string | undefined
       } else {
         console.log(sarif);
       }
+      break;
+    }
+    case 'html': {
+      const html = formatHtml(report, aiSummary);
+      const outFile = config.outputFile.endsWith('.md') 
+        ? config.outputFile.replace(/\.md$/, '.html')
+        : `${config.outputFile}.html`;
+      writeFileSync(outFile, html, 'utf8');
+      console.log('');
+      console.log(chalk.green(`  [+] HTML report written to: ${chalk.bold(outFile)}`));
+      printCiSummary(report);
       break;
     }
   }
