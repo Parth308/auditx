@@ -17,9 +17,10 @@ import { runGitHealth } from './health/githealth.js';
 import { runLizard } from './quality/lizard.js';
 import { runAiPatterns } from './ai/aipatterns.js';
 import { runIaC } from './security/iac.js';
+import { runSupplychain } from './security/supplychain.js';
 import { Orchestrator, type TaskCost } from './orchestrator.js';
 
-type RunnerName = 'secrets' | 'deps' | 'sast' | 'deadcode' | 'iac' | 'patterns' | 'duplication' | 'complexity' | 'dephealth' | 'license' | 'aicode' | 'githealth' | 'typesafety';
+type RunnerName = 'secrets' | 'deps' | 'sast' | 'deadcode' | 'iac' | 'patterns' | 'duplication' | 'complexity' | 'dephealth' | 'license' | 'aicode' | 'githealth' | 'typesafety' | 'supplychain';
 
 interface RunnerDef {
   name: RunnerName;
@@ -157,6 +158,13 @@ const RUNNERS: RunnerDef[] = [
     cost: 2,
     run: runCspell,
     isApplicable: () => true,
+  },
+  {
+    name: 'supplychain',
+    label: 'supplychain (malware heuristics)',
+    cost: 2,
+    run: runSupplychain,
+    isApplicable: (s) => s.hasNodeJs,
   },
 ];
 

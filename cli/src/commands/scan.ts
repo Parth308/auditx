@@ -81,7 +81,7 @@ async function doCoreScan(config: Config, VERSION: string): Promise<void> {
   const totalDuration = Date.now() - scanStart;
 
   // 3. Aggregate findings
-  let findings = aggregate(results);
+  let findings = aggregate(results, config.target);
 
   // 3.5. Baseline logic
   if (config.generateBaseline) {

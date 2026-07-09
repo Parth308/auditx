@@ -2,6 +2,7 @@ import { createHash } from 'crypto';
 import { existsSync, readFileSync } from 'fs';
 import type { Finding, ScanResult, Severity, SEVERITY_ORDER, BaselineFile } from './types.js';
 import { SEVERITY_ORDER as ORDER } from './types.js';
+import { ReachabilityEngine } from './reachability.js';
 
 /**
  * Generates a stable, deterministic 8-char hex ID from a finding's fingerprint.
@@ -19,7 +20,7 @@ function deterministicId(prefix: string, rule: string, file: string, line: strin
  * 2. Deduplicates by (file + line + rule) fingerprint
  * 3. Sorts by severity (critical → high → medium → low → info)
  */
-export function aggregate(results: ScanResult[]): Finding[] {
+export function aggregate(results: ScanResult[], targetDir: string): Finding[] {
   const seen = new Set<string>();
   const merged: Finding[] = [];
 
@@ -33,6 +34,22 @@ export function aggregate(results: ScanResult[]): Finding[] {
       if (seen.has(key)) continue;
       seen.add(key);
       merged.push(finding);
+    }
+  }
+
+  // Reachability Analysis
+  if (targetDir) {
+    const reachability = new ReachabilityEngine(targetDir);
+    for (const finding of merged) {
+      if (finding.category === 'DEPS' && finding.packageName) {
+        if (!reachability.isReachable(finding.packageName)) {
+          finding.severity = 'info';
+          if (!finding.title.startsWith('[UNREACHABLE]')) {
+            finding.title = `[UNREACHABLE] ${finding.title}`;
+            finding.description = `[UNREACHABLE] This dependency is not directly imported in the source code. ${finding.description || ''}`;
+          }
+        }
+      }
     }
   }
 

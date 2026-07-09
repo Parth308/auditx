@@ -183,6 +183,7 @@ auditx . --baseline custom.json    # use custom file instead of .auditxignore
 | `SAST` | [Semgrep](https://github.com/semgrep/semgrep) + [Shellcheck](https://github.com/koalaman/shellcheck) | SQL injection, XSS, eval usage, and unquoted variable bugs in `.sh` bash scripts |
 | `AI_CODE` | `aipatterns` (100+ AST rules) | AI-generated anti-patterns & flaws (silent catches, React state mutation, NextJS/Express/Django/Go/Python bugs) |
 | `DEAD_CODE` | [Knip](https://github.com/webpro-nl/knip) | Unused exports, unused imports, unused dependencies |
+| `COMPLEXITY` | [Lizard](https://github.com/terryyin/lizard) | Cyclomatic complexity, function length, and deeply nested code blocks |
 | `IaC` | [Trivy](https://github.com/aquasecurity/trivy) config | Dockerfile misconfig, k8s insecure defaults, Terraform issues |
 | `PATTERNS` | ESLint + [CSpell](https://cspell.org/) | Prototype pollution, unsafe regex, and misspelled codebase variables/strings |
 | `DUPLICATION` | [jscpd](https://github.com/kucherenko/jscpd) | Copy-pasted code blocks and exact clones across multiple files (polyglot) |
@@ -190,6 +191,8 @@ auditx . --baseline custom.json    # use custom file instead of .auditxignore
 | `LICENSE` | [license-checker](https://github.com/davglass/license-checker) | Restrictive licenses (GPL/AGPL) that pose a legal risk |
 | `TYPE_SAFETY` | `tsc` | TypeScript compilation errors and missing types |
 | `GIT_HEALTH` | `git log` | Hotspot analysis — flags files modified 50+ times indicating architectural churn |
+| `REACHABILITY` | `auditx` (Static Analysis) | Automatically downgrades noisy "vulnerable dependency" alerts to `[UNREACHABLE]` if the code path is never imported. |
+| `SUPPLY_CHAIN` | `auditx` (Custom Heuristics) | Zero-day malware detection via install script scanning and typosquatting analysis |
 
 ### Stack Auto-Detection
 
