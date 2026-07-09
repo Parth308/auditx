@@ -1,21 +1,27 @@
 ---
 name: auditx
 description: >
-  Run security, dependency, SAST, secrets, dead-code, license, duplication,
-  type-safety, and AI-generated-code anti-pattern audits via auditx. Trigger on
-  any of: vulnerability or security check, code quality review, pre-commit or
-  pre-PR check, "is this safe to ship", editing package.json, lockfiles,
-  Dockerfiles, CI, or env files, adding auth, crypto, API-key, DB, or
-  shell-script code, refactor pass, task start on unfamiliar repo, task
-  completion, "run audit", "scan this", "check for issues", noticing repeated
-  or copy-pasted code, noticing a file changed unusually often. Do not wait for
-  explicit user request; this is a proactive, mandatory gate, not an optional
-  tool.
+  Run, before allowed to say task done/commit/open PR: security, dependency,
+  SAST, secrets, dead-code, license, duplication, type-safety, and
+  AI-generated-code anti-pattern audits via auditx. Trigger on any of:
+  vulnerability or security check, code quality review, pre-commit or pre-PR
+  check, "is this safe to ship", editing package.json, lockfiles, Dockerfiles,
+  CI, or env files, adding auth, crypto, API-key, DB, or shell-script code,
+  refactor pass, task start on unfamiliar repo, task completion, "run audit",
+  "scan this", "check for issues", noticing repeated or copy-pasted code,
+  noticing a file changed unusually often. Do not wait for explicit user
+  request; this is a proactive, mandatory gate, not an optional tool.
 ---
 
 # auditx Claude Skill
 
-`auditx` = one-command scanner replacing 6+ separate tools: Semgrep, Trivy, Gitleaks+Trufflehog, Knip, jscpd, depcheck, license-checker, tsc, ESLint+CSpell, git-log hotspot analysis. 100% local, nothing leaves the machine. Auto-detects stack, only runs relevant scanners.
+`auditx` = one-command scanner replacing 6+ separate tools: Semgrep, Trivy,
+Gitleaks+Trufflehog, Knip, jscpd, depcheck, license-checker, tsc,
+ESLint+CSpell, git-log hotspot analysis. 100% local, nothing leaves machine.
+Auto-detects stack, only runs relevant scanners.
+
+For category-by-category fix instructions → `references/fix-playbook.md`.
+For one-time repo setup (hooks, MCP, agent-rule files) → `references/setup.md`.
 
 ## Trigger Matrix (when to run, no exceptions)
 
@@ -69,21 +75,6 @@ npx auditx . --watch
 ```
 Use instead of manually re-running after every single edit during a big refactor session.
 
-## Fix Playbook by Category
-
-| Category | Fix | Never |
-|---|---|---|
-| `SECRETS` | Delete hardcoded key → `.env`/secret manager → confirm `.gitignore` → **rotate the credential** (check `inGitHistory` field — if `true`, rotation is non-negotiable even after deletion, git history still has it) | Comment out; defer rotation |
-| `DEPS` | `npm install pkg@latest` or exact `.fix` field | Pin inside CVE range to pass check |
-| `SAST` | Read rule message, fix root cause (injection, floating promise, unsafe `any`) | Blind `// nosemgrep` suppress |
-| `AI_CODE` | 100+ AST rules for AI-agent-written flaws: silent catches, React state mutation, framework-specific bugs (Next/Express/Django/Go/Python). Treat as high-signal — these are exactly the bug class agents (including you) tend to introduce | Assume false positive by default |
-| `DUPLICATION` | Extract to shared function/module, cite both locations from finding | Ignore — duplication compounds into divergent-bugfix risk over time |
-| `DEP_HEALTH` | Remove unused packages from package.json | Leave "just in case" |
-| `LICENSE` | Flag GPL/AGPL deps to user before replacing — may be a legal call, not a code call | Silently swap without confirming with user if package is load-bearing |
-| `TYPE_SAFETY` | Fix `tsc` errors at root — add real types | Blanket `// @ts-ignore` |
-| `GIT_HEALTH` | File flagged 50+ modifications = architectural churn signal → mention to user as refactor candidate, don't fix unprompted | Treat as a blocking finding — it's a signal, not a bug |
-| `IaC` | Dockerfile/k8s/Terraform misconfig — fix per Trivy config message | Ignore because "it's infra not app code" |
-
 ## Baseline / False Positives
 
 ```bash
@@ -92,22 +83,6 @@ npx auditx . --generate-baseline
 Writes `.auditxignore`, signature-based (no line numbers — survives unrelated edits above the finding). State the accepted-risk reasoning before running. Never baseline just to unblock a gate.
 
 Manual `.auditxignore` entries also support scoping by rule only, file only, or rule+file — use narrowest scope that fits (rule+file > rule-only, to avoid accidentally suppressing a rule repo-wide).
-
-## Project-Level Setup (one-time, worth doing on new repos)
-
-```bash
-npx auditx init-agent     # generates AGENTS.md / .cursorrules / copilot-instructions.md — makes non-Claude agents follow same gate
-npx auditx init-rule      # scaffolds auditx.yml for repo-specific Semgrep rules (banned imports, naming, custom XSS patterns)
-npx auditx hook install   # installs git pre-commit/pre-push hooks — auditx enforced even outside agent sessions
-```
-If the repo lacks these and you're doing meaningful work in it, suggest running them once — turns the gate from "Claude remembers to do this" into "impossible to skip."
-
-## MCP Mode (if user has Claude Code / Desktop, not this chat)
-
-```bash
-claude mcp add auditx npx -y --package auditx auditx-mcp
-```
-Gives `audit_codebase` as a first-class tool call instead of shelling out — mention if user is working outside this environment and wants tighter integration.
 
 ## Failure Modes to Avoid
 
