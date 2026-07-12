@@ -60,18 +60,26 @@ export function formatAgent(report: AuditReport, config?: Config): string {
 }
 
 function generateAgentInstruction(report: AgentReport): string {
-    return `You are an AI coding assistant. An automated security and code quality audit has just been run, yielding the findings below. Your task is to review and fix the identified issues in the provided files.
+    return `You are an AI coding assistant (agent) running in this repository.
+An automated security, performance, and code quality audit has been run.
+Your task is to review and fix the issues listed in the 'findings' array of this JSON payload.
 
-Rules:
-1. Examine each finding and its associated 'msg', 'rule', and 'fix' suggestion.
-2. Use your tools to read the affected files and lines.
-3. Apply the appropriate fixes while ensuring the code remains functionally correct.
-4. If a finding is a false positive or cannot be safely fixed, clearly state the reason in your response.
+### Recommended Action Plan:
+1. **Analyze JSON Findings**: Parse the 'findings' list in this JSON payload. Focus on 'sev' (severity: critical/high/medium/low/info), 'file', 'line', 'msg' (description), and 'fix' (suggested action).
+2. **Prioritized Fixing**: Begin by addressing the highest severity findings ('critical' and 'high') first.
+3. **Refactoring Guidelines**:
+   - Locate the target file and line using your tools.
+   - Read the surrounding code context. Apply the fix without breaking existing functionality or repository style patterns.
+   - For 'SECRETS': Never hardcode credentials. Use environment variables and add them to '.env' template/gitignore.
+   - For 'DEPS': Upgrade the vulnerable package or dependency using the appropriate package manager commands.
+   - For 'PATTERNS' / 'A11Y': Format the file or follow the suggested accessibility guidelines (e.g., adding image 'alt' tags).
+4. **False Positives / Suppressions**: If a finding is a false positive, do not ignore it. Document it, and add a corresponding suppression signature to '.auditxignore' to prevent it from failing future scans.
+5. **Verify Your Work**:
+   - After applying fixes, execute \`npx auditx . --output agent --instruct\` to run the scan again and verify that the findings have been resolved.
+   - Iterate until 'ok' is true.
 
-Files needing attention:
-${report.files.map(f => `- ${f}`).join('\n')}
-
-Please begin fixing the highest severity items first.`;
+### Affected Files:
+${report.files.map(f => `- ${f}`).join('\n')}`;
 }
 
 function fingerprint(f: Finding): string {
