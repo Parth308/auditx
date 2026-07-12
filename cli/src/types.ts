@@ -123,6 +123,7 @@ export interface Config {
     | 'typesafety'
     | 'supplychain'
     | 'outdated'
+    | 'todocheck'
   >;
   /** Optional array of staged files to scan (used by git hook) */
   stagedFiles?: string[];

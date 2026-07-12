@@ -15,13 +15,14 @@ import { runLicenseChecker } from './health/license.js';
 import { runTypecheck } from './quality/typecheck.js';
 import { runGitHealth } from './health/githealth.js';
 import { runNpmOutdated } from './health/npmoutdated.js';
+import { runTodoCheck } from './quality/todocheck.js';
 import { runLizard } from './quality/lizard.js';
 import { runAiPatterns } from './ai/aipatterns.js';
 import { runIaC } from './security/iac.js';
 import { runSupplychain } from './security/supplychain.js';
 import { Orchestrator, type TaskCost } from './orchestrator.js';
 
-type RunnerName = 'secrets' | 'deps' | 'sast' | 'deadcode' | 'iac' | 'patterns' | 'duplication' | 'complexity' | 'dephealth' | 'license' | 'aicode' | 'githealth' | 'typesafety' | 'supplychain' | 'outdated';
+type RunnerName = 'secrets' | 'deps' | 'sast' | 'deadcode' | 'iac' | 'patterns' | 'duplication' | 'complexity' | 'dephealth' | 'license' | 'aicode' | 'githealth' | 'typesafety' | 'supplychain' | 'outdated' | 'todocheck';
 
 interface RunnerDef {
   name: RunnerName;
@@ -165,6 +166,13 @@ const RUNNERS: RunnerDef[] = [
     label: 'cspell (code spelling)',
     cost: 2,
     run: runCspell,
+    isApplicable: () => true,
+  },
+  {
+    name: 'todocheck',
+    label: 'leasot (TODOs/FIXMEs)',
+    cost: 1,
+    run: runTodoCheck,
     isApplicable: () => true,
   },
   {
