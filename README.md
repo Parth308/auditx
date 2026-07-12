@@ -157,6 +157,7 @@ auditx . --skip deadcode           # skip Knip
 auditx . --fix                     # auto-apply fixable issues (eslint --fix)
 auditx . --ci                      # exit code 1 if findings exist (CI mode)
 auditx . --watch                   # re-run on file changes
+auditx . --no-cache                # bypass the blazing fast file-hashing cache layer
 auditx hook install                # install git hooks (pre-commit, pre-push, etc.)
 auditx . --staged-list <file>      # only scan specific files (used by git hooks)
 
@@ -607,6 +608,7 @@ auditx .
 `auditx` is optimized to run on massive enterprise monorepos (10,000+ files) with extreme speed:
 
 - **Tier 1 Context-Free Filtering:** Before handing files over to heavy dataflow-tracing engines like Semgrep, `auditx` synchronously scans file texts with precise word-boundary regex for dangerous sinks/sources (e.g., `eval`, `req.body`, `SELECT ... ?`). Clean files are discarded instantly, bypassing 95% of the computational load.
+- **Native File Hashing Cache:** Re-running a scan without changing files takes **0ms**. `auditx` recursively walks directories using native Node APIs, hashing file modified times (`mtimeMs`) and your CLI config (`--skip`, `--severity`), intercepting unchanged codebases before orchestration even begins.
 - **File Batching (Chunking):** Node-based runners automatically chunk massive arrays of files into blocks of 500, preventing OS `E2BIG` (Argument list too long) crashes on Windows command lines.
 - **LPT Orchestrator:** Uses a Token Bucket algorithm with Longest-Processing-Time-First (LPT) scheduling. The heaviest tools (Semgrep, Trivy) are queued first, ensuring 100% CPU utilization and eliminating "long tail" core idling.
 
