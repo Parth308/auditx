@@ -1,6 +1,6 @@
 // formatters/agent.ts
 import { createHash } from 'crypto';
-import type { AuditReport, Finding, Severity } from '../types.js';
+import type { AuditReport, Finding, Severity, Config } from '../types.js';
 
 interface AgentFinding {
     id: string;
@@ -20,13 +20,14 @@ interface AgentReport {
     counts: Record<Severity, number>;
     files: string[];      // unique files touched, agent iterates this
     findings: AgentFinding[];
+    instruction?: string;
 }
 
 /**
  * Minimal token-cheap JSON for AI agent loops piping auditx stdout directly.
  * No prose, no color, no duplication — smallest payload that's still complete.
  */
-export function formatAgent(report: AuditReport): string {
+export function formatAgent(report: AuditReport, config?: Config): string {
     const urgentCount = report.summary.critical + report.summary.high;
 
     const findings: AgentFinding[] = report.findings.map((f) => ({
@@ -51,7 +52,26 @@ export function formatAgent(report: AuditReport): string {
         findings,
     };
 
+    if (config?.instruct && findings.length > 0) {
+        out.instruction = generateAgentInstruction(out);
+    }
+
     return JSON.stringify(out);
+}
+
+function generateAgentInstruction(report: AgentReport): string {
+    return `You are an AI coding assistant. An automated security and code quality audit has just been run, yielding the findings below. Your task is to review and fix the identified issues in the provided files.
+
+Rules:
+1. Examine each finding and its associated 'msg', 'rule', and 'fix' suggestion.
+2. Use your tools to read the affected files and lines.
+3. Apply the appropriate fixes while ensuring the code remains functionally correct.
+4. If a finding is a false positive or cannot be safely fixed, clearly state the reason in your response.
+
+Files needing attention:
+${report.files.map(f => `- ${f}`).join('\n')}
+
+Please begin fixing the highest severity items first.`;
 }
 
 function fingerprint(f: Finding): string {

@@ -212,6 +212,7 @@ export async function runScanCommand(opts: Record<string, any>, targetArg: strin
     generateBaseline: Boolean(opts['generateBaseline']),
     baseline: opts['baseline'] as string,
     noCache: Boolean(opts['noCache']),
+    instruct: Boolean(opts['instruct']),
   };
 
   if (config.checkDeps) {
@@ -327,7 +328,7 @@ function handleOutput(config: Config, report: any, aiSummary: string | undefined
       break;
     }
     case 'agent': {
-      console.log(formatAgent(report));
+      console.log(formatAgent(report, config));
       break;
     }
     case 'sarif': {
