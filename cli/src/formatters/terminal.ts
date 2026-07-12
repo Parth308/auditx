@@ -1,5 +1,5 @@
 import chalk, { type ChalkInstance } from 'chalk';
-import type { AuditReport, Finding, Severity, ScanResult } from '../types.js';
+import type { AuditReport, Finding, Severity, ScanResult, StackInfo } from '../types.js';
 
 const SEV_COLOR: Record<Severity, ChalkInstance> = {
   critical: chalk.bgRed.white.bold,
@@ -129,5 +129,128 @@ export function printCiSummary(report: AuditReport): void {
       chalk.red(`auditx: [-] ${total} findings`) +
       chalk.dim(` — critical: ${s.critical}, high: ${s.high}, medium: ${s.medium}, low: ${s.low}`),
     );
+  }
+}
+
+function formatCell(text: string, colorFn: (s: string) => string, width: number): string {
+  const padLeft = Math.floor((width - text.length) / 2);
+  const padRight = width - text.length - padLeft;
+  return ' '.repeat(padLeft) + colorFn(text) + ' '.repeat(padRight);
+}
+
+export function printSummaryTable(report: AuditReport, stack: StackInfo): void {
+  const CATEGORY_MAP: Record<string, string> = {
+    SECRETS: 'Secrets',
+    DEPS: 'Dependencies',
+    SAST: 'SAST',
+    AI_CODE: 'AI Code Analysis',
+    DUPLICATION: 'Code Duplication',
+    DEP_HEALTH: 'Dependency Health',
+    TYPE_SAFETY: 'Type Safety',
+    GIT_HEALTH: 'Git Health',
+    LICENSE: 'License Compliance',
+    DEAD_CODE: 'Dead Code',
+    IaC: 'IaC / Config',
+    COMPLEXITY: 'Code Complexity',
+    PATTERNS: 'Patterns',
+    SUPPLY_CHAIN: 'Supply Chain',
+    A11Y: 'Accessibility',
+    COMPOUND: 'Compound Findings',
+  };
+
+  const categoriesToShow: string[] = [];
+  for (const [catKey, catLabel] of Object.entries(CATEGORY_MAP)) {
+    let app = true;
+    if (catKey === 'SECRETS') app = stack.hasGit;
+    else if (catKey === 'AI_CODE') app = stack.hasNodeJs || stack.hasTypeScript || stack.hasPython || stack.hasGo || stack.hasSql || stack.hasReact || stack.hasNextJs || stack.hasDjango || stack.hasExpress || stack.hasNestJs;
+    else if (catKey === 'DEP_HEALTH') app = stack.hasNodeJs;
+    else if (catKey === 'TYPE_SAFETY') app = stack.hasTypeScript;
+    else if (catKey === 'GIT_HEALTH') app = stack.hasGit;
+    else if (catKey === 'LICENSE') app = stack.hasNodeJs;
+    else if (catKey === 'DEAD_CODE') app = stack.hasNodeJs;
+    else if (catKey === 'IaC') app = stack.hasTerraform || stack.hasDocker || stack.hasGit;
+    else if (catKey === 'SUPPLY_CHAIN') app = stack.hasNodeJs;
+    else if (catKey === 'A11Y') app = stack.hasReact || stack.hasNextJs;
+    
+    if (app) {
+      categoriesToShow.push(catKey);
+    }
+  }
+
+  // Ensure any category with findings is included
+  for (const f of report.findings) {
+    if (f.category && !categoriesToShow.includes(f.category)) {
+      categoriesToShow.push(f.category);
+    }
+  }
+
+  // Row line builders
+  const topBorder =    '┌' + '─'.repeat(23) + '┬' + ('─'.repeat(10) + '┬').repeat(4) + '─'.repeat(10) + '┐';
+  const midBorder =    '├' + '─'.repeat(23) + '┼' + ('─'.repeat(10) + '┼').repeat(4) + '─'.repeat(10) + '┤';
+  const bottomBorder = '└' + '─'.repeat(23) + '┴' + ('─'.repeat(10) + '┴').repeat(4) + '─'.repeat(10) + '┘';
+
+  console.log('  ' + chalk.gray(topBorder));
+
+  // Header row
+  const catHeader = chalk.cyan(' Category'.padEnd(23));
+  const critHeader = formatCell('Critical', chalk.red.bold, 10);
+  const highHeader = formatCell('High', chalk.redBright.bold, 10);
+  const medHeader = formatCell('Medium', chalk.yellow.bold, 10);
+  const lowHeader = formatCell('Low', chalk.blue.bold, 10);
+  const infoHeader = formatCell('Info', chalk.cyan.bold, 10);
+  
+  console.log(`  ${chalk.gray('│')}${catHeader}${chalk.gray('│')}${critHeader}${chalk.gray('│')}${highHeader}${chalk.gray('│')}${medHeader}${chalk.gray('│')}${lowHeader}${chalk.gray('│')}${infoHeader}${chalk.gray('│')}`);
+  console.log('  ' + chalk.gray(midBorder));
+
+  const severities: Severity[] = ['critical', 'high', 'medium', 'low', 'info'];
+
+  for (const catKey of categoriesToShow) {
+    const label = CATEGORY_MAP[catKey] || catKey;
+    const catCell = chalk.cyan(` ${label}`.padEnd(23));
+    const cells: string[] = [];
+
+    for (const sev of severities) {
+      if (catKey === 'DEAD_CODE' && (sev === 'critical' || sev === 'high')) {
+        cells.push(formatCell('-', chalk.dim, 10));
+        continue;
+      }
+
+      const count = report.findings.filter(f => f.category === catKey && f.severity === sev).length;
+      
+      let colorFn = chalk.dim;
+      if (count > 0) {
+        if (sev === 'critical') colorFn = chalk.red.bold;
+        else if (sev === 'high') colorFn = chalk.redBright.bold;
+        else if (sev === 'medium') colorFn = chalk.yellow.bold;
+        else if (sev === 'low') colorFn = chalk.blue.bold;
+        else if (sev === 'info') colorFn = chalk.cyan.bold;
+      }
+      
+      cells.push(formatCell(String(count), colorFn, 10));
+    }
+
+    console.log(`  ${chalk.gray('│')}${catCell}${chalk.gray('│')}${cells.join(chalk.gray('│'))}${chalk.gray('│')}`);
+  }
+
+  console.log('  ' + chalk.gray(bottomBorder));
+}
+
+export function printSummaryStats(report: AuditReport): void {
+  const s = report.summary;
+  const summaryLine = [
+    `🔴 ${chalk.red.bold(s.critical)} critical`,
+    `🟠 ${chalk.redBright.bold(s.high)} high`,
+    `🟡 ${chalk.yellow.bold(s.medium)} medium`,
+    `🔵 ${chalk.blue.bold(s.low)} low`,
+    `⚪ ${chalk.cyan.bold(s.info)} info`,
+  ].join(chalk.gray('  •  '));
+  
+  console.log(`  ${summaryLine}`);
+  console.log('');
+
+  const urgentCount = s.critical + s.high;
+  if (urgentCount > 0) {
+    console.log(`  ${chalk.yellow.bold('⚠️')}  ${chalk.yellow.bold(urgentCount)} high severity findings need immediate attention.`);
+    console.log('');
   }
 }

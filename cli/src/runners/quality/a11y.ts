@@ -92,10 +92,16 @@ export async function runA11y(targetDir: string, stagedFiles?: string[]): Promis
       '--cache-location', 'node_modules/.cache/auditx/a11y/',
       '--resolve-plugins-relative-to', eslintCacheDir,
       '--ext', '.jsx,.tsx',
+      '--ignore-pattern', 'node_modules',
       '--ignore-pattern', '**/node_modules/**',
+      '--ignore-pattern', 'dist',
       '--ignore-pattern', '**/dist/**',
+      '--ignore-pattern', 'build',
       '--ignore-pattern', '**/build/**',
+      '--ignore-pattern', 'coverage',
       '--ignore-pattern', '**/coverage/**',
+      '--ignore-pattern', '.next',
+      '--ignore-pattern', '**/.next/**',
     ];
     const report: EslintFileResult[] = [];
 

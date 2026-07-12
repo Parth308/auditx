@@ -12,7 +12,7 @@ import { formatJson } from '../formatters/json.js';
 import { formatAgent } from '../formatters/agent.js';
 import { formatSarif } from '../formatters/sarif.js';
 import { formatHtml } from '../formatters/html.js';
-import { printTerminalReport, printCiSummary, printScannerResult } from '../formatters/terminal.js';
+import { printTerminalReport, printCiSummary, printScannerResult, printSummaryTable, printSummaryStats } from '../formatters/terminal.js';
 import { generateAiSummary } from '../ai.js';
 import { promptForAiConfig, readGlobalConfig } from '../config.js';
 import { applyFixes } from './fix.js';
@@ -73,11 +73,35 @@ async function doCoreScan(config: Config, VERSION: string): Promise<void> {
 
   // 2. Run all scanners in parallel with live progress
   if (!results) {
-    const spinner = isInteractive ? ora({ text: 'Scanning…', color: 'cyan' }).start() : undefined;
+    let completedCount = 0;
+    const totalCount = applicableRunners.length;
+    let hasDrawn = false;
+
+    const drawProgressBar = () => {
+      const elapsed = ((Date.now() - scanStart) / 1000).toFixed(1);
+      const pct = Math.min(100, Math.round((completedCount / totalCount) * 100));
+      const barWidth = 50;
+      const filledWidth = Math.round((completedCount / totalCount) * barWidth);
+      const emptyWidth = barWidth - filledWidth;
+      const bar = chalk.cyan('█'.repeat(filledWidth)) + chalk.gray('░'.repeat(emptyWidth));
+      
+      console.log(chalk.cyan('  : Scanning...'));
+      console.log(`  [${bar}] ${pct}% (${elapsed}s)`);
+      hasDrawn = true;
+    };
+
+    if (isInteractive) {
+      drawProgressBar();
+    }
 
     results = await runAll(config.target, stack, config, (progress) => {
       if (isInteractive) {
-        spinner?.stop();
+        completedCount++;
+
+        if (hasDrawn) {
+          process.stdout.write('\x1b[2A\r\x1b[K\n\r\x1b[K\x1b[1A\r');
+        }
+
         printScannerResult({
           scanner: progress.label,
           ok: progress.status === 'done',
@@ -85,11 +109,20 @@ async function doCoreScan(config: Config, VERSION: string): Promise<void> {
           error: progress.error,
           durationMs: progress.durationMs ?? 0,
         });
-        spinner?.start();
+
+        hasDrawn = false;
+        drawProgressBar();
       }
     });
 
-    if (isInteractive) spinner?.stop();
+    if (isInteractive && completedCount < totalCount) {
+      completedCount = totalCount;
+      if (hasDrawn) {
+        process.stdout.write('\x1b[2A\r\x1b[K\n\r\x1b[K\x1b[1A\r');
+      }
+      hasDrawn = false;
+      drawProgressBar();
+    }
 
     if (!config.noCache && !config.stagedFiles) {
       await cacheManager.saveCache(config.target, VERSION, config, results);
@@ -332,8 +365,10 @@ function handleOutput(config: Config, report: any, aiSummary: string | undefined
       const md = formatMarkdown(report, aiSummary);
       writeFileSync(config.outputFile, md, 'utf8');
       console.log('');
-      console.log(chalk.green(`  [+] Report written to: ${chalk.bold(config.outputFile)}`));
-      printCiSummary(report);
+      printSummaryTable(report, detectStack(config.target));
+      console.log('');
+      printSummaryStats(report);
+      console.log(chalk.green(`  ✓ Report written → ${config.outputFile}`));
       break;
     }
     case 'json': {
@@ -368,8 +403,10 @@ function handleOutput(config: Config, report: any, aiSummary: string | undefined
         : `${config.outputFile}.html`;
       writeFileSync(outFile, html, 'utf8');
       console.log('');
-      console.log(chalk.green(`  [+] HTML report written to: ${chalk.bold(outFile)}`));
-      printCiSummary(report);
+      printSummaryTable(report, detectStack(config.target));
+      console.log('');
+      printSummaryStats(report);
+      console.log(chalk.green(`  ✓ Report written → ${outFile}`));
       break;
     }
   }
