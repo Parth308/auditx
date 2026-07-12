@@ -30,35 +30,15 @@ interface EslintFileResult {
   fixableWarningCount: number;
 }
 
-// ─── Security-focused ESLint rules ───────────────────────────────────────────
-
-const SECURITY_RULES = new Set([
-  'no-eval',
-  'no-implied-eval',
-  'security/detect-eval-with-expression',
-  'security/detect-non-literal-regexp',
-  'security/detect-non-literal-require',
-  'security/detect-non-literal-fs-filename',
-  'security/detect-unsafe-regex',
-  'security/detect-buffer-noassert',
-  'security/detect-child-process',
-  'security/detect-disable-mustache-escape',
-  'security/detect-new-buffer',
-  'security/detect-no-csrf-before-method-override',
-  'security/detect-object-injection',
-  'security/detect-possible-timing-attacks',
-  'security/detect-pseudoRandomBytes',
-]);
-
 // ─── Runner ───────────────────────────────────────────────────────────────────
 
 /**
- * Runs `eslint` with `eslint-plugin-security` against the target directory.
- * Only surfaces security-related rule violations as PATTERNS findings.
+ * Runs `eslint` with `eslint-plugin-jsx-a11y` against the target directory.
+ * Only surfaces accessibility-related rule violations as A11Y findings.
  */
-export async function runEslint(targetDir: string, stagedFiles?: string[]): Promise<ScanResult> {
+export async function runA11y(targetDir: string, stagedFiles?: string[]): Promise<ScanResult> {
   const start = Date.now();
-  const scanner = 'eslint';
+  const scanner = 'jsx-a11y';
 
   const handleEslintError = (err: any) => {
     if (err.stdout) return { stdout: err.stdout as string };
@@ -68,7 +48,7 @@ export async function runEslint(targetDir: string, stagedFiles?: string[]): Prom
           messages: [{
             ruleId: 'auditx/eslint-flat-config',
             severity: 1,
-            message: 'ESLint 9 Flat Config detected. auditx security plugin injection is currently unsupported for this repo.',
+            message: 'ESLint 9 Flat Config detected. auditx a11y plugin injection is currently unsupported for this repo.',
             line: 1
           }],
           filePath: 'eslint.config.js'
@@ -79,39 +59,54 @@ export async function runEslint(targetDir: string, stagedFiles?: string[]): Prom
   };
 
   try {
-    const eslintCacheDir = join(homedir(), '.auditx', 'eslint-deps');
+    const eslintCacheDir = join(homedir(), '.auditx', 'a11y-deps');
     const eslintJs = join(eslintCacheDir, 'node_modules', 'eslint', 'bin', 'eslint.js');
 
     if (!existsSync(eslintJs)) {
       if (!existsSync(eslintCacheDir)) {
         mkdirSync(eslintCacheDir, { recursive: true });
       }
-      writeFileSync(join(eslintCacheDir, 'package.json'), JSON.stringify({ name: "auditx-eslint-deps", version: "1.0.0" }));
+      writeFileSync(join(eslintCacheDir, 'package.json'), JSON.stringify({ name: "auditx-a11y-deps", version: "1.0.0" }));
       const npmBin = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-      execFileSync(npmBin, ['install', 'eslint@8', 'eslint-plugin-security'], { cwd: eslintCacheDir, stdio: 'ignore', shell: process.platform === 'win32' });
+      execFileSync(npmBin, ['install', 'eslint@8', 'eslint-plugin-jsx-a11y'], { cwd: eslintCacheDir, stdio: 'ignore', shell: process.platform === 'win32' });
     }
+
+    // Write a temporary config file that extends jsx-a11y/recommended
+    const configPath = join(eslintCacheDir, '.eslintrc.json');
+    writeFileSync(configPath, JSON.stringify({
+      plugins: ["jsx-a11y"],
+      extends: ["plugin:jsx-a11y/recommended"],
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: "module",
+        ecmaFeatures: { jsx: true }
+      },
+      env: { browser: true, es2021: true }
+    }));
 
     const args = [
       '--format', 'json',
-      '--no-eslintrc',
+      '--config', configPath,
       '--no-error-on-unmatched-pattern',
       '--cache',
-      '--cache-location', 'node_modules/.cache/auditx/eslint/',
+      '--cache-location', 'node_modules/.cache/auditx/a11y/',
       '--resolve-plugins-relative-to', eslintCacheDir,
-      '--plugin', 'security',
-      '--rule', JSON.stringify(buildSecurityRules()),
-      '--ext', '.js,.ts,.jsx,.tsx,.mjs,.cjs',
+      '--ext', '.jsx,.tsx',
     ];
     const report: EslintFileResult[] = [];
 
     // Batching to prevent E2BIG on massive repos
     if (stagedFiles && stagedFiles.length > 0) {
-      const CHUNK_SIZE = 500;
-      for (let i = 0; i < stagedFiles.length; i += CHUNK_SIZE) {
-        const chunk = stagedFiles.slice(i, i + CHUNK_SIZE);
-        const chunkArgs = [eslintJs, ...args, ...chunk];
-        const result = await execFileAsync(process.execPath, chunkArgs, { cwd: targetDir, maxBuffer: 20 * 1024 * 1024 }).catch(handleEslintError);
-        report.push(...JSON.parse(result.stdout || '[]'));
+      // Filter staged files to only jsx/tsx
+      const reactFiles = stagedFiles.filter(f => f.endsWith('.jsx') || f.endsWith('.tsx'));
+      if (reactFiles.length > 0) {
+        const CHUNK_SIZE = 500;
+        for (let i = 0; i < reactFiles.length; i += CHUNK_SIZE) {
+          const chunk = reactFiles.slice(i, i + CHUNK_SIZE);
+          const chunkArgs = [eslintJs, ...args, ...chunk];
+          const result = await execFileAsync(process.execPath, chunkArgs, { cwd: targetDir, maxBuffer: 20 * 1024 * 1024 }).catch(handleEslintError);
+          report.push(...JSON.parse(result.stdout || '[]'));
+        }
       }
     } else {
       const chunkArgs = [eslintJs, ...args, '.'];
@@ -123,19 +118,19 @@ export async function runEslint(targetDir: string, stagedFiles?: string[]): Prom
     for (const fileResult of report) {
       for (const msg of fileResult.messages) {
         if (!msg.ruleId) continue;
-        // Only include security-related rules
-        if (!isSecurityRule(msg.ruleId)) continue;
+        // Only include jsx-a11y related rules
+        if (!msg.ruleId.startsWith('jsx-a11y/')) continue;
 
         findings.push({
           id: '',
-          category: 'PATTERNS',
+          category: 'A11Y',
           severity: msg.severity === 2 ? 'high' : 'medium',
           title: msg.message.slice(0, 120),
           file: fileResult.filePath,
           line: msg.line,
           rule: msg.ruleId,
           scanner,
-          description: `ESLint rule '${msg.ruleId}' violation`,
+          description: `Accessibility rule '${msg.ruleId}' violation`,
           fix: msg.fix
             ? 'Auto-fixable. Run: npx eslint --fix'
             : undefined,
@@ -153,28 +148,4 @@ export async function runEslint(targetDir: string, stagedFiles?: string[]): Prom
       durationMs: Date.now() - start,
     };
   }
-}
-
-function isSecurityRule(ruleId: string): boolean {
-  return SECURITY_RULES.has(ruleId) || ruleId.startsWith('security/');
-}
-
-function buildSecurityRules(): Record<string, 'error' | 'warn'> {
-  return {
-    'no-eval': 'error',
-    'no-implied-eval': 'error',
-    'security/detect-eval-with-expression': 'error',
-    'security/detect-non-literal-regexp': 'warn',
-    'security/detect-non-literal-require': 'warn',
-    'security/detect-non-literal-fs-filename': 'warn',
-    'security/detect-unsafe-regex': 'error',
-    'security/detect-buffer-noassert': 'error',
-    'security/detect-child-process': 'warn',
-    'security/detect-disable-mustache-escape': 'error',
-    'security/detect-new-buffer': 'error',
-    'security/detect-no-csrf-before-method-override': 'error',
-    'security/detect-object-injection': 'warn',
-    'security/detect-possible-timing-attacks': 'warn',
-    'security/detect-pseudoRandomBytes': 'error',
-  };
 }

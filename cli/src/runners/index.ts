@@ -21,9 +21,10 @@ import { runLizard } from './quality/lizard.js';
 import { runAiPatterns } from './ai/aipatterns.js';
 import { runIaC } from './security/iac.js';
 import { runSupplychain } from './security/supplychain.js';
+import { runA11y } from './quality/a11y.js';
 import { Orchestrator, type TaskCost } from './orchestrator.js';
 
-type RunnerName = 'secrets' | 'deps' | 'sast' | 'deadcode' | 'iac' | 'patterns' | 'duplication' | 'complexity' | 'dephealth' | 'license' | 'aicode' | 'githealth' | 'typesafety' | 'supplychain' | 'outdated' | 'todocheck' | 'prettier';
+type RunnerName = 'secrets' | 'deps' | 'sast' | 'deadcode' | 'iac' | 'patterns' | 'duplication' | 'complexity' | 'dephealth' | 'license' | 'aicode' | 'githealth' | 'typesafety' | 'supplychain' | 'outdated' | 'todocheck' | 'prettier' | 'a11y';
 
 interface RunnerDef {
   name: RunnerName;
@@ -182,6 +183,13 @@ const RUNNERS: RunnerDef[] = [
     cost: 1,
     run: runPrettierCheck,
     isApplicable: () => true,
+  },
+  {
+    name: 'a11y',
+    label: 'jsx-a11y (accessibility)',
+    cost: 1,
+    run: runA11y,
+    isApplicable: (s) => s.hasReact || s.hasNextJs,
   },
   {
     name: 'supplychain',

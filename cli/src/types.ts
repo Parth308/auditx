@@ -23,6 +23,7 @@ export type Category =
   | 'GIT_HEALTH'
   | 'TYPE_SAFETY'
   | 'SUPPLY_CHAIN'
+  | 'A11Y'
   | 'COMPOUND';
 
 /** A single normalized security finding. */
@@ -125,6 +126,7 @@ export interface Config {
     | 'outdated'
     | 'todocheck'
     | 'prettier'
+    | 'a11y'
   >;
   /** Optional array of staged files to scan (used by git hook) */
   stagedFiles?: string[];

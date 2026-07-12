@@ -16,6 +16,7 @@ const CAT_LABEL: Record<Category, string> = {
   GIT_HEALTH: 'Git Health',
   TYPE_SAFETY: 'Type Safety',
   SUPPLY_CHAIN: 'Supply Chain',
+  A11Y: 'Accessibility',
   COMPOUND: 'Compound',
 };
 
