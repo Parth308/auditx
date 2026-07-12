@@ -1,6 +1,6 @@
 {
   "name": "auditx",
-  "version": "0.1.46",
+  "version": "0.1.47",
   "description": "One command. Every vulnerability, dead code, and AI-generated code anti-pattern. JSON output built for AI coding agents to parse and self-fix.",
   "type": "module",
   "bin": {
