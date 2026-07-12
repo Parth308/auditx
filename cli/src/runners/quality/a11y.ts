@@ -92,6 +92,10 @@ export async function runA11y(targetDir: string, stagedFiles?: string[]): Promis
       '--cache-location', 'node_modules/.cache/auditx/a11y/',
       '--resolve-plugins-relative-to', eslintCacheDir,
       '--ext', '.jsx,.tsx',
+      '--ignore-pattern', '**/node_modules/**',
+      '--ignore-pattern', '**/dist/**',
+      '--ignore-pattern', '**/build/**',
+      '--ignore-pattern', '**/coverage/**',
     ];
     const report: EslintFileResult[] = [];
 
@@ -100,12 +104,28 @@ export async function runA11y(targetDir: string, stagedFiles?: string[]): Promis
       // Filter staged files to only jsx/tsx
       const reactFiles = stagedFiles.filter(f => f.endsWith('.jsx') || f.endsWith('.tsx'));
       if (reactFiles.length > 0) {
-        const CHUNK_SIZE = 500;
-        for (let i = 0; i < reactFiles.length; i += CHUNK_SIZE) {
-          const chunk = reactFiles.slice(i, i + CHUNK_SIZE);
+        const maxCommandLength = 7000;
+        let currentChunk: string[] = [];
+        let currentLength = 0;
+
+        const processA11yRun = async (chunk: string[]) => {
           const chunkArgs = [eslintJs, ...args, ...chunk];
           const result = await execFileAsync(process.execPath, chunkArgs, { cwd: targetDir, maxBuffer: 20 * 1024 * 1024 }).catch(handleEslintError);
           report.push(...JSON.parse(result.stdout || '[]'));
+        };
+
+        for (const file of reactFiles) {
+          const estimateLen = file.length + 3;
+          if (currentChunk.length > 0 && currentLength + estimateLen > maxCommandLength) {
+            await processA11yRun(currentChunk);
+            currentChunk = [];
+            currentLength = 0;
+          }
+          currentChunk.push(file);
+          currentLength += estimateLen;
+        }
+        if (currentChunk.length > 0) {
+          await processA11yRun(currentChunk);
         }
       }
     } else {

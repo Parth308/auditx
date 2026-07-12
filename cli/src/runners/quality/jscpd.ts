@@ -49,10 +49,22 @@ export async function runJscpd(targetPath: string, stagedFiles?: string[]): Prom
     };
 
     if (stagedFiles && stagedFiles.length > 0) {
-      const CHUNK_SIZE = 500;
-      for (let i = 0; i < stagedFiles.length; i += CHUNK_SIZE) {
-        const chunk = stagedFiles.slice(i, i + CHUNK_SIZE);
-        await processJscpdRun(chunk.map(f => `"${f}"`).join(' '));
+      const maxCommandLength = 7000;
+      let currentChunk: string[] = [];
+      let currentLength = 0;
+
+      for (const file of stagedFiles) {
+        const quoted = `"${file}"`;
+        if (currentChunk.length > 0 && currentLength + quoted.length + 1 > maxCommandLength) {
+          await processJscpdRun(currentChunk.join(' '));
+          currentChunk = [];
+          currentLength = 0;
+        }
+        currentChunk.push(quoted);
+        currentLength += quoted.length + 1;
+      }
+      if (currentChunk.length > 0) {
+        await processJscpdRun(currentChunk.join(' '));
       }
     } else {
       await processJscpdRun(`"${targetPath}"`);

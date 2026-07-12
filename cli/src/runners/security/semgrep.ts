@@ -74,23 +74,50 @@ export async function runSemgrep(targetDir: string, stagedFiles: string[] | unde
       return { scanner, ok: true, findings: [], durationMs: Date.now() - start };
     }
 
+    const report: SemgrepReport = { results: [], errors: [] };
+
+    const runSemgrepChunk = async (chunkFiles: string[]) => {
+      const chunkArgs = [...args, ...chunkFiles];
+      const { stdout } = await execFileAsync(
+        bin,
+        chunkArgs,
+        { maxBuffer: 50 * 1024 * 1024, env: getSemgrepEnv(), timeout: 120_000 },
+      ).catch((err) => {
+        // semgrep exits 1 when findings exist
+        if (err.stdout) return { stdout: err.stdout as string };
+        throw err;
+      });
+
+      const chunkReport: SemgrepReport = JSON.parse(stdout || '{"results":[]}');
+      if (chunkReport.results) {
+        report.results.push(...chunkReport.results);
+      }
+      if (chunkReport.errors) {
+        report.errors.push(...chunkReport.errors);
+      }
+    };
+
     if (filteredFiles.length > 0) {
-      args.push(...filteredFiles);
+      const maxCommandLength = 7000;
+      let currentChunk: string[] = [];
+      let currentLength = 0;
+
+      for (const file of filteredFiles) {
+        const estimateLen = file.length + 3;
+        if (currentChunk.length > 0 && currentLength + estimateLen > maxCommandLength) {
+          await runSemgrepChunk(currentChunk);
+          currentChunk = [];
+          currentLength = 0;
+        }
+        currentChunk.push(file);
+        currentLength += estimateLen;
+      }
+      if (currentChunk.length > 0) {
+        await runSemgrepChunk(currentChunk);
+      }
     } else {
-      args.push(targetDir);
+      await runSemgrepChunk([targetDir]);
     }
-
-    const { stdout } = await execFileAsync(
-      bin,
-      args,
-      { maxBuffer: 50 * 1024 * 1024, env: getSemgrepEnv(), timeout: 120_000 },
-    ).catch((err) => {
-      // semgrep exits 1 when findings exist
-      if (err.stdout) return { stdout: err.stdout as string };
-      throw err;
-    });
-
-    const report: SemgrepReport = JSON.parse(stdout || '{"results":[]}');
 
     const findings: Finding[] = report.results.map((match) => ({
       id: '',

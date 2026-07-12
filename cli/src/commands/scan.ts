@@ -104,9 +104,10 @@ async function doCoreScan(config: Config, VERSION: string): Promise<void> {
   // 3.1 Exclude filter
   if (config.exclude && config.exclude.length > 0) {
     findings = findings.filter((f) => {
-      if (!f.file) return true;
+      const filePath = f.file;
+      if (!filePath) return true;
       return !config.exclude!.some((ex) => {
-        const normalizedFile = f.file.replace(/\\/g, '/');
+        const normalizedFile = filePath.replace(/\\/g, '/');
         const normalizedEx = ex.replace(/\\/g, '/');
         return normalizedFile.includes(normalizedEx);
       });

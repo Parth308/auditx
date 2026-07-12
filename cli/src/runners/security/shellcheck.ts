@@ -45,9 +45,11 @@ export async function runShellcheck(targetDir: string, stagedFiles?: string[]): 
     let stdout = '';
 
     let raw: any[] = [];
-    const CHUNK_SIZE = 500;
-    for (let i = 0; i < filesToScan.length; i += CHUNK_SIZE) {
-      const chunk = filesToScan.slice(i, i + CHUNK_SIZE);
+    const maxCommandLength = 7000;
+    let currentChunk: string[] = [];
+    let currentLength = 0;
+
+    const processShellcheckRun = async (chunk: string[]) => {
       let chunkStdout = '';
       try {
         const res = await execFileAsync(
@@ -67,6 +69,20 @@ export async function runShellcheck(targetDir: string, stagedFiles?: string[]): 
           // Ignored
         }
       }
+    };
+
+    for (const file of filesToScan) {
+      const estimateLen = file.length + 3;
+      if (currentChunk.length > 0 && currentLength + estimateLen > maxCommandLength) {
+        await processShellcheckRun(currentChunk);
+        currentChunk = [];
+        currentLength = 0;
+      }
+      currentChunk.push(file);
+      currentLength += estimateLen;
+    }
+    if (currentChunk.length > 0) {
+      await processShellcheckRun(currentChunk);
     }
 
     const findings: Finding[] = raw.map((item) => {

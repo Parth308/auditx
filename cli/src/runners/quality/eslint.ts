@@ -101,17 +101,37 @@ export async function runEslint(targetDir: string, stagedFiles?: string[]): Prom
       '--plugin', 'security',
       '--rule', JSON.stringify(buildSecurityRules()),
       '--ext', '.js,.ts,.jsx,.tsx,.mjs,.cjs',
+      '--ignore-pattern', '**/node_modules/**',
+      '--ignore-pattern', '**/dist/**',
+      '--ignore-pattern', '**/build/**',
+      '--ignore-pattern', '**/coverage/**',
     ];
     const report: EslintFileResult[] = [];
 
     // Batching to prevent E2BIG on massive repos
     if (stagedFiles && stagedFiles.length > 0) {
-      const CHUNK_SIZE = 500;
-      for (let i = 0; i < stagedFiles.length; i += CHUNK_SIZE) {
-        const chunk = stagedFiles.slice(i, i + CHUNK_SIZE);
+      const maxCommandLength = 7000;
+      let currentChunk: string[] = [];
+      let currentLength = 0;
+
+      const processEslintRun = async (chunk: string[]) => {
         const chunkArgs = [eslintJs, ...args, ...chunk];
         const result = await execFileAsync(process.execPath, chunkArgs, { cwd: targetDir, maxBuffer: 20 * 1024 * 1024 }).catch(handleEslintError);
         report.push(...JSON.parse(result.stdout || '[]'));
+      };
+
+      for (const file of stagedFiles) {
+        const estimateLen = file.length + 3;
+        if (currentChunk.length > 0 && currentLength + estimateLen > maxCommandLength) {
+          await processEslintRun(currentChunk);
+          currentChunk = [];
+          currentLength = 0;
+        }
+        currentChunk.push(file);
+        currentLength += estimateLen;
+      }
+      if (currentChunk.length > 0) {
+        await processEslintRun(currentChunk);
       }
     } else {
       const chunkArgs = [eslintJs, ...args, '.'];
