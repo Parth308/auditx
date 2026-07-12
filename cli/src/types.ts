@@ -128,6 +128,27 @@ export interface Config {
     | 'prettier'
     | 'a11y'
   >;
+  /** Scanners to run exclusively */
+  only?: Array<
+    | 'secrets'
+    | 'deps'
+    | 'sast'
+    | 'deadcode'
+    | 'iac'
+    | 'patterns'
+    | 'duplication'
+    | 'complexity'
+    | 'dephealth'
+    | 'license'
+    | 'aicode'
+    | 'githealth'
+    | 'typesafety'
+    | 'supplychain'
+    | 'outdated'
+    | 'todocheck'
+    | 'prettier'
+    | 'a11y'
+  >;
   /** Optional array of staged files to scan (used by git hook) */
   stagedFiles?: string[];
   /** CI mode — exit 1 on any findings */

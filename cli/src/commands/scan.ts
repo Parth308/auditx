@@ -200,6 +200,9 @@ export async function runScanCommand(opts: Record<string, any>, targetArg: strin
     skip: opts['skip']
       ? (opts['skip'] as string).split(',').map((s: string) => s.trim()).filter(Boolean) as any
       : [],
+    only: opts['only']
+      ? (opts['only'] as string).split(',').map((s: string) => s.trim()).filter(Boolean) as any
+      : undefined,
     stagedFiles,
     ci: Boolean(opts['ci']),
     ai: Boolean(opts['ai']),

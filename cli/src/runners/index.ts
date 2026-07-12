@@ -219,10 +219,12 @@ export async function runAll(
   onProgress?: (progress: RunnerProgress) => void,
 ): Promise<ScanResult[]> {
   const skip = new Set(config.skip);
+  const only = config.only && config.only.length > 0 ? new Set(config.only) : null;
 
-  // Select applicable and non-skipped runners
+  // Select applicable and non-skipped/only runners
   const selected = RUNNERS.filter((r) => {
-    if (skip.has(r.name)) return false;
+    if (only && !only.has(r.name)) return false;
+    if (!only && skip.has(r.name)) return false;
     if (!r.isApplicable(stack)) return false;
     return true;
   });
@@ -275,7 +277,10 @@ export async function runAll(
 /** Returns a list of all runner labels applicable to the given stack. */
 export function getApplicableRunnerLabels(stack: StackInfo, config: Config): string[] {
   const skip = new Set(config.skip);
-  return RUNNERS.filter((r) => !skip.has(r.name) && r.isApplicable(stack)).map(
-    (r) => r.label,
-  );
+  const only = config.only && config.only.length > 0 ? new Set(config.only) : null;
+  return RUNNERS.filter((r) => {
+    if (only && !only.has(r.name)) return false;
+    if (!only && skip.has(r.name)) return false;
+    return r.isApplicable(stack);
+  }).map((r) => r.label);
 }
