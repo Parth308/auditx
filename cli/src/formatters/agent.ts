@@ -60,12 +60,26 @@ export function formatAgent(report: AuditReport, config?: Config): string {
 }
 
 function generateAgentInstruction(report: AgentReport): string {
+    const findingsList = report.findings.map((f, index) => {
+        let text = `#### ${index + 1}. [${f.cat}] ${f.msg} (${f.sev.toUpperCase()})\n`;
+        if (f.file) {
+            text += `- **File**: \`${f.file}\`${f.line ? ` (Line ${f.line})` : ''}\n`;
+        }
+        if (f.rule) {
+            text += `- **Rule**: \`${f.rule}\`\n`;
+        }
+        if (f.fix) {
+            text += `- **Suggested Fix**: \`${f.fix}\`\n`;
+        }
+        return text;
+    }).join('\n');
+
     return `You are an AI coding assistant (agent) running in this repository.
 An automated security, performance, and code quality audit has been run.
-Your task is to review and fix the issues listed in the 'findings' array of this JSON payload.
+Your task is to review and fix the issues listed below.
 
 ### Recommended Action Plan:
-1. **Analyze JSON Findings**: Parse the 'findings' list in this JSON payload. Focus on 'sev' (severity: critical/high/medium/low/info), 'file', 'line', 'msg' (description), and 'fix' (suggested action).
+1. **Analyze Findings**: Review the list of findings below, focusing on the severity, file location, and description.
 2. **Prioritized Fixing**: Begin by addressing the highest severity findings ('critical' and 'high') first.
 3. **Refactoring Guidelines**:
    - Locate the target file and line using your tools.
@@ -77,6 +91,9 @@ Your task is to review and fix the issues listed in the 'findings' array of this
 5. **Verify Your Work**:
    - After applying fixes, execute \`npx auditx . --output agent --instruct\` to run the scan again and verify that the findings have been resolved.
    - Iterate until 'ok' is true.
+
+### Findings to Fix:
+${findingsList}
 
 ### Affected Files:
 ${report.files.map(f => `- ${f}`).join('\n')}`;
