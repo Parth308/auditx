@@ -14,13 +14,14 @@ import { runDepcheck } from './health/depcheck.js';
 import { runLicenseChecker } from './health/license.js';
 import { runTypecheck } from './quality/typecheck.js';
 import { runGitHealth } from './health/githealth.js';
+import { runNpmOutdated } from './health/npmoutdated.js';
 import { runLizard } from './quality/lizard.js';
 import { runAiPatterns } from './ai/aipatterns.js';
 import { runIaC } from './security/iac.js';
 import { runSupplychain } from './security/supplychain.js';
 import { Orchestrator, type TaskCost } from './orchestrator.js';
 
-type RunnerName = 'secrets' | 'deps' | 'sast' | 'deadcode' | 'iac' | 'patterns' | 'duplication' | 'complexity' | 'dephealth' | 'license' | 'aicode' | 'githealth' | 'typesafety' | 'supplychain';
+type RunnerName = 'secrets' | 'deps' | 'sast' | 'deadcode' | 'iac' | 'patterns' | 'duplication' | 'complexity' | 'dephealth' | 'license' | 'aicode' | 'githealth' | 'typesafety' | 'supplychain' | 'outdated';
 
 interface RunnerDef {
   name: RunnerName;
@@ -115,6 +116,13 @@ const RUNNERS: RunnerDef[] = [
     label: 'depcheck (unused dependencies)',
     cost: 1,
     run: runDepcheck,
+    isApplicable: (s) => s.hasNodeJs,
+  },
+  {
+    name: 'outdated',
+    label: 'npm-outdated (outdated dependencies)',
+    cost: 1,
+    run: runNpmOutdated,
     isApplicable: (s) => s.hasNodeJs,
   },
   {

@@ -122,6 +122,7 @@ export interface Config {
     | 'githealth'
     | 'typesafety'
     | 'supplychain'
+    | 'outdated'
   >;
   /** Optional array of staged files to scan (used by git hook) */
   stagedFiles?: string[];
