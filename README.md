@@ -161,10 +161,12 @@ auditx . --no-cache                # bypass the blazing fast file-hashing cache 
 auditx hook install                # install git hooks (pre-commit, pre-push, etc.)
 auditx . --staged-list <file>      # only scan specific files (used by git hooks)
 
-# AI
+# AI / Agents
 auditx . --ai                      # append Claude AI risk summary to report
 auditx . --ai-provider openai      # override AI provider: claude | openai | gemini
 auditx . --ai-model gpt-4o         # override model
+auditx . --output agent            # generate minimal JSON payload meant for AI agents
+auditx . --output agent --instruct # append strict prompt instructions for fixing findings
 
 # Info
 auditx --version
