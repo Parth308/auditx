@@ -124,6 +124,7 @@ export interface Config {
     | 'supplychain'
     | 'outdated'
     | 'todocheck'
+    | 'prettier'
   >;
   /** Optional array of staged files to scan (used by git hook) */
   stagedFiles?: string[];

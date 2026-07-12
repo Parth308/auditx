@@ -16,13 +16,14 @@ import { runTypecheck } from './quality/typecheck.js';
 import { runGitHealth } from './health/githealth.js';
 import { runNpmOutdated } from './health/npmoutdated.js';
 import { runTodoCheck } from './quality/todocheck.js';
+import { runPrettierCheck } from './quality/prettier.js';
 import { runLizard } from './quality/lizard.js';
 import { runAiPatterns } from './ai/aipatterns.js';
 import { runIaC } from './security/iac.js';
 import { runSupplychain } from './security/supplychain.js';
 import { Orchestrator, type TaskCost } from './orchestrator.js';
 
-type RunnerName = 'secrets' | 'deps' | 'sast' | 'deadcode' | 'iac' | 'patterns' | 'duplication' | 'complexity' | 'dephealth' | 'license' | 'aicode' | 'githealth' | 'typesafety' | 'supplychain' | 'outdated' | 'todocheck';
+type RunnerName = 'secrets' | 'deps' | 'sast' | 'deadcode' | 'iac' | 'patterns' | 'duplication' | 'complexity' | 'dephealth' | 'license' | 'aicode' | 'githealth' | 'typesafety' | 'supplychain' | 'outdated' | 'todocheck' | 'prettier';
 
 interface RunnerDef {
   name: RunnerName;
@@ -173,6 +174,13 @@ const RUNNERS: RunnerDef[] = [
     label: 'leasot (TODOs/FIXMEs)',
     cost: 1,
     run: runTodoCheck,
+    isApplicable: () => true,
+  },
+  {
+    name: 'prettier',
+    label: 'prettier (formatting)',
+    cost: 1,
+    run: runPrettierCheck,
     isApplicable: () => true,
   },
   {
