@@ -152,6 +152,7 @@ auditx . --skip secrets            # skip Gitleaks
 auditx . --skip deps               # skip Trivy + npm audit
 auditx . --skip sast               # skip Semgrep
 auditx . --skip deadcode           # skip Knip
+auditx . --only secrets,a11y        # focus mode: only run Gitleaks and jsx-a11y
 
 # Actions
 auditx . --fix                     # auto-apply fixable issues (eslint --fix)
