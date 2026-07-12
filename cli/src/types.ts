@@ -171,6 +171,7 @@ export interface Config {
   baseline?: string;
   noCache?: boolean;
   instruct?: boolean;
+  exclude?: string[];
 }
 
 /** The fully aggregated scan report. */

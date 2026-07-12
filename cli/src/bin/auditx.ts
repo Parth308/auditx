@@ -53,6 +53,11 @@ program
     'Comma-separated list of categories to run exclusively',
     '',
   )
+  .option(
+    '--exclude <paths>',
+    'Comma-separated list of paths/directories to exclude from scanning',
+    '',
+  )
   .option('--ci', 'Exit with code 1 if any findings exist (for CI pipelines)')
   .option('--ai', 'Append AI analysis block to the report')
   .option('--ai-provider <provider>', 'AI provider: gemini | openai | claude')

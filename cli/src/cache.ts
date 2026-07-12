@@ -22,6 +22,8 @@ export class CacheManager {
     // Mix in relevant config options so cache busts if user changes parameters
     const configStr = JSON.stringify({
       skip: config.skip,
+      only: config.only,
+      exclude: config.exclude,
       severity: config.severity,
       baseline: config.baseline,
       stagedFiles: config.stagedFiles
@@ -42,8 +44,21 @@ export class CacheManager {
         ) {
           continue;
         }
-        
+
         const fullPath = path.join(currentDir, entry.name);
+        
+        // Skip user-excluded files/folders
+        if (config.exclude && config.exclude.length > 0) {
+          const normalizedPath = fullPath.replace(/\\/g, '/');
+          const isExcluded = config.exclude.some((ex) => {
+            const normalizedEx = ex.replace(/\\/g, '/');
+            return normalizedPath.includes(normalizedEx);
+          });
+          if (isExcluded) {
+            continue;
+          }
+        }
+        
         if (entry.isDirectory()) {
           await walk(fullPath);
         } else {
