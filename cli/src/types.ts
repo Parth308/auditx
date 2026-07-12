@@ -146,6 +146,7 @@ export interface Config {
   generateBaseline?: boolean;
   /** Custom path to the baseline file */
   baseline?: string;
+  noCache?: boolean;
 }
 
 /** The fully aggregated scan report. */

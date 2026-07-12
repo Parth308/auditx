@@ -17,6 +17,7 @@ import { generateAiSummary } from '../ai.js';
 import { promptForAiConfig, readGlobalConfig } from '../config.js';
 import { applyFixes } from './fix.js';
 import { generateSbom } from './sbom.js';
+import { CacheManager } from '../cache.js';
 
 async function doCoreScan(config: Config, VERSION: string): Promise<void> {
   const scanStart = Date.now();
@@ -58,25 +59,41 @@ async function doCoreScan(config: Config, VERSION: string): Promise<void> {
     console.log('');
   }
 
-  // 2. Run all scanners in parallel with live progress
-  const spinner = isInteractive ? ora({ text: 'Scanning…', color: 'cyan' }).start() : undefined;
+  // 1.5 Cache layer
+  const cacheManager = new CacheManager(config.target);
+  let results = null;
 
-  const results = await runAll(config.target, stack, config, (progress) => {
-    if (isInteractive) {
-      spinner?.stop();
-      printScannerResult({
-        scanner: progress.label,
-        ok: progress.status === 'done',
-        findings: [],
-        error: progress.error,
-        durationMs: progress.durationMs ?? 0,
-      });
-      spinner?.start();
+  if (!config.noCache && !config.stagedFiles) {
+    const cachedResults = await cacheManager.loadCache(config.target, VERSION, config);
+    if (cachedResults) {
+      if (isInteractive) console.log(chalk.green(`  ✓  loaded from cache (0ms)`));
+      results = cachedResults;
     }
-  });
+  }
 
-  if (isInteractive) {
-    spinner?.stop();
+  // 2. Run all scanners in parallel with live progress
+  if (!results) {
+    const spinner = isInteractive ? ora({ text: 'Scanning…', color: 'cyan' }).start() : undefined;
+
+    results = await runAll(config.target, stack, config, (progress) => {
+      if (isInteractive) {
+        spinner?.stop();
+        printScannerResult({
+          scanner: progress.label,
+          ok: progress.status === 'done',
+          findings: [],
+          error: progress.error,
+          durationMs: progress.durationMs ?? 0,
+        });
+        spinner?.start();
+      }
+    });
+
+    if (isInteractive) spinner?.stop();
+
+    if (!config.noCache && !config.stagedFiles) {
+      await cacheManager.saveCache(config.target, VERSION, config, results);
+    }
   }
 
   const totalDuration = Date.now() - scanStart;
@@ -194,6 +211,7 @@ export async function runScanCommand(opts: Record<string, any>, targetArg: strin
     checkDeps: Boolean(opts['checkDeps']),
     generateBaseline: Boolean(opts['generateBaseline']),
     baseline: opts['baseline'] as string,
+    noCache: Boolean(opts['noCache']),
   };
 
   if (config.checkDeps) {

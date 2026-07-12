@@ -59,6 +59,7 @@ program
   .option('--sbom', 'Generate a CycloneDX SBOM file (sbom.json)')
   .option('--watch', 'Re-run on file changes (dev mode)')
   .option('--check-deps', 'Verify all required external scanner tools are installed')
+  .option('--no-cache', 'Disable file hashing and caching of scan results')
   .option('--help-json', 'Output command reference as JSON (for AI agents)');
 
 program.parse();
