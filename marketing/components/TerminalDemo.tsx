@@ -8,7 +8,7 @@ const LINES = [
   { text: '  Scanning: /projects/my-app', color: '#9a9898', delay: 800 },
   { text: '', color: '', delay: 1000 },
   { text: '  Stack detected: Node.js · TypeScript · Docker', color: '#9a9898', delay: 1100 },
-  { text: '  Running 15 scanners in parallel…', color: '#9a9898', delay: 1400 },
+  { text: '  Running 22 scanners in parallel…', color: '#9a9898', delay: 1400 },
   { text: '', color: '', delay: 1600 },
   { text: '  [+] gitleaks (secrets)              clean  1.2s', color: '#16a34a', delay: 1800 },
   { text: '  [+] trivy (deps/CVEs)               clean  2.1s', color: '#16a34a', delay: 2100 },

@@ -21,7 +21,7 @@ const ROWS = [
     feature: 'Scope',
     snyk: 'SCA, SAST, IaC',
     sonarqube: 'SAST, code quality',
-    auditx: '15 scanners — Secrets, AI patterns, dead code + more',
+    auditx: '22 scanners — Secrets, AI patterns, dead code + more',
     win: true,
   },
   {

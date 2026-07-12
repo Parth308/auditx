@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     template: '%s | auditx',
   },
   description:
-    'auditx is a zero-config security CLI running 15 scanners in parallel. Detect secrets, vulnerable deps, SAST issues, and AI code anti-patterns instantly.',
+    'auditx is a zero-config security CLI running 22 scanners in parallel. Detect secrets, vulnerable deps, SAST issues, and AI code anti-patterns instantly.',
   applicationName: 'auditx',
   authors: [{ name: 'Parth Mongia', url: 'https://parthmongia.dev' }],
   creator: 'Parth Mongia',
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'auditx — One command. Every vulnerability. AI-ready.',
     description:
-      'Zero-config security CLI. 13 scanners running in parallel. 100+ custom rules for AI code anti-patterns. Built for the agentic-coding era.',
+      'Zero-config security CLI. 22 scanners running in parallel. 100+ custom rules for AI code anti-patterns. Built for the agentic-coding era.',
     url: 'https://auditx-cli.vercel.app',
     siteName: 'auditx',
     type: 'website',
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'auditx — Security Audits for the AI Era',
     description:
-      'One command runs 13 scanners. Detects secrets, vulnerable deps, and AI-generated code anti-patterns. Built by @parth308.',
+      'One command runs 22 scanners. Detects secrets, vulnerable deps, and AI-generated code anti-patterns. Built by @parth308.',
     creator: '@parth308',
   },
   robots: {
@@ -91,7 +91,7 @@ export default function RootLayout({
       priceCurrency: 'USD',
     },
     description:
-      'auditx is a zero-config security CLI running 15 scanners in parallel. Detect secrets, vulnerable deps, SAST issues, and AI code anti-patterns instantly.',
+      'auditx is a zero-config security CLI running 22 scanners in parallel. Detect secrets, vulnerable deps, SAST issues, and AI code anti-patterns instantly.',
     author: {
       '@type': 'Person',
       name: 'Parth Mongia',

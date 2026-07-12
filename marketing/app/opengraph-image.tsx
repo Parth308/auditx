@@ -59,7 +59,7 @@ export default async function Image() {
             color: '#737373',
           }}
         >
-          Zero-config security CLI. 13 scanners in parallel. AI-ready.
+          Zero-config security CLI. 22 scanners in parallel. AI-ready.
         </div>
       </div>
     ),

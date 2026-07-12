@@ -28,7 +28,7 @@ npx auditx@latest .
 ```
 🛡️  auditx — scanning /home/parth/codeoracle
   ✓  stack detected: Node.js · TypeScript · Docker
-  ✓  running 15 scanners in parallel...
+  ✓  running 22 scanners in parallel...
 
   ████████████████████████████████ 100% (9.4s)
 

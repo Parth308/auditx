@@ -67,7 +67,7 @@ export default function Footer() {
             fontSize: 14,
             color: 'var(--color-mute)',
           }}>
-            Zero config. 15 scanners. MIT — free forever.
+            Zero config. 22 scanners. MIT — free forever.
           </div>
         </div>
 

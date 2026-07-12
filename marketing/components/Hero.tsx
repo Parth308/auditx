@@ -45,7 +45,7 @@ export default function Hero() {
             fontWeight: 400,
           }}>
             auditx auto-detects your stack, orchestrates{' '}
-            <strong style={{ color: 'var(--color-ink)', fontWeight: 700 }}>15 scanners</strong>{' '}
+            <strong style={{ color: 'var(--color-ink)', fontWeight: 700 }}>22 scanners</strong>{' '}
             in parallel — secrets, deps, SAST, dead code, complexity,
             IaC, and AI-pattern anti-patterns. One command. One normalized report.
           </p>
