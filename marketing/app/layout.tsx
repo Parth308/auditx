@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Rajdhani, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
-
+import { Analytics } from '@vercel/analytics/next';
 
 const rajdhani = Rajdhani({
   subsets: ['latin'],
@@ -73,7 +73,6 @@ export const metadata: Metadata = {
   },
 };
 
-import { Analytics } from '@vercel/analytics/next';
 
 export default function RootLayout({
   children,
