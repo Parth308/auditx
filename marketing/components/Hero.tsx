@@ -2,9 +2,9 @@ import CopyButton from './CopyButton';
 import TerminalDemo from './TerminalDemo';
 
 const STATS = [
-  { val: '15',   label: 'parallel scanners' },
-  { val: '100+',   label: 'AI-pattern rules' },
-  { val: '0',    label: 'config required' },
+  { val: '22', label: 'parallel scanners' },
+  { val: '100+', label: 'AI-pattern rules' },
+  { val: '0', label: 'config required' },
   { val: '100%', label: 'local — no cloud' },
 ];
 
