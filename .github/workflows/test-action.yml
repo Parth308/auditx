@@ -1,0 +1,27 @@
+name: Test GitHub Action
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-action:
+    name: Test composite action
+    runs-on: ubuntu-latest
+    permissions:
+      # Required to upload SARIF results to GitHub Security tab
+      security-events: write
+      actions: read
+      contents: read
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run auditx action
+        uses: ./
+        with:
+          target: '.'
+          severity: 'info'
