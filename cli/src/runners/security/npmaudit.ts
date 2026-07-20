@@ -60,7 +60,7 @@ const NPM_SEV_MAP: Record<string, Severity> = {
  * Runs `npm audit --json` in the target directory and maps vulnerabilities
  * to normalized auditx findings.
  */
-export async function runNpmAudit(targetDir: string): Promise<ScanResult> {
+export async function runNpmAudit(targetDir: string, _stagedFiles?: string[], _stack?: any, workspaceName?: string): Promise<ScanResult> {
   const start = Date.now();
   const scanner = 'npm-audit';
 
@@ -108,6 +108,7 @@ export async function runNpmAudit(targetDir: string): Promise<ScanResult> {
         packageName: pkgName,
         packageVersion: vuln.range,
         fix: fixNote,
+        ...(workspaceName ? { workspace: workspaceName } : {}),
       });
     }
 

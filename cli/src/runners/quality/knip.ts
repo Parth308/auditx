@@ -31,7 +31,7 @@ interface KnipReport {
  * Runs `knip` in the target directory and maps unused exports, files, and
  * dependencies to normalized DEAD_CODE findings.
  */
-export async function runKnip(targetDir: string): Promise<ScanResult> {
+export async function runKnip(targetDir: string, _stagedFiles?: string[], _stack?: any, workspaceName?: string): Promise<ScanResult> {
   const start = Date.now();
   const scanner = 'knip';
 
@@ -70,6 +70,7 @@ export async function runKnip(targetDir: string): Promise<ScanResult> {
         scanner,
         description: 'This file is not imported or used anywhere in the project.',
         fix: 'Remove this file if it is no longer needed.',
+        ...(workspaceName ? { workspace: workspaceName } : {}),
       });
     }
 
@@ -86,6 +87,7 @@ export async function runKnip(targetDir: string): Promise<ScanResult> {
           scanner,
           description: `'${exp.name}' is exported but never imported anywhere.`,
           fix: `Remove the export for '${exp.name}' or delete it if unused.`,
+          ...(workspaceName ? { workspace: workspaceName } : {}),
         });
       }
 
@@ -99,6 +101,7 @@ export async function runKnip(targetDir: string): Promise<ScanResult> {
           scanner,
           description: `Package '${dep}' is listed in dependencies but not used.`,
           fix: `Run: npm uninstall ${dep}`,
+          ...(workspaceName ? { workspace: workspaceName } : {}),
         });
       }
 
@@ -112,6 +115,7 @@ export async function runKnip(targetDir: string): Promise<ScanResult> {
           scanner,
           description: `Package '${dep}' is listed in devDependencies but not used.`,
           fix: `Run: npm uninstall --save-dev ${dep}`,
+          ...(workspaceName ? { workspace: workspaceName } : {}),
         });
       }
     }

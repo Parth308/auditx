@@ -56,7 +56,7 @@ const SECURITY_RULES = new Set([
  * Runs `eslint` with `eslint-plugin-security` against the target directory.
  * Only surfaces security-related rule violations as PATTERNS findings.
  */
-export async function runEslint(targetDir: string, stagedFiles?: string[]): Promise<ScanResult> {
+export async function runEslint(targetDir: string, stagedFiles?: string[], _stack?: any, workspaceName?: string): Promise<ScanResult> {
   const start = Date.now();
   const scanner = 'eslint';
 
@@ -170,6 +170,7 @@ export async function runEslint(targetDir: string, stagedFiles?: string[]): Prom
           fix: msg.fix
             ? 'Auto-fixable. Run: npx eslint --fix'
             : undefined,
+          ...(workspaceName ? { workspace: workspaceName } : {}),
         });
       }
     }

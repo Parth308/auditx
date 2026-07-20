@@ -7,7 +7,7 @@ const execAsync = promisify(exec);
 
 const RESTRICTIVE_LICENSES = ['GPL', 'AGPL', 'LGPL'];
 
-export async function runLicenseChecker(targetPath: string): Promise<ScanResult> {
+export async function runLicenseChecker(targetPath: string, _stagedFiles?: string[], _stack?: any, workspaceName?: string): Promise<ScanResult> {
   const start = Date.now();
   const findings: Finding[] = [];
 
@@ -33,6 +33,7 @@ export async function runLicenseChecker(targetPath: string): Promise<ScanResult>
               description: `The package '${pkgName}' uses a restrictive ${license} license, which may require you to open-source your own project if distributed.`,
               packageName: pkgName.split('@')[0],
               packageVersion: pkgName.split('@')[1],
+              ...(workspaceName ? { workspace: workspaceName } : {}),
             });
           }
         }

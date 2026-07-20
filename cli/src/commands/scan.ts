@@ -6,6 +6,7 @@ import { resolve, join } from 'path';
 import type { Config } from '../types.js';
 import { detectStack, stackLabels } from '../detect.js';
 import { runAll, getApplicableRunnerLabels } from '../runners/index.js';
+import { detectWorkspaces, isMonorepo } from '../workspace.js';
 import { aggregate, filterBaselines, filterBySeverity, buildSummary } from '../aggregate.js';
 import { formatMarkdown } from '../formatters/markdown.js';
 import { formatJson } from '../formatters/json.js';
@@ -39,15 +40,23 @@ async function doCoreScan(config: Config, VERSION: string): Promise<void> {
   const stack = detectStack(config.target);
   const labels = stackLabels(stack);
 
+  // 1.1 Detect workspaces (monorepo support)
+  const workspaces = detectWorkspaces(config.target, stack);
+  const monorepo = isMonorepo(workspaces);
+
   if (isInteractive) {
     if (labels.length === 0) {
       console.log(chalk.yellow('  [!]  No recognized stack detected. Running generic scanners only.'));
     } else {
-      console.log(chalk.dim(`  Stack detected: ${chalk.cyan(labels.join(' · '))}`));
+      console.log(chalk.dim(`  Stack detected: ${chalk.cyan(labels.join(' · '))}`) );
+    }
+    if (monorepo) {
+      const wsNames = workspaces.filter(w => !w.isRoot).map(w => chalk.cyan(w.name)).join(', ');
+      console.log(chalk.dim(`  Workspaces: ${wsNames} (${workspaces.length - 1} sub-package${workspaces.length - 1 !== 1 ? 's' : ''} + root)`));
     }
   }
 
-  const applicableRunners = getApplicableRunnerLabels(stack, config);
+  const applicableRunners = getApplicableRunnerLabels(stack, config, workspaces);
   if (isInteractive) {
     if (existsSync(join(config.target, 'auditx.yml'))) {
       console.log(chalk.cyan(`  Custom rules: `) + chalk.dim(join(config.target, 'auditx.yml')));
@@ -55,7 +64,7 @@ async function doCoreScan(config: Config, VERSION: string): Promise<void> {
     if (config.baseline && existsSync(join(config.target, config.baseline))) {
       console.log(chalk.cyan(`  Baseline loaded: `) + chalk.dim(join(config.target, config.baseline)));
     }
-    console.log(chalk.dim(`  Running ${applicableRunners.length} scanners in parallel…`));
+    console.log(chalk.dim(`  Running ${applicableRunners.length} scanner${applicableRunners.length !== 1 ? 's' : ''}${monorepo ? ` across ${workspaces.length} workspaces` : ''} in parallel…`));
     console.log('');
   }
 
@@ -94,7 +103,7 @@ async function doCoreScan(config: Config, VERSION: string): Promise<void> {
       drawProgressBar();
     }
 
-    results = await runAll(config.target, stack, config, (progress) => {
+    results = await runAll(config.target, stack, workspaces, config, (progress) => {
       if (isInteractive) {
         completedCount++;
 

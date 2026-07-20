@@ -13,6 +13,7 @@ import { runAll } from '../runners/index.js';
 import { aggregate, filterBySeverity, buildSummary } from '../aggregate.js';
 import { formatAgent } from '../formatters/agent.js';
 import { detectStack, stackLabels } from '../detect.js';
+import { detectWorkspaces } from '../workspace.js';
 import type { Config, Severity } from '../types.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -81,7 +82,8 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       
       const scanStart = Date.now();
       const TIMEOUT_MS = 120_000;
-      const scanPromise = runAll(config.target, stack, config, () => {});
+      const workspaces = detectWorkspaces(config.target, stack);
+      const scanPromise = runAll(config.target, stack, workspaces, config, () => {});
       const results = await Promise.race([
         scanPromise,
         new Promise((_, reject) => setTimeout(() => reject(new Error('auditx scan timed out after 120s')), TIMEOUT_MS))

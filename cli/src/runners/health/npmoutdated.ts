@@ -7,7 +7,7 @@ import type { Finding, ScanResult } from '../../types.js';
 
 const execAsync = promisify(exec);
 
-export async function runNpmOutdated(targetDir: string): Promise<ScanResult> {
+export async function runNpmOutdated(targetDir: string, _stagedFiles?: string[], _stack?: any, workspaceName?: string): Promise<ScanResult> {
   const start = Date.now();
   const scanner = 'npm-outdated';
   const findings: Finding[] = [];
@@ -48,6 +48,7 @@ export async function runNpmOutdated(targetDir: string): Promise<ScanResult> {
         scanner,
         description: `Package '${pkg}' is outdated. Current: ${info.current}, Wanted: ${info.wanted}, Latest: ${info.latest}.`,
         fix: `npm install ${pkg}@latest`,
+        ...(workspaceName ? { workspace: workspaceName } : {}),
       });
     }
 

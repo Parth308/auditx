@@ -5,7 +5,7 @@ import type { Finding, ScanResult } from '../../types.js';
 
 const execAsync = promisify(exec);
 
-export async function runTypecheck(targetPath: string): Promise<ScanResult> {
+export async function runTypecheck(targetPath: string, _stagedFiles?: string[], _stack?: any, workspaceName?: string): Promise<ScanResult> {
   const start = Date.now();
   const findings: Finding[] = [];
 
@@ -44,6 +44,7 @@ export async function runTypecheck(targetPath: string): Promise<ScanResult> {
           rule,
           scanner: 'typecheck',
           description: message.trim(),
+          ...(workspaceName ? { workspace: workspaceName } : {}),
         });
       }
     }

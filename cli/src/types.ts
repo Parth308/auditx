@@ -62,6 +62,8 @@ export interface Finding {
   match?: string;
   /** IDs of underlying findings that were correlated into this compound finding */
   correlations?: string[];
+  /** Workspace/service name this finding belongs to (monorepo support) */
+  workspace?: string;
 }
 
 /** Result returned by each runner. */

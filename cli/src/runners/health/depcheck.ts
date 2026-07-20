@@ -7,7 +7,7 @@ import type { Finding, ScanResult } from '../../types.js';
 
 const execAsync = promisify(exec);
 
-export async function runDepcheck(targetDir: string): Promise<ScanResult> {
+export async function runDepcheck(targetDir: string, _stagedFiles?: string[], _stack?: any, workspaceName?: string): Promise<ScanResult> {
   const start = Date.now();
   const scanner = 'depcheck';
   const findings: Finding[] = [];
@@ -51,6 +51,7 @@ export async function runDepcheck(targetDir: string): Promise<ScanResult> {
           scanner: 'depcheck',
           description: `The package '${depName}' is defined in package.json but never used in the codebase.`,
           fix: `npm uninstall ${depName}`,
+          ...(workspaceName ? { workspace: workspaceName } : {}),
         });
       }
     }
@@ -68,6 +69,7 @@ export async function runDepcheck(targetDir: string): Promise<ScanResult> {
           scanner: 'depcheck',
           description: `The package '${depName}' is defined in package.json but never used in the codebase.`,
           fix: `npm uninstall ${depName}`,
+          ...(workspaceName ? { workspace: workspaceName } : {}),
         });
       }
     }
@@ -83,6 +85,7 @@ export async function runDepcheck(targetDir: string): Promise<ScanResult> {
           scanner: 'depcheck',
           description: `The package '${dep}' is used in code but missing from package.json.`,
           fix: `npm install ${dep}`,
+          ...(workspaceName ? { workspace: workspaceName } : {}),
         });
       }
     }
