@@ -68,7 +68,43 @@ Appends finding signature to \`.auditxignore\`. Before running this, state in yo
 - Treating \`ok:false\` as advisory → it's a hard gate on completion/commit/PR.
 - Fixing findings out of severity order → always critical/high first, they're likeliest to block merge/CI anyway.
 - Baselining instead of fixing → baseline is for accepted risk, not laziness.
-- Forgetting DEPS/SECRETS triggers on non-source-file edits (Dockerfile, CI config, lockfiles) — these are audit triggers too, not just \`.ts\`/\`.py\` edits.`;
+- Forgetting DEPS/SECRETS triggers on non-source-file edits (Dockerfile, CI config, lockfiles) — these are audit triggers too, not just \`.ts\`/\`.py\` edits.
+
+### Code Knowledge Graph (structural context + security overlay)
+
+\`--emit-graph\` builds \`auditx-graph.json\` — a static adjacency list of files, functions, classes, imports, call edges, inheritance edges, with every scanner finding attached to its owning AST node as \`risk_flags\`.
+
+**When to use:**
+- Understanding unfamiliar/inherited code: generate graph, then query via MCP tools for immediate context
+- Impact analysis before fixing a vuln: \`get_callers(fn)\` shows all call sites that could be affected
+- Narrowing down risky code: \`get_risk_flags(file)\` lists only nodes with attached findings
+
+**Generate / regenerate:**
+\`\`\`bash
+npx auditx . --emit-graph          # scan + graph in one pass
+npx auditx . --emit-graph --no-cache  # force full rebuild (incremental by default)
+\`\`\`
+
+**MCP tools (available when auditx MCP server is running):**
+
+| Tool | Input | Returns |
+|---|---|---|
+| \`get_context(symbol)\` | function/class/file name | node + incoming + outgoing edges + risk_flags |
+| \`get_callers(symbol)\` | function/class name | all nodes that call this symbol |
+| \`get_callees(symbol)\` | function/class name | all nodes this symbol calls |
+| \`get_risk_flags(file?)\` | optional relative file path | all nodes with security/quality findings |
+
+All graph MCP tools auto-build the graph on first call if \`auditx-graph.json\` doesn't exist yet.
+
+**Graph schema:**
+\`\`\`json
+{
+  "nodes": [{ "id":"src/auth.ts::function::login", "type":"function", "file":"src/auth.ts",
+               "name":"login", "line":12, "endLine":45,
+               "risk_flags":[{"rule":"semgrep/hardcoded-secret","severity":"critical","line":18,"message":"...","scanner":"semgrep"}] }],
+  "edges": [{ "from":"src/api.ts::function::handleRequest", "to":"src/auth.ts::function::login", "type":"calls" }]
+}
+\`\`\``;
 
 const STAMPED = `${MARKER_START}\n${CORE_INSTRUCTION}\n${MARKER_END}`;
 

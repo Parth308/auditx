@@ -19,6 +19,7 @@ import { promptForAiConfig, readGlobalConfig } from '../config.js';
 import { applyFixes } from './fix.js';
 import { generateSbom } from './sbom.js';
 import { CacheManager } from '../cache.js';
+import { buildCodeGraph } from '../graph.js';
 
 async function doCoreScan(config: Config, VERSION: string): Promise<void> {
   const scanStart = Date.now();
@@ -195,6 +196,13 @@ async function doCoreScan(config: Config, VERSION: string): Promise<void> {
     await generateSbom(config.target, isInteractive);
   }
 
+  // 8.7 --emit-graph
+  if (config.emitGraph) {
+    if (isInteractive) console.log(chalk.cyan('\n  [graph] Building code knowledge graph…'));
+    await buildCodeGraph(config.target, findings, config.exclude ?? []);
+    if (isInteractive) console.log(chalk.green('  ✓ Code graph → auditx-graph.json'));
+  }
+
   // 9. --ci exit code
   const urgentFindings = findings.filter(
     (f) => f.severity === 'critical' || f.severity === 'high',
@@ -274,6 +282,7 @@ export async function runScanCommand(opts: Record<string, any>, targetArg: strin
     exclude: opts['exclude']
       ? (opts['exclude'] as string).split(',').map((s: string) => s.trim()).filter(Boolean)
       : [],
+    emitGraph: Boolean(opts['emitGraph']),
   };
 
   if (config.checkDeps) {

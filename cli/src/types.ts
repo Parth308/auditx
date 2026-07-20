@@ -174,6 +174,8 @@ export interface Config {
   noCache?: boolean;
   instruct?: boolean;
   exclude?: string[];
+  /** Emit code knowledge graph as auditx-graph.json */
+  emitGraph?: boolean;
 }
 
 /** The fully aggregated scan report. */
